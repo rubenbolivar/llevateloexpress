@@ -1,15 +1,17 @@
 # LlévateloExpress - Plataforma de Financiamiento
 
-Aplicación web para LlévateloExpress.com, una plataforma para financiamiento y adquisición de vehículos, motocicletas y maquinaria agrícola en Venezuela.
+Aplicación web para LlévateloExpress.com, una plataforma para financiamiento y adquisición de vehículos, motocicletas, camiones, maquinaria agrícola y equipos industriales en Venezuela.
 
 ## Características Principales
 
-- **Catálogo de Productos**: Amplia variedad de vehículos, motocicletas y maquinaria agrícola disponibles para financiamiento.
+- **Catálogo de Productos**: Amplia variedad de vehículos, motocicletas, camiones, maquinaria agrícola y equipos industriales disponibles para financiamiento.
 - **Planes de Financiamiento**: Diferentes opciones adaptadas a las necesidades de cada cliente (Plan 50-50, Plan 70-30, Plan Agrícola).
 - **Calculadora Interactiva**: Permite al usuario simular diferentes escenarios de financiamiento y ver las cuotas resultantes con tabla de amortización.
 - **Registro de Clientes**: Sistema seguro para recolectar información de los potenciales clientes interesados en adquirir un producto.
+- **Formulario de Contacto**: Integrado con WhatsApp para comunicación directa con los asesores.
 - **Diseño Responsive**: Experiencia de usuario optimizada para dispositivos móviles, tablets y escritorio.
 - **Despliegue Automatizado**: Script de despliegue para configuración rápida del servidor de producción.
+- **Preparado para Integración con Django**: Estructura de datos diseñada para futuro backend con Django.
 
 ## Tecnologías Utilizadas
 
@@ -19,6 +21,7 @@ Aplicación web para LlévateloExpress.com, una plataforma para financiamiento y
 - Font Awesome para iconografía
 - Servidor Nginx con configuración optimizada
 - Certificados SSL vía Let's Encrypt
+- API de WhatsApp para formulario de contacto
 - Optimización de rendimiento para producción
 
 ## Estructura del Proyecto
@@ -32,10 +35,12 @@ Aplicación web para LlévateloExpress.com, una plataforma para financiamiento y
 ├── planes.html             # Información sobre planes de financiamiento
 ├── calculadora.html        # Calculadora interactiva de financiamiento
 ├── nosotros.html           # Información sobre la empresa
+├── contacto.html           # Formulario de contacto con integración WhatsApp
 ├── css/
 │   └── styles.css          # Estilos personalizados
 ├── js/
 │   ├── main.js             # Funcionalidades comunes
+│   ├── models.js           # Modelos y estructuras para integración con Django
 │   ├── products.js         # Datos y funciones del catálogo
 │   ├── calculadora.js      # Lógica de la calculadora
 │   ├── planes.js           # Funcionalidades página de planes
@@ -46,6 +51,18 @@ Aplicación web para LlévateloExpress.com, una plataforma para financiamiento y
 │   └── banners/            # Banners promocionales
 └── deploy.sh               # Script de despliegue automatizado
 ```
+
+## Categorías de Productos
+
+El sistema incluye las siguientes categorías de productos, cada una con su estructura de datos optimizada:
+
+1. **Motocicletas**: Modelos de diferentes cilindradas y estilos, desde económicas hasta deportivas.
+2. **Vehículos**: Automóviles, camionetas y vehículos de pasajeros.
+3. **Camiones**: Unidades de carga, transporte y distribución de diferentes capacidades.
+4. **Maquinaria Agrícola**: Tractores y equipos para optimizar la producción agrícola.
+5. **Maquinaria y Equipos**: Equipamiento especializado para la industria y el comercio.
+
+Cada categoría está modelada para permitir filtrado, búsqueda y presentación específica acorde a sus características particulares.
 
 ## Páginas del Sitio
 
@@ -69,6 +86,30 @@ Herramienta interactiva para simular diferentes escenarios de financiamiento, pe
 
 ### Sobre Nosotros (nosotros.html)
 Información sobre la empresa, misión, visión y valores, así como equipo y trayectoria.
+
+### Contacto (contacto.html)
+Formulario de contacto con integración directa a WhatsApp, información de ubicación y preguntas frecuentes.
+
+## Integración con Django (Plan Futuro)
+
+El proyecto está estructurado para facilitar la migración a un backend Django:
+
+### Modelos y Estructura
+
+- Se ha creado un archivo `js/models.js` que define la estructura de datos para los modelos de Django.
+- Las categorías de productos están definidas siguiendo el patrón de modelos Django con:
+  - Identificadores únicos (id)
+  - Slugs para URLs amigables
+  - Nombres legibles para usuarios
+  - Descripciones e iconos
+- La estructura de productos incluye metadatos para las relaciones y campos necesarios
+
+### Pasos para Migración a Django
+
+1. Crear los modelos Django basados en la estructura definida en `models.js`
+2. Implementar API REST para consumo de datos
+3. Adaptar el frontend para consumir datos de la API
+4. Implementar panel administrativo para gestión de productos
 
 ## Despliegue a Producción
 
@@ -107,6 +148,9 @@ El proyecto incluye un script `deploy.sh` que automatiza:
 ### Actualización de Productos
 Para actualizar el catálogo de productos, edite el archivo `js/products.js` siguiendo el formato establecido.
 
+### Actualización de Categorías
+Para añadir nuevas categorías o modificar las existentes, edite el archivo `js/models.js` y actualice el arreglo `PRODUCT_CATEGORIES`.
+
 ### Cambios en la Interfaz
 Los estilos personalizados se encuentran en `css/styles.css`. Para modificaciones mayores, considere editar los archivos HTML correspondientes.
 
@@ -115,6 +159,7 @@ Los estilos personalizados se encuentran en `css/styles.css`. Para modificacione
 Para consultas técnicas o soporte relacionado con la implementación:
 - Email: soporte@llevateloexpress.com
 - Teléfono: (0212) 555-1234
+- WhatsApp: +584121010744
 
 ## Desarrollado por
 
