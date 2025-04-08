@@ -403,56 +403,54 @@
                 featuresContainer.appendChild(col);
             });
             
-            // Simulamos datos técnicos (en un futuro estos vendrían desde Django)
-            const generalSpecs = [
-                { label: 'Marca', value: product.brand },
-                { label: 'Modelo', value: product.name },
-                { label: 'Año', value: '2023' },
-                { label: 'Tipo', value: 'Motocicleta' },
-                { label: 'País de Origen', value: 'China' },
-                { label: 'Garantía', value: '3 años o 30,000 km' },
-                { label: 'Colores disponibles', value: 'Negro, Azul, Rojo' },
-                { label: 'Peso', value: '175 kg' }
-            ];
-            
-            const engineSpecs = [
-                { label: 'Tipo de motor', value: '4 tiempos, monocilíndrico' },
-                { label: 'Cilindrada', value: '300 cc' },
-                { label: 'Potencia máxima', value: '29 HP @ 8500 rpm' },
-                { label: 'Torque máximo', value: '27 Nm @ 6500 rpm' },
-                { label: 'Transmisión', value: '6 velocidades' },
-                { label: 'Sistema de enfriamiento', value: 'Líquido' },
-                { label: 'Capacidad de tanque', value: '16 L' },
-                { label: 'Consumo promedio', value: '3.2 L/100km' }
-            ];
-            
-            const comfortSpecs = [
-                { label: 'Asiento', value: 'Ergonómico, doble altura' },
-                { label: 'Panel de instrumentos', value: 'Digital LCD' },
-                { label: 'Iluminación', value: 'Full LED' },
-                { label: 'USB', value: 'Sí, cargador' },
-                { label: 'Posición de manejo', value: 'Deportiva/Touring' },
-                { label: 'Capacidad de carga', value: '10 kg' },
-                { label: 'Altura del asiento', value: '835 mm' },
-                { label: 'Parabrisas', value: 'Ajustable' }
-            ];
-            
-            const safetySpecs = [
-                { label: 'Freno delantero', value: 'Disco 320mm, ABS' },
-                { label: 'Freno trasero', value: 'Disco 240mm, ABS' },
-                { label: 'ABS', value: 'Sí, con modo off-road' },
-                { label: 'Control de tracción', value: 'Sí, desconectable' },
-                { label: 'Suspensión delantera', value: 'Invertida, ajustable' },
-                { label: 'Suspensión trasera', value: 'Monoshock, ajustable' },
-                { label: 'Neumático delantero', value: '110/80-19' },
-                { label: 'Neumático trasero', value: '150/70-17' }
-            ];
-            
-            // Renderizar especificaciones
-            renderSpecsSection(content.querySelector('.specs-general'), generalSpecs);
-            renderSpecsSection(content.querySelector('.specs-engine'), engineSpecs);
-            renderSpecsSection(content.querySelector('.specs-comfort'), comfortSpecs);
-            renderSpecsSection(content.querySelector('.specs-safety'), safetySpecs);
+            // Usar especificaciones reales del producto si están disponibles
+            if (product.specs) {
+                renderSpecsSection(content.querySelector('.specs-general'), product.specs.general || []);
+                renderSpecsSection(content.querySelector('.specs-engine'), product.specs.engine || []);
+                renderSpecsSection(content.querySelector('.specs-comfort'), product.specs.comfort || []);
+                renderSpecsSection(content.querySelector('.specs-safety'), product.specs.safety || []);
+            } else {
+                // Fallback a datos simulados si no hay specs (para compatibilidad)
+                const generalSpecs = [
+                    { label: 'Marca', value: product.brand },
+                    { label: 'Modelo', value: product.name },
+                    { label: 'Año', value: '2023' },
+                    { label: 'Tipo', value: getCategoryName(product.category) },
+                    { label: 'País de Origen', value: 'Importado' },
+                    { label: 'Garantía', value: '1 año' },
+                    { label: 'Colores disponibles', value: 'Consultar disponibilidad' },
+                    { label: 'Peso', value: 'Información no disponible' }
+                ];
+                
+                // Extraer información básica de las características
+                const engineSpecs = [];
+                const comfortSpecs = [];
+                const safetySpecs = [];
+                
+                // Recorrer features para extraer información básica
+                (product.features || []).forEach(feature => {
+                    if (feature.toLowerCase().includes('motor') || feature.toLowerCase().includes('cilindrada') || 
+                        feature.toLowerCase().includes('potencia') || feature.toLowerCase().includes('transmisión')) {
+                        const parts = feature.split(':');
+                        if (parts.length > 1) {
+                            engineSpecs.push({ label: parts[0].trim(), value: parts[1].trim() });
+                        } else {
+                            engineSpecs.push({ label: 'Característica', value: feature });
+                        }
+                    } else if (feature.toLowerCase().includes('asiento') || feature.toLowerCase().includes('panel') || 
+                              feature.toLowerCase().includes('iluminación') || feature.toLowerCase().includes('usb')) {
+                        comfortSpecs.push({ label: 'Característica', value: feature });
+                    } else if (feature.toLowerCase().includes('freno') || feature.toLowerCase().includes('abs') || 
+                              feature.toLowerCase().includes('suspensión') || feature.toLowerCase().includes('neumático')) {
+                        safetySpecs.push({ label: 'Característica', value: feature });
+                    }
+                });
+                
+                renderSpecsSection(content.querySelector('.specs-general'), generalSpecs);
+                renderSpecsSection(content.querySelector('.specs-engine'), engineSpecs.length ? engineSpecs : [{ label: 'Información', value: 'Datos técnicos no disponibles' }]);
+                renderSpecsSection(content.querySelector('.specs-comfort'), comfortSpecs.length ? comfortSpecs : [{ label: 'Información', value: 'Datos de confort no disponibles' }]);
+                renderSpecsSection(content.querySelector('.specs-safety'), safetySpecs.length ? safetySpecs : [{ label: 'Información', value: 'Datos de seguridad no disponibles' }]);
+            }
             
             // Añadir el contenido al contenedor
             container.appendChild(content);
