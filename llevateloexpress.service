@@ -1,0 +1,17 @@
+[Unit]
+Description=LlévateloExpress Gunicorn Service
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+User=llevateloexpress
+Group=www-data
+WorkingDirectory=/var/www/llevateloexpress
+ExecStart=/var/www/llevateloexpress/backend_env/bin/gunicorn -c gunicorn_conf.py llevateloexpress_backend.wsgi:application
+Restart=on-failure
+RestartSec=5
+Environment="PATH=/var/www/llevateloexpress/backend_env/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+EnvironmentFile=/var/www/llevateloexpress/.env.production
+
+[Install]
+WantedBy=multi-user.target

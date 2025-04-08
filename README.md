@@ -11,45 +11,62 @@ Aplicación web para LlévateloExpress.com, una plataforma para financiamiento y
 - **Formulario de Contacto**: Integrado con WhatsApp para comunicación directa con los asesores.
 - **Diseño Responsive**: Experiencia de usuario optimizada para dispositivos móviles, tablets y escritorio.
 - **Despliegue Automatizado**: Script de despliegue para configuración rápida del servidor de producción.
-- **Preparado para Integración con Django**: Estructura de datos diseñada para futuro backend con Django.
+- **Backend Django**: Panel de administración Django para gestionar productos, planes de financiamiento y solicitudes.
+- **API REST**: API RESTful para la comunicación entre el frontend y el backend.
 
 ## Tecnologías Utilizadas
 
-- HTML5 y CSS3 para estructuración y estilización
-- JavaScript (ES6+) para funcionalidades dinámicas
-- Bootstrap 5 como framework de UI
-- Font Awesome para iconografía
-- Servidor Nginx con configuración optimizada
-- Certificados SSL vía Let's Encrypt
-- API de WhatsApp para formulario de contacto
-- Optimización de rendimiento para producción
+- **Frontend**:
+  - HTML5 y CSS3 para estructuración y estilización
+  - JavaScript (ES6+) para funcionalidades dinámicas
+  - Bootstrap 5 como framework de UI
+  - Font Awesome para iconografía
+
+- **Backend**:
+  - Django 4.2 como framework principal
+  - Django REST Framework para API RESTful
+  - PostgreSQL como base de datos
+  - Autenticación JWT para seguridad
+
+- **Infraestructura**:
+  - Servidor Nginx con configuración optimizada
+  - Gunicorn como servidor WSGI
+  - Certificados SSL vía Let's Encrypt
+  - API de WhatsApp para formulario de contacto
+  - Optimización de rendimiento para producción
 
 ## Estructura del Proyecto
 
 ```
 /
-├── index.html              # Página principal con catálogo
-├── catalogo.html           # Catálogo completo de productos
-├── detalle-producto.html   # Vista detallada de productos
-├── registro.html           # Formulario de registro de clientes
-├── planes.html             # Información sobre planes de financiamiento
-├── calculadora.html        # Calculadora interactiva de financiamiento
-├── nosotros.html           # Información sobre la empresa
-├── contacto.html           # Formulario de contacto con integración WhatsApp
-├── css/
-│   └── styles.css          # Estilos personalizados
-├── js/
-│   ├── main.js             # Funcionalidades comunes
-│   ├── models.js           # Modelos y estructuras para integración con Django
-│   ├── products.js         # Datos y funciones del catálogo
-│   ├── calculadora.js      # Lógica de la calculadora
-│   ├── planes.js           # Funcionalidades página de planes
-│   └── registro.js         # Validación del formulario
-├── img/
-│   ├── logos/              # Logos e identidad visual
-│   ├── products/           # Imágenes de productos
-│   └── banners/            # Banners promocionales
-└── deploy.sh               # Script de despliegue automatizado
+├── backend_env/             # Entorno virtual de Python para el backend
+├── .env.production          # Variables de entorno para producción
+├── css/                     # Estilos CSS del frontend
+├── deploy.sh                # Script de despliegue automatizado
+├── gunicorn_conf.py         # Configuración de Gunicorn
+├── img/                     # Imágenes y recursos visuales
+├── js/                      # JavaScript del frontend
+├── llevateloexpress_backend/# Configuración principal de Django
+├── llevateloexpress.service # Configuración del servicio systemd
+├── llevateloexpress_nginx.conf # Configuración de Nginx
+├── manage.py                # Script de gestión de Django
+├── media/                   # Archivos subidos por usuarios
+├── products/                # App de Django para gestión de productos
+├── financing/               # App de Django para gestión de financiamiento
+├── users/                   # App de Django para gestión de usuarios
+├── requirements.txt         # Dependencias de Python
+├── scripts/                 # Scripts de utilidad
+├── static/                  # Archivos estáticos para Django
+├── staticfiles/             # Archivos estáticos recopilados para producción
+├── templates/               # Plantillas HTML servidas por Django
+│   ├── index.html           # Página principal con catálogo
+│   ├── catalogo.html        # Catálogo completo de productos
+│   ├── detalle-producto.html# Vista detallada de productos
+│   ├── registro.html        # Formulario de registro de clientes
+│   ├── planes.html          # Información sobre planes de financiamiento
+│   ├── calculadora.html     # Calculadora interactiva de financiamiento
+│   ├── nosotros.html        # Información sobre la empresa
+│   └── contacto.html        # Formulario de contacto con integración WhatsApp
 ```
 
 ## Categorías de Productos
@@ -64,52 +81,84 @@ El sistema incluye las siguientes categorías de productos, cada una con su estr
 
 Cada categoría está modelada para permitir filtrado, búsqueda y presentación específica acorde a sus características particulares.
 
-## Páginas del Sitio
+## API REST
 
-### Página Principal (index.html)
-Muestra el catálogo de productos destacados, categorías principales y acceso rápido a la calculadora de financiamiento.
+El sistema proporciona una API RESTful para comunicación entre el frontend y el backend, con los siguientes endpoints principales:
 
-### Catálogo (catalogo.html)
-Listado completo de productos disponibles para financiamiento, con filtros por categoría, marca y precio.
+- `/api/products/categories/`: Lista de categorías de productos
+- `/api/products/products/`: Lista de productos
+- `/api/products/products/<id>/`: Detalle de un producto específico
+- `/api/products/featured-products/`: Lista de productos destacados
+- `/api/products/products-by-category/<slug>/`: Productos por categoría
+- `/api/financing/plans/`: Planes de financiamiento disponibles
+- `/api/financing/simulate/`: Simulación de financiamiento
+- `/api/financing/save-simulation/`: Guardar simulación de financiamiento
+- `/api/users/register/`: Registro de usuarios
+- `/api/users/token/`: Autenticación de usuarios
+- `/api/users/profile/`: Perfil de usuario
+- `/api/users/applications/`: Solicitudes de financiamiento
 
-### Detalle de Producto (detalle-producto.html)
-Vista detallada de cada producto con especificaciones técnicas, imágenes y opciones de financiamiento.
+## Panel Administrativo de Django
 
-### Registro de Clientes (registro.html)
-Formulario para recolectar información de clientes interesados, con validación en tiempo real y feedback visual sobre la fortaleza de la contraseña.
+El panel administrativo de Django permite:
 
-### Planes de Financiamiento (planes.html)
-Detalla las opciones de financiamiento disponibles, con una tabla comparativa, beneficios y requisitos.
+- Gestión completa de productos y categorías
+- Administración de planes de financiamiento
+- Revisión y gestión de simulaciones
+- Gestión de solicitudes de financiamiento
+- Administración de usuarios y clientes
 
-### Calculadora de Financiamiento (calculadora.html)
-Herramienta interactiva para simular diferentes escenarios de financiamiento, permitiendo ajustar monto, inicial y plazo, mostrando resultados detallados incluyendo tabla de amortización.
+## Configuración de Desarrollo
 
-### Sobre Nosotros (nosotros.html)
-Información sobre la empresa, misión, visión y valores, así como equipo y trayectoria.
+### Requisitos previos
+- Python 3.9 o superior
+- PostgreSQL 13 o superior
+- Node.js y npm (opcional, para desarrollo frontend)
 
-### Contacto (contacto.html)
-Formulario de contacto con integración directa a WhatsApp, información de ubicación y preguntas frecuentes.
+### Instalación
 
-## Integración con Django (Plan Futuro)
+1. Clonar el repositorio:
+   ```bash
+   git clone https://github.com/tu-usuario/llevateloexpress.git
+   cd llevateloexpress
+   ```
 
-El proyecto está estructurado para facilitar la migración a un backend Django:
+2. Crear y activar el entorno virtual:
+   ```bash
+   python -m venv backend_env
+   source backend_env/bin/activate  # En Windows: backend_env\Scripts\activate
+   ```
 
-### Modelos y Estructura
+3. Instalar dependencias:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-- Se ha creado un archivo `js/models.js` que define la estructura de datos para los modelos de Django.
-- Las categorías de productos están definidas siguiendo el patrón de modelos Django con:
-  - Identificadores únicos (id)
-  - Slugs para URLs amigables
-  - Nombres legibles para usuarios
-  - Descripciones e iconos
-- La estructura de productos incluye metadatos para las relaciones y campos necesarios
+4. Configurar la base de datos:
+   ```bash
+   createdb llevateloexpress
+   python manage.py migrate
+   ```
 
-### Pasos para Migración a Django
+5. Crear superusuario:
+   ```bash
+   python manage.py createsuperuser
+   ```
 
-1. Crear los modelos Django basados en la estructura definida en `models.js`
-2. Implementar API REST para consumo de datos
-3. Adaptar el frontend para consumir datos de la API
-4. Implementar panel administrativo para gestión de productos
+6. Importar datos de muestra:
+   ```bash
+   python scripts/import_products.py
+   ```
+
+7. Iniciar el servidor de desarrollo:
+   ```bash
+   python manage.py runserver
+   ```
+
+8. Accede a:
+   - Frontend: http://localhost:8000/
+   - Panel de administración: http://localhost:8000/admin/
+   - API: http://localhost:8000/api/products/products/
 
 ## Despliegue a Producción
 
@@ -121,6 +170,22 @@ El proyecto incluye un script `deploy.sh` que automatiza:
 4. Implementación de HTTPS con Let's Encrypt
 5. Optimización para producción
 
+### Preparación para despliegue
+
+1. Ejecutar el script de preparación:
+   ```bash
+   python scripts/prepare_production.py
+   ```
+
+2. Actualizar la configuración en los archivos generados:
+   - `.env.production`: Variables de entorno
+   - `deploy.sh`: Dirección del servidor y credenciales
+
+3. Ejecutar el script de despliegue:
+   ```bash
+   ./deploy.sh
+   ```
+
 ### Requisitos para Despliegue
 
 - Servidor con Ubuntu/Debian
@@ -128,28 +193,13 @@ El proyecto incluye un script `deploy.sh` que automatiza:
 - Dominio configurado apuntando al servidor
 - Puertos 80 y 443 abiertos
 
-### Instrucciones de Despliegue
-
-1. Configurar las variables del servidor en `deploy.sh`:
-   - SERVER_IP
-   - USERNAME
-   - PASSWORD
-   - DOMAIN
-   - EMAIL
-
-2. Ejecutar el script de despliegue:
-   ```bash
-   chmod +x deploy.sh
-   ./deploy.sh
-   ```
-
 ## Mantenimiento
 
 ### Actualización de Productos
-Para actualizar el catálogo de productos, edite el archivo `js/products.js` siguiendo el formato establecido.
+Para actualizar el catálogo de productos, se recomienda usar el panel administrativo de Django.
 
 ### Actualización de Categorías
-Para añadir nuevas categorías o modificar las existentes, edite el archivo `js/models.js` y actualice el arreglo `PRODUCT_CATEGORIES`.
+Para añadir nuevas categorías o modificar las existentes, use el panel administrativo de Django.
 
 ### Cambios en la Interfaz
 Los estilos personalizados se encuentran en `css/styles.css`. Para modificaciones mayores, considere editar los archivos HTML correspondientes.

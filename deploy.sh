@@ -1,109 +1,111 @@
 #!/bin/bash
+# Script de despliegue para LlévateloExpress
 
-# Configuración del servidor
-SERVER_IP="203.161.55.87"
-USERNAME="root"
-PASSWORD="53y2rAv4lzX9EY8WHn"
-REMOTE_DIR="/var/www/html/llevateloexpress"
-DOMAIN="llevateloexpress.com"
-EMAIL="admin@llevateloexpress.com" # Cambia esto a tu email real
+set -e  # Detener en caso de error
 
-# Verificar servidor web e instalar si es necesario
-echo "Verificando servidor web..."
-sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $USERNAME@$SERVER_IP "
-    if ! command -v nginx &> /dev/null; then
-        echo 'Instalando Nginx...'
-        apt update
-        apt install -y nginx
-    fi
-    
-    # Iniciar Nginx si no está corriendo
-    if ! systemctl is-active --quiet nginx; then
-        systemctl start nginx
-    fi
-    
-    # Habilitar Nginx para que inicie con el sistema
-    systemctl enable nginx
+# Configuraciones
+SERVER_USER="llevateloexpress"
+SERVER_IP=""  # Completar con la IP del servidor
+SERVER_PATH="/var/www/llevateloexpress"
+REPO_URL="https://github.com/tu-usuario/llevateloexpress.git"  # Actualizar con la URL real del repositorio
+
+# Colores para la salida
+RED='[0;31m'
+GREEN='[0;32m'
+YELLOW='[0;33m'
+NC='[0m'  # Sin color
+
+# Funciones
+print_section() {
+    echo -e "
+${YELLOW}==== $1 ====${NC}
 "
-
-# Crear el directorio remoto si no existe
-echo "Creando directorio remoto..."
-sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $USERNAME@$SERVER_IP "mkdir -p $REMOTE_DIR"
-
-# Transferir archivos
-echo "Transfiriendo archivos al servidor..."
-sshpass -p "$PASSWORD" rsync -avz --exclude-from='.gitignore' --exclude='.git' --exclude='deploy.sh' ./ $USERNAME@$SERVER_IP:$REMOTE_DIR/
-
-# Configurar permisos
-echo "Configurando permisos..."
-sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $USERNAME@$SERVER_IP "chmod -R 755 $REMOTE_DIR"
-
-# Crear configuración de Nginx
-echo "Configurando Nginx con dominio $DOMAIN..."
-sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $USERNAME@$SERVER_IP "
-cat > /etc/nginx/sites-available/llevateloexpress << EOF
-server {
-    listen 80;
-    listen [::]:80;
-    
-    root ${REMOTE_DIR};
-    index index.html;
-    
-    server_name ${DOMAIN} www.${DOMAIN} ${SERVER_IP};
-    
-    location / {
-        try_files \\\$uri \\\$uri/ =404;
-    }
-
-    # Mejoras adicionales
-    # Caché de archivos estáticos
-    location ~* \.(jpg|jpeg|png|gif|ico|css|js)$ {
-        expires 30d;
-        add_header Cache-Control \"public\";
-    }
 }
-EOF
 
-# Habilitar el sitio
-ln -sf /etc/nginx/sites-available/llevateloexpress /etc/nginx/sites-enabled/
-# Verificar configuración
-nginx -t
-# Reiniciar Nginx
-systemctl restart nginx
-"
+print_success() {
+    echo -e "${GREEN}✓ $1${NC}"
+}
 
-# Instalar y configurar Let's Encrypt
-echo "Configurando HTTPS con Let's Encrypt..."
-sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $USERNAME@$SERVER_IP "
-    # Instalar Certbot y plugin de Nginx
-    if ! command -v certbot &> /dev/null; then
-        echo 'Instalando Certbot...'
-        apt update
-        apt install -y certbot python3-certbot-nginx
+print_error() {
+    echo -e "${RED}✗ $1${NC}"
+    exit 1
+}
+
+# Verificar que se ha proporcionado la IP del servidor
+if [ -z "$SERVER_IP" ]; then
+    print_error "Debes configurar la IP del servidor en el script deploy.sh"
+fi
+
+print_section "Iniciando despliegue a producción"
+
+# Crear archivos estáticos localmente
+print_section "Recopilando archivos estáticos"
+source backend_env/bin/activate
+python manage.py collectstatic --no-input
+deactivate
+
+# Comprimir proyecto para transferencia
+print_section "Preparando archivos para transferencia"
+tar -czf deploy.tar.gz     --exclude='.git'     --exclude='backend_env'     --exclude='__pycache__'     --exclude='*.pyc'     --exclude='.DS_Store'     --exclude='node_modules'     --exclude='deploy.tar.gz'     .
+
+# Transferir archivos al servidor
+print_section "Transfiriendo archivos al servidor"
+scp deploy.tar.gz $SERVER_USER@$SERVER_IP:/tmp/
+scp .env.production $SERVER_USER@$SERVER_IP:/tmp/
+
+# Ejecutar comandos remotos
+print_section "Configurando servidor"
+ssh $SERVER_USER@$SERVER_IP << 'ENDSSH'
+    set -e  # Detener en caso de error
+    
+    # Crear estructura de directorios
+    sudo mkdir -p $SERVER_PATH
+    sudo mkdir -p /var/log/llevateloexpress
+    
+    # Extraer archivos
+    cd $SERVER_PATH
+    sudo rm -rf *  # Limpiar directorio
+    sudo tar -xzf /tmp/deploy.tar.gz -C .
+    sudo mv /tmp/.env.production .
+    
+    # Configurar permisos
+    sudo chown -R $SERVER_USER:www-data .
+    sudo chmod -R 755 .
+    sudo chmod -R 775 media staticfiles
+    
+    # Configurar entorno virtual
+    python3 -m venv backend_env
+    source backend_env/bin/activate
+    pip install -r requirements.txt
+    pip install gunicorn gevent
+    
+    # Aplicar migraciones
+    python manage.py migrate
+    
+    # Configurar servicios
+    sudo cp llevateloexpress_nginx.conf /etc/nginx/sites-available/llevateloexpress
+    sudo ln -sf /etc/nginx/sites-available/llevateloexpress /etc/nginx/sites-enabled/
+    sudo cp llevateloexpress.service /etc/systemd/system/
+    
+    # Reiniciar servicios
+    sudo systemctl daemon-reload
+    sudo systemctl enable llevateloexpress
+    sudo systemctl restart llevateloexpress
+    sudo systemctl restart nginx
+    
+    # Configurar certificado SSL (si no existe)
+    if [ ! -d "/etc/letsencrypt/live/llevateloexpress.com" ]; then
+        sudo apt-get update
+        sudo apt-get install -y certbot python3-certbot-nginx
+        sudo certbot --nginx -d llevateloexpress.com -d www.llevateloexpress.com --non-interactive --agree-tos --email info@llevateloexpress.com
     fi
     
-    # Nota: Este comando solo funcionará si el dominio ya apunta a este servidor
-    # De lo contrario, generará un error que deberás resolver manualmente
-    echo 'Ejecutando Certbot para obtener certificados SSL...'
-    
-    # Probar si el dominio ya resuelve a este servidor
-    if host ${DOMAIN} | grep -q ${SERVER_IP}; then
-        # El dominio ya apunta a este servidor, podemos proceder con la generación automática
-        certbot --nginx --non-interactive --agree-tos --email ${EMAIL} -d ${DOMAIN} -d www.${DOMAIN}
-    else
-        echo 'AVISO: El dominio aún no apunta a este servidor.'
-        echo 'Una vez que el dominio apunte a ${SERVER_IP}, ejecuta el siguiente comando para habilitar HTTPS:'
-        echo \"certbot --nginx --non-interactive --agree-tos --email ${EMAIL} -d ${DOMAIN} -d www.${DOMAIN}\"
-    fi
-"
+    # Limpiar archivos temporales
+    rm /tmp/deploy.tar.gz
+ENDSSH
 
-echo "¡Despliegue completado con éxito!"
-echo "El sitio está configurado con el dominio: $DOMAIN"
-echo "Nota: Asegúrate de que el dominio $DOMAIN tenga un registro DNS tipo A que apunte a $SERVER_IP"
-echo "Puedes acceder temporalmente al sitio a través de: http://$SERVER_IP/"
-echo ""
-echo "IMPORTANTE PARA HTTPS:"
-echo "1. Configura los registros DNS de tu dominio para que apunten a: $SERVER_IP"
-echo "2. Una vez que los DNS se propaguen (puede tardar hasta 48 horas),"
-echo "   ejecuta el siguiente comando en el servidor para habilitar HTTPS automáticamente:"
-echo "   certbot --nginx --email $EMAIL -d $DOMAIN -d www.$DOMAIN" 
+# Limpiar archivos locales
+rm deploy.tar.gz
+
+print_section "Despliegue completado"
+print_success "LlévateloExpress se ha desplegado con éxito en el servidor $SERVER_IP"
