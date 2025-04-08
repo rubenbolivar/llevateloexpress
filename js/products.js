@@ -537,7 +537,9 @@ function getCategoryName(category) {
     const categories = {
         'motocicletas': 'Motocicleta',
         'vehiculos': 'Vehículo',
-        'maquinaria': 'Maquinaria'
+        'maquinaria': 'Maquinaria Agrícola',
+        'camiones': 'Camión',
+        'equipos': 'Maquinaria y Equipos'
     };
     
     return categories[category] || category;
