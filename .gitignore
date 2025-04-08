@@ -1,0 +1,15 @@
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Archivos temporales
+*.log
+*.tmp
+
+# Entornos de desarrollo
+.vscode/
+.idea/
+*.sublime-*
+
+# Archivos de caché
+.cache/ 
