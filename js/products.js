@@ -41,23 +41,27 @@ window.products = [
             ],
             comfort: [
                 { label: 'Asiento', value: 'Doble altura, ergonómico' },
+                { label: 'Altura del asiento', value: '825 mm' },
                 { label: 'Panel de instrumentos', value: 'TFT a color de 5"' },
                 { label: 'Iluminación', value: 'Full LED' },
                 { label: 'USB', value: 'Sí, puerto cargador 2.1A' },
                 { label: 'Posición de manejo', value: 'Adventure, semi-erguida' },
                 { label: 'Capacidad de carga', value: '12 kg' },
-                { label: 'Altura del asiento', value: '825 mm' },
                 { label: 'Parabrisas', value: 'Ajustable 3 posiciones' }
             ],
             safety: [
                 { label: 'Freno delantero', value: 'Disco 300mm, pinza de 4 pistones, ABS' },
                 { label: 'Freno trasero', value: 'Disco 240mm, pinza de 1 pistón, ABS' },
+                { label: 'Sistema de frenos', value: 'Hidráulico, doble disco, ABS desconectable' },
                 { label: 'ABS', value: 'Bosch 9.1 MB, desconectable' },
                 { label: 'Control de tracción', value: 'No disponible' },
                 { label: 'Suspensión delantera', value: 'Horquilla invertida 41mm, ajustable' },
                 { label: 'Suspensión trasera', value: 'Monoamortiguador con depósito separado' },
+                { label: 'Tipo de suspensión', value: 'Invertida delantera, monoamortiguador trasero' },
+                { label: 'Recorrido suspensiones', value: '160mm delantero / 150mm trasero' },
                 { label: 'Neumático delantero', value: '100/90-19' },
-                { label: 'Neumático trasero', value: '140/80-17' }
+                { label: 'Neumático trasero', value: '140/80-17' },
+                { label: 'Tamaño de ruedas', value: '19" delantera, 17" trasera' }
             ]
         },
         stock: 8,
@@ -104,23 +108,27 @@ window.products = [
             ],
             comfort: [
                 { label: 'Asiento', value: 'Ergonómico, tapizado antideslizante' },
+                { label: 'Altura del asiento', value: '840 mm' },
                 { label: 'Panel de instrumentos', value: 'TFT a color de 7 pulgadas' },
                 { label: 'Iluminación', value: 'Full LED con DRL' },
                 { label: 'USB', value: 'Sí, puerto cargador tipo C' },
                 { label: 'Posición de manejo', value: 'Adventure/Touring' },
                 { label: 'Capacidad de carga', value: '18 kg' },
-                { label: 'Altura del asiento', value: '840 mm' },
                 { label: 'Parabrisas', value: 'Regulable en altura' }
             ],
             safety: [
                 { label: 'Freno delantero', value: 'Doble disco 320mm, pinzas radiales de 4 pistones' },
                 { label: 'Freno trasero', value: 'Disco 260mm, pinza flotante de 2 pistones' },
+                { label: 'Sistema de frenos', value: 'Hidráulico, doble disco delantero, ABS en ambos ejes' },
                 { label: 'ABS', value: 'Bosch 9.1 MB, modos Road/Off-road' },
                 { label: 'Control de tracción', value: 'Sí, desconectable, 2 modos' },
                 { label: 'Suspensión delantera', value: 'KYB invertida de 43mm, totalmente ajustable' },
                 { label: 'Suspensión trasera', value: 'KYB monoamortiguador con depósito separado' },
+                { label: 'Tipo de suspensión', value: 'Invertida delantera, monoamortiguador trasero, ambas ajustables' },
+                { label: 'Recorrido suspensiones', value: '170mm delantero / 175mm trasero' },
                 { label: 'Neumático delantero', value: '110/80-R19' },
-                { label: 'Neumático trasero', value: '150/70-R17' }
+                { label: 'Neumático trasero', value: '150/70-R17' },
+                { label: 'Tamaño de ruedas', value: '19" delantera, 17" trasera' }
             ]
         },
         stock: 5,
@@ -167,23 +175,27 @@ window.products = [
             ],
             comfort: [
                 { label: 'Asiento', value: 'Touring, altura ajustable 830-850 mm' },
+                { label: 'Altura del asiento', value: '830-850 mm (ajustable)' },
                 { label: 'Panel de instrumentos', value: 'TFT a color de 7" con conectividad bluetooth' },
                 { label: 'Iluminación', value: 'Full LED con iluminación adaptativa en curvas' },
                 { label: 'USB', value: 'Sí, dos puertos (tipo A y tipo C)' },
                 { label: 'Posición de manejo', value: 'Touring, protegida del viento' },
                 { label: 'Capacidad de carga', value: '25 kg' },
-                { label: 'Altura del asiento', value: '830-850 mm (ajustable)' },
                 { label: 'Parabrisas', value: 'Regulable en altura y ángulo' }
             ],
             safety: [
                 { label: 'Freno delantero', value: 'Doble disco 320mm, pinzas Brembo monobloque de 4 pistones' },
                 { label: 'Freno trasero', value: 'Disco 260mm, pinza Brembo de 2 pistones' },
+                { label: 'Sistema de frenos', value: 'Hidráulico, Brembo, doble disco delantero, ABS de triple modo' },
                 { label: 'ABS', value: 'Bosch 9.3 MP, modos Road/Off-road/Desconectable' },
                 { label: 'Control de tracción', value: 'Sí, 3 modos + desconectable' },
                 { label: 'Suspensión delantera', value: 'KYB invertida de 43mm, totalmente ajustable, 170mm recorrido' },
                 { label: 'Suspensión trasera', value: 'KYB monoamortiguador con depósito separado, 180mm recorrido' },
+                { label: 'Tipo de suspensión', value: 'Invertida delantera, monoamortiguador trasero, ambas ajustables' },
+                { label: 'Recorrido suspensiones', value: '170mm delantero / 180mm trasero' },
                 { label: 'Neumático delantero', value: '120/70-R19' },
-                { label: 'Neumático trasero', value: '170/60-R17' }
+                { label: 'Neumático trasero', value: '170/60-R17' },
+                { label: 'Tamaño de ruedas', value: '19" delantera, 17" trasera' }
             ]
         },
         stock: 6,
@@ -230,23 +242,27 @@ window.products = [
             ],
             comfort: [
                 { label: 'Asiento', value: 'Altura ajustable 840-870 mm' },
+                { label: 'Altura del asiento', value: '840-870 mm (ajustable)' },
                 { label: 'Panel de instrumentos', value: 'Analógico' },
                 { label: 'Iluminación', value: 'Halógena' },
                 { label: 'USB', value: 'No disponible de serie' },
                 { label: 'Posición de manejo', value: 'Erguida, off-road' },
                 { label: 'Capacidad de carga', value: '20 kg' },
-                { label: 'Altura del asiento', value: '840-870 mm (ajustable)' },
                 { label: 'Parabrisas', value: 'No incluido de serie' }
             ],
             safety: [
                 { label: 'Freno delantero', value: 'Disco 290mm, pinza de 2 pistones' },
                 { label: 'Freno trasero', value: 'Disco 240mm, pinza de 1 pistón' },
+                { label: 'Sistema de frenos', value: 'Hidráulico, disco simple en ambos ejes, sin ABS' },
                 { label: 'ABS', value: 'No disponible' },
                 { label: 'Control de tracción', value: 'No disponible' },
                 { label: 'Suspensión delantera', value: 'Telescópica convencional, 260mm recorrido' },
                 { label: 'Suspensión trasera', value: 'Monoamortiguador con sistema de bieletas, 280mm recorrido' },
+                { label: 'Tipo de suspensión', value: 'Convencional delantera, monoamortiguador trasero' },
+                { label: 'Recorrido suspensiones', value: '260mm delantero / 280mm trasero' },
                 { label: 'Neumático delantero', value: '90/90-21' },
-                { label: 'Neumático trasero', value: '120/90-17' }
+                { label: 'Neumático trasero', value: '120/90-17' },
+                { label: 'Tamaño de ruedas', value: '21" delantera, 17" trasera' }
             ]
         },
         stock: 4,
@@ -293,23 +309,27 @@ window.products = [
             ],
             comfort: [
                 { label: 'Asiento', value: 'Biplaza, estilo clásico' },
+                { label: 'Altura del asiento', value: '770 mm' },
                 { label: 'Panel de instrumentos', value: 'Analógico, velocímetro y tacómetro' },
                 { label: 'Iluminación', value: 'Halógena' },
                 { label: 'USB', value: 'No disponible de serie' },
                 { label: 'Posición de manejo', value: 'Erguida, urbana' },
                 { label: 'Capacidad de carga', value: '10 kg' },
-                { label: 'Altura del asiento', value: '770 mm' },
                 { label: 'Parabrisas', value: 'No incluido' }
             ],
             safety: [
                 { label: 'Freno delantero', value: 'Disco 240mm, pinza de 2 pistones' },
                 { label: 'Freno trasero', value: 'Tambor 130mm' },
+                { label: 'Sistema de frenos', value: 'Hidráulico delantero, mecánico trasero' },
                 { label: 'ABS', value: 'No disponible' },
                 { label: 'Control de tracción', value: 'No disponible' },
                 { label: 'Suspensión delantera', value: 'Horquilla telescópica convencional' },
                 { label: 'Suspensión trasera', value: 'Doble amortiguador con precarga ajustable' },
+                { label: 'Tipo de suspensión', value: 'Convencional delantera, doble amortiguador trasero' },
+                { label: 'Recorrido suspensiones', value: '120mm delantero / 95mm trasero' },
                 { label: 'Neumático delantero', value: '2.75-18' },
-                { label: 'Neumático trasero', value: '3.50-16' }
+                { label: 'Neumático trasero', value: '3.50-16' },
+                { label: 'Tamaño de ruedas', value: '18" delantera, 16" trasera' }
             ]
         },
         stock: 12,
@@ -356,23 +376,27 @@ window.products = [
             ],
             comfort: [
                 { label: 'Asiento', value: 'Deportivo biplaza' },
+                { label: 'Altura del asiento', value: '810 mm' },
                 { label: 'Panel de instrumentos', value: 'TFT a color de 5"' },
                 { label: 'Iluminación', value: 'Full LED' },
                 { label: 'USB', value: 'Sí, puerto cargador tipo C' },
                 { label: 'Posición de manejo', value: 'Deportiva, semi-inclinada' },
                 { label: 'Capacidad de carga', value: '8 kg' },
-                { label: 'Altura del asiento', value: '810 mm' },
                 { label: 'Parabrisas', value: 'Deportivo aerodinámico' }
             ],
             safety: [
                 { label: 'Freno delantero', value: 'Doble disco 300mm, pinzas radiales de 4 pistones' },
                 { label: 'Freno trasero', value: 'Disco 240mm, pinza flotante de 1 pistón' },
+                { label: 'Sistema de frenos', value: 'Hidráulico, doble disco delantero, ABS en ambos ejes' },
                 { label: 'ABS', value: 'Bosch 9.1 MB, doble canal' },
                 { label: 'Control de tracción', value: 'Sí, 2 modos + desconectable' },
                 { label: 'Suspensión delantera', value: 'Horquilla invertida de 41mm, ajustable' },
                 { label: 'Suspensión trasera', value: 'Monoamortiguador ajustable en precarga' },
+                { label: 'Tipo de suspensión', value: 'Invertida delantera, monoamortiguador trasero' },
+                { label: 'Recorrido suspensiones', value: '140mm delantero / 130mm trasero' },
                 { label: 'Neumático delantero', value: '120/70-ZR17' },
-                { label: 'Neumático trasero', value: '160/60-ZR17' }
+                { label: 'Neumático trasero', value: '160/60-ZR17' },
+                { label: 'Tamaño de ruedas', value: '17" delantera, 17" trasera' }
             ]
         },
         stock: 7,
@@ -419,23 +443,27 @@ window.products = [
             ],
             comfort: [
                 { label: 'Asiento', value: 'Biplaza escalonado' },
+                { label: 'Altura del asiento', value: '800 mm' },
                 { label: 'Panel de instrumentos', value: 'LCD multifunción' },
                 { label: 'Iluminación', value: 'LED (posición) y halógena (principal)' },
                 { label: 'USB', value: 'Sí, puerto cargador' },
                 { label: 'Posición de manejo', value: 'Erguida, confortable' },
                 { label: 'Capacidad de carga', value: '15 kg' },
-                { label: 'Altura del asiento', value: '800 mm' },
                 { label: 'Parabrisas', value: 'Ajustable en 3 posiciones' }
             ],
             safety: [
                 { label: 'Freno delantero', value: 'Disco 290mm, pinza de 2 pistones' },
                 { label: 'Freno trasero', value: 'Disco 240mm, pinza de 1 pistón' },
+                { label: 'Sistema de frenos', value: 'Hidráulico, disco simple en ambos ejes, ABS' },
                 { label: 'ABS', value: 'Bosch, doble canal' },
                 { label: 'Control de tracción', value: 'No disponible' },
                 { label: 'Suspensión delantera', value: 'Horquilla telescópica convencional, 120mm recorrido' },
                 { label: 'Suspensión trasera', value: 'Monoamortiguador con sistema de bieletas, 125mm recorrido' },
+                { label: 'Tipo de suspensión', value: 'Convencional delantera, monoamortiguador trasero' },
+                { label: 'Recorrido suspensiones', value: '120mm delantero / 125mm trasero' },
                 { label: 'Neumático delantero', value: '110/80-17' },
-                { label: 'Neumático trasero', value: '140/70-17' }
+                { label: 'Neumático trasero', value: '140/70-17' },
+                { label: 'Tamaño de ruedas', value: '17" delantera, 17" trasera' }
             ]
         },
         stock: 9,
