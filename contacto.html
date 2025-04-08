@@ -205,8 +205,8 @@
                                 </div>
                             </div>
                             <div class="col-12 mt-3">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-paper-plane me-2"></i>Enviar Mensaje
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fab fa-whatsapp me-2"></i>Enviar por WhatsApp
                                 </button>
                             </div>
                         </div>
@@ -392,10 +392,36 @@
                     
                     // Verificar validez del formulario
                     if(this.checkValidity()) {
-                        // Simulación de envío exitoso
-                        alert('¡Mensaje enviado con éxito! Te contactaremos a la brevedad.');
-                        this.reset();
-                        this.classList.remove('was-validated');
+                        // Recopilar datos del formulario
+                        const nombre = document.getElementById('nombre').value;
+                        const apellido = document.getElementById('apellido').value;
+                        const email = document.getElementById('email').value;
+                        const telefono = document.getElementById('telefono').value;
+                        const asuntoSelect = document.getElementById('asunto');
+                        const asuntoTexto = asuntoSelect.options[asuntoSelect.selectedIndex].text;
+                        const mensaje = document.getElementById('mensaje').value;
+                        
+                        // Crear el mensaje para WhatsApp
+                        let mensajeWhatsApp = 
+                            `*NUEVO CONTACTO DESDE LLEVATELOEXPRESS*%0A%0A` +
+                            `*Nombre:* ${nombre} ${apellido}%0A` +
+                            `*Email:* ${email}%0A` +
+                            `*Teléfono:* ${telefono}%0A` +
+                            `*Asunto:* ${asuntoTexto}%0A` +
+                            `*Mensaje:*%0A${mensaje}`;
+                        
+                        // Crear el enlace de WhatsApp
+                        const whatsappLink = `https://api.whatsapp.com/send?phone=584121010744&text=${mensajeWhatsApp}`;
+                        
+                        // Mostrar mensaje de confirmación
+                        if(confirm('¿Deseas enviar este mensaje por WhatsApp?')) {
+                            // Abrir WhatsApp en una nueva ventana
+                            window.open(whatsappLink, '_blank');
+                            
+                            // Limpiar el formulario
+                            this.reset();
+                            this.classList.remove('was-validated');
+                        }
                     }
                 });
             }
