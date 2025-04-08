@@ -45,6 +45,9 @@ function setupActiveNavItem() {
             // Destacar botón de registro en lugar de item de navegación
             document.querySelector('a.btn[href="registro.html"]').classList.add('active');
             break;
+        case 'nosotros.html':
+            activeLink = document.querySelector('.navbar-nav .nav-link[href="nosotros.html"]');
+            break;
         default:
             // Si es una subcategoría, activar la categoría padre
             if(currentPage.includes('producto')) {

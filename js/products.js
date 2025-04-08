@@ -1,5 +1,5 @@
 // Datos de productos
-const products = [
+window.products = [
     {
         id: 1,
         name: "Voge Rally 300",
@@ -149,13 +149,19 @@ const products = [
     }
 ];
 
+// Asignar a una variable global normal para compatibilidad con el código existente
+const products = window.products;
+
 // Cargar productos destacados en la página principal
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('[products.js] DOM cargado, productos disponibles:', window.products.length);
+    
     const featuredContainer = document.getElementById('featured-products-container');
     
     if(featuredContainer) {
+        console.log('[products.js] Cargando productos destacados');
         // Filtrar productos destacados
-        const featuredProducts = products.filter(product => product.featured);
+        const featuredProducts = window.products.filter(product => product.featured);
         
         // Generar HTML para cada producto
         featuredProducts.forEach(product => {
