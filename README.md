@@ -213,4 +213,100 @@ Para consultas técnicas o soporte relacionado con la implementación:
 
 ## Desarrollado por
 
-LlévateloExpress © 2023-2024 - Todos los derechos reservados 
+LlévateloExpress © 2023-2024 - Todos los derechos reservados
+
+## Requisitos
+
+- Python 3.8+
+- PostgreSQL 12+
+- Nginx
+
+## Configuración del entorno de desarrollo
+
+### Instalación de dependencias
+
+```bash
+# Crear entorno virtual
+python -m venv backend_env
+source backend_env/bin/activate  # En Windows: backend_env\Scripts\activate
+
+# Instalar dependencias
+pip install -r requirements.txt
+```
+
+### Configuración local
+
+Para desarrollo local, el proyecto utiliza SQLite en lugar de PostgreSQL. La configuración necesaria ya está en `llevateloexpress_backend/local_settings.py` que se carga automáticamente.
+
+### Ejecución del servidor de desarrollo
+
+```bash
+python manage.py migrate  # Aplicar migraciones
+python manage.py runserver  # Iniciar servidor
+```
+
+## Despliegue en producción
+
+### Configuración de acceso SSH sin contraseña
+
+Para facilitar el despliegue, configura el acceso SSH con clave pública:
+
+```bash
+# Generar par de claves SSH si no lo tienes
+ssh-keygen -t rsa -b 4096
+
+# Enviar clave pública al servidor
+ssh-copy-id root@203.161.55.87
+```
+
+### Script de despliegue automatizado
+
+El proyecto incluye un script para automatizar el proceso de despliegue en el servidor de producción.
+
+```bash
+# Ver opciones disponibles
+./scripts/deploy_to_server.sh
+
+# Despliegue completo (código, dependencias, DB, migraciones, estáticos)
+./scripts/deploy_to_server.sh --full-deploy
+
+# Solo sincronizar código
+./scripts/deploy_to_server.sh --sync-code
+
+# Ejecutar migraciones
+./scripts/deploy_to_server.sh --migrate
+
+# Corregir configuración de base de datos
+./scripts/deploy_to_server.sh --fix-db
+
+# Verificar estado de servicios
+./scripts/deploy_to_server.sh --check-status
+
+# Abrir shell en el servidor
+./scripts/deploy_to_server.sh --shell
+
+# Ejecutar un comando específico en el servidor
+./scripts/deploy_to_server.sh --execute "comando"
+```
+
+## Estructura del proyecto
+
+- `llevateloexpress_backend/`: Configuración principal de Django
+- `core/`: Funcionalidades centrales
+- `products/`: Gestión de productos
+- `financing/`: Planes de financiamiento
+- `users/`: Gestión de usuarios y clientes
+- `templates/`: Plantillas HTML
+- `static/`: Archivos estáticos (CSS, JS, imágenes)
+- `media/`: Archivos subidos por usuarios
+- `scripts/`: Scripts de utilidad para desarrollo y despliegue
+
+## Acceso al Admin
+
+- Local: http://localhost:8000/admin/
+- Producción: https://llevateloexpress.com/admin/
+
+## Recursos adicionales
+
+- [DEPLOYMENT_PROTOCOL.md](DEPLOYMENT_PROTOCOL.md): Protocolo detallado de despliegue
+- [ADMIN_FIX_INSTRUCCIONES.md](ADMIN_FIX_INSTRUCCIONES.md): Solución para problemas con el admin en producción 
