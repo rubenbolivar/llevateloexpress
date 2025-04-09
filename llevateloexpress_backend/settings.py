@@ -196,3 +196,9 @@ else:
 # Configuración para que la interfaz de admin funcione correctamente en producción
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 SILENCED_SYSTEM_CHECKS = ['security.W019']
+
+# Import local settings if exists (for development)
+try:
+    from .local_settings import *
+except ImportError:
+    pass
