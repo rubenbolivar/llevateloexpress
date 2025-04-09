@@ -91,8 +91,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('DB_NAME', 'llevateloexpress'),
-        'USER': os.environ.get('DB_USER', 'postgres'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'postgres'),
+        'USER': os.environ.get('DB_USER', 'llevateloexpress_user'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'llevateloexpress_pass'),
         'HOST': os.environ.get('DB_HOST', 'localhost'),
         'PORT': os.environ.get('DB_PORT', '5432'),
         'CONN_MAX_AGE': 600,
