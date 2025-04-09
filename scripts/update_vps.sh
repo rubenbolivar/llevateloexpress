@@ -12,6 +12,10 @@ SERVER_USER="llevateloexpress"
 SERVER_IP="llevateloexpress.com"  # Cambiar por la IP o dominio del servidor
 SERVER_PATH="/var/www/llevateloexpress"
 
+# Opciones SSH para evitar problemas de verificación de host
+SSH_OPTS="-o StrictHostKeyChecking=no"
+SCP_OPTS="-o StrictHostKeyChecking=no"
+
 echo -e "${YELLOW}Iniciando actualización del VPS...${NC}"
 
 # Crear directorio temporal para archivos
@@ -27,11 +31,19 @@ cp ADMIN_FIX_INSTRUCCIONES.md tmp_deploy/
 
 # Enviar archivos al servidor
 echo -e "${YELLOW}Enviando archivos al servidor...${NC}"
-scp -r tmp_deploy/* $SERVER_USER@$SERVER_IP:/tmp/
+scp $SCP_OPTS -r tmp_deploy/* $SERVER_USER@$SERVER_IP:/tmp/
+
+# Verificar si el envío fue exitoso
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Error al enviar archivos al servidor. Verifica la conexión SSH.${NC}"
+    echo -e "${YELLOW}Puedes intentar ejecutar: ssh-keygen -R $SERVER_IP${NC}"
+    rm -rf tmp_deploy
+    exit 1
+fi
 
 # Ejecutar comandos en el servidor para actualizar los archivos
 echo -e "${YELLOW}Actualizando archivos en el servidor...${NC}"
-ssh $SERVER_USER@$SERVER_IP << 'EOF'
+ssh $SSH_OPTS $SERVER_USER@$SERVER_IP << EOF
     # Mover los archivos a sus ubicaciones correctas
     sudo cp /tmp/.env.production $SERVER_PATH/
     sudo mkdir -p $SERVER_PATH/llevateloexpress_backend/
@@ -49,7 +61,7 @@ ssh $SERVER_USER@$SERVER_IP << 'EOF'
     sudo nginx -t
     
     # Ejecutar el script de corrección de admin si la configuración de Nginx es correcta
-    if [ $? -eq 0 ]; then
+    if [ \$? -eq 0 ]; then
         echo "Ejecutando script de corrección de admin..."
         cd $SERVER_PATH
         sudo ./scripts/fix_admin_static.sh
@@ -57,6 +69,13 @@ ssh $SERVER_USER@$SERVER_IP << 'EOF'
         echo "Error en la configuración de Nginx. Por favor, revisa y corrige manualmente."
     fi
 EOF
+
+# Verificar si la ejecución en el servidor fue exitosa
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Error al ejecutar comandos en el servidor.${NC}"
+    rm -rf tmp_deploy
+    exit 1
+fi
 
 # Limpiar archivos temporales
 echo -e "${YELLOW}Limpiando archivos temporales...${NC}"
