@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contáctanos | LlévateloExpress</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .contact-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: #0d6efd;
+        }
+        
+        .contact-card {
+            height: 100%;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .contact-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        
+        .social-icon {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #f8f9fa;
+            color: #0d6efd;
+            margin-right: 10px;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+        }
+        
+        .social-icon:hover {
+            background-color: #0d6efd;
+            color: white;
+        }
+        
+        .map-container {
+            height: 400px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="sticky-top">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm">
+            <div class="container">
+                <a class="navbar-brand" href="index.html">
+                    <img src="img/banners/logo.png" alt="LlévateloExpress" height="40" class="d-inline-block align-middle">
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link" href="index.html">Inicio</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="catalogo.html">Catálogo</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="planes.html">Planes de Financiamiento</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="nosotros.html">Nosotros</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="contacto.html">Contáctanos</a>
+                        </li>
+                    </ul>
+                    <div class="d-flex">
+                        <a href="registro.html" class="btn btn-outline-primary me-2">Registrarse</a>
+                        <a href="#" class="btn btn-primary">Iniciar Sesión</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Page Banner -->
+    <section class="page-banner bg-primary text-white py-5">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8 mx-auto text-center">
+                    <h1 class="display-4 fw-bold mb-3">Contáctanos</h1>
+                    <p class="lead mb-0">Estamos aquí para responder tus preguntas y ayudarte con tu financiamiento</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Información de Contacto -->
+    <section class="contact-info py-5">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card contact-card border-0 shadow-sm p-4 h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-map-marker-alt contact-icon"></i>
+                            <h4 class="card-title">Ubicación</h4>
+                            <p class="card-text">Av. Principal de El Cafetal<br>Al lado de Distribuidora Mototap, C.A.<br>El Cafetal, Caracas, Venezuela</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card contact-card border-0 shadow-sm p-4 h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-phone contact-icon"></i>
+                            <h4 class="card-title">Teléfonos</h4>
+                            <p class="card-text">(0212) 555-1234<br>(0414) 555-5678<br>0800-LLEVATE (0800-553-8283)</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card contact-card border-0 shadow-sm p-4 h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-envelope contact-icon"></i>
+                            <h4 class="card-title">Correo Electrónico</h4>
+                            <p class="card-text">info@llevateloexpress.com<br>ventas@llevateloexpress.com<br>soporte@llevateloexpress.com</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Formulario y Mapa -->
+    <section class="contact-form-section py-5 bg-light">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-6 mb-5 mb-lg-0">
+                    <h2 class="mb-4">Envíanos un Mensaje</h2>
+                    <form id="contactForm" class="needs-validation" novalidate>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="nombre" class="form-label">Nombre</label>
+                                <input type="text" class="form-control" id="nombre" required>
+                                <div class="invalid-feedback">
+                                    Por favor ingresa tu nombre.
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="apellido" class="form-label">Apellido</label>
+                                <input type="text" class="form-control" id="apellido" required>
+                                <div class="invalid-feedback">
+                                    Por favor ingresa tu apellido.
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Correo Electrónico</label>
+                                <input type="email" class="form-control" id="email" required>
+                                <div class="invalid-feedback">
+                                    Por favor ingresa un correo electrónico válido.
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="telefono" class="form-label">Teléfono</label>
+                                <input type="tel" class="form-control" id="telefono" required>
+                                <div class="invalid-feedback">
+                                    Por favor ingresa tu número de teléfono.
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label for="asunto" class="form-label">Asunto</label>
+                                <select class="form-select" id="asunto" required>
+                                    <option value="" selected disabled>Selecciona una opción</option>
+                                    <option value="informacion">Solicitud de Información</option>
+                                    <option value="financiamiento">Consulta sobre Financiamiento</option>
+                                    <option value="productos">Consulta sobre Productos</option>
+                                    <option value="soporte">Soporte Técnico</option>
+                                    <option value="otro">Otro</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Por favor selecciona un asunto.
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label for="mensaje" class="form-label">Mensaje</label>
+                                <textarea class="form-control" id="mensaje" rows="5" required></textarea>
+                                <div class="invalid-feedback">
+                                    Por favor ingresa tu mensaje.
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="politica" required>
+                                    <label class="form-check-label" for="politica">
+                                        Acepto la <a href="#" class="text-decoration-underline">Política de Privacidad</a> y el tratamiento de mis datos.
+                                    </label>
+                                    <div class="invalid-feedback">
+                                        Debes aceptar la política de privacidad.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 mt-3">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fab fa-whatsapp me-2"></i>Enviar por WhatsApp
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="col-lg-6">
+                    <h2 class="mb-4">Nuestra Ubicación</h2>
+                    <div class="map-container">
+                        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3923.048642657682!2d-66.8199729!3d10.4927444!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8c2a59d2fe3fffff%3A0xe0f6f48533823d69!2sDistribuidora%20Mototap%2C%20C.A.!5e0!3m2!1ses!2sve!4v1689351515693!5m2!1ses!2sve" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h4 class="mb-3">Horario de Atención</h4>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><i class="far fa-clock me-2 text-primary"></i> Lunes a Viernes: 8:00 AM - 5:00 PM</li>
+                            <li><i class="far fa-clock me-2 text-primary"></i> Sábados: 9:00 AM - 1:00 PM</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h4 class="mb-3">Síguenos en Redes Sociales</h4>
+                        <div class="social-media-links">
+                            <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+                            <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+                            <a href="#" class="social-icon"><i class="fab fa-linkedin-in"></i></a>
+                            <a href="#" class="social-icon"><i class="fab fa-youtube"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Preguntas Frecuentes -->
+    <section class="faq-section py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">Preguntas Frecuentes</h2>
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="accordion" id="faqAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faqHeading1">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse1" aria-expanded="true" aria-controls="faqCollapse1">
+                                    ¿Cómo funciona el proceso de financiamiento?
+                                </button>
+                            </h2>
+                            <div id="faqCollapse1" class="accordion-collapse collapse show" aria-labelledby="faqHeading1" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Nuestro proceso de financiamiento es simple y transparente. Primero, selecciona el producto que deseas adquirir. Luego, utiliza nuestra calculadora para simular diferentes escenarios de financiamiento. Una vez que encuentres el plan que mejor se adapte a tus necesidades, completa el formulario de solicitud y uno de nuestros asesores te contactará para finalizar el proceso.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faqHeading2">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse2" aria-expanded="false" aria-controls="faqCollapse2">
+                                    ¿Qué documentos necesito para solicitar un financiamiento?
+                                </button>
+                            </h2>
+                            <div id="faqCollapse2" class="accordion-collapse collapse" aria-labelledby="faqHeading2" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Los documentos básicos requeridos incluyen: cédula de identidad, comprobante de domicilio, constancia de trabajo o declaración de impuestos (si eres trabajador independiente), y estados de cuenta bancarios de los últimos 3 meses. Dependiendo del plan de financiamiento y monto solicitado, podrían requerirse documentos adicionales.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faqHeading3">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse3" aria-expanded="false" aria-controls="faqCollapse3">
+                                    ¿Cuánto tiempo demora la aprobación de un financiamiento?
+                                </button>
+                            </h2>
+                            <div id="faqCollapse3" class="accordion-collapse collapse" aria-labelledby="faqHeading3" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    El tiempo de aprobación varía según el plan seleccionado. Para planes de crédito tradicional, la aprobación preliminar puede obtenerse en 24-48 horas, mientras que la aprobación final puede tomar entre 3-5 días hábiles. Para planes de compra programada, la aprobación es casi inmediata una vez verificada la documentación básica.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faqHeading4">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse4" aria-expanded="false" aria-controls="faqCollapse4">
+                                    ¿Puedo cancelar mi financiamiento anticipadamente?
+                                </button>
+                            </h2>
+                            <div id="faqCollapse4" class="accordion-collapse collapse" aria-labelledby="faqHeading4" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Sí, todos nuestros planes de financiamiento permiten la cancelación anticipada sin penalización. Incluso ofrecemos descuentos por pronto pago en ciertos planes. Consulta con uno de nuestros asesores para obtener información específica sobre tu plan.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faqHeading5">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse5" aria-expanded="false" aria-controls="faqCollapse5">
+                                    ¿Ofrecen garantía para los productos financiados?
+                                </button>
+                            </h2>
+                            <div id="faqCollapse5" class="accordion-collapse collapse" aria-labelledby="faqHeading5" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Todos nuestros productos vienen con la garantía del fabricante. Adicionalmente, ofrecemos planes de garantía extendida opcionales que pueden ser incluidos en el financiamiento. Estos planes cubren reparaciones, mantenimiento y asistencia en carretera según el tipo de producto adquirido.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="cta py-5 text-white text-center" style="background-color: #0d6efd;">
+        <div class="container">
+            <h2 class="display-6 mb-3">¿Listo para adquirir tu vehículo soñado?</h2>
+            <p class="lead mb-4">Calcula tu plan de financiamiento ideal y comienza el proceso hoy mismo.</p>
+            <a href="calculadora.html" class="btn btn-light btn-lg">Calcular mi financiamiento</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer bg-dark text-white py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5 class="mb-3">LlévateloExpress</h5>
+                    <p class="mb-3">Tu aliado financiero para la adquisición de vehículos, motocicletas y maquinaria agrícola en Venezuela.</p>
+                    <div class="social-links">
+                        <a href="#" class="text-white me-3"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-white me-3"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-white me-3"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+                <div class="col-md-2 mb-4 mb-md-0">
+                    <h5 class="mb-3">Enlaces</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="index.html" class="text-white text-decoration-none">Inicio</a></li>
+                        <li class="mb-2"><a href="catalogo.html" class="text-white text-decoration-none">Catálogo</a></li>
+                        <li class="mb-2"><a href="planes.html" class="text-white text-decoration-none">Planes</a></li>
+                        <li class="mb-2"><a href="nosotros.html" class="text-white text-decoration-none">Nosotros</a></li>
+                        <li><a href="contacto.html" class="text-white text-decoration-none">Contáctanos</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <h5 class="mb-3">Contacto</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-map-marker-alt me-2"></i> El Cafetal, Caracas, Venezuela</li>
+                        <li class="mb-2"><i class="fas fa-phone me-2"></i> (0212) 555-1234</li>
+                        <li><i class="fas fa-envelope me-2"></i> info@llevateloexpress.com</li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5 class="mb-3">Horario de Atención</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">Lunes a Viernes: 8:00 AM - 5:00 PM</li>
+                        <li>Sábados: 9:00 AM - 1:00 PM</li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+                    <p class="mb-0">&copy; 2023 LlévateloExpress. Todos los derechos reservados.</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <a href="#" class="text-white text-decoration-none me-3">Términos y Condiciones</a>
+                    <a href="#" class="text-white text-decoration-none">Política de Privacidad</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Validación del formulario
+            const contactForm = document.getElementById('contactForm');
+            
+            if(contactForm) {
+                contactForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    // Activar validación de Bootstrap
+                    this.classList.add('was-validated');
+                    
+                    // Verificar validez del formulario
+                    if(this.checkValidity()) {
+                        // Recopilar datos del formulario
+                        const nombre = document.getElementById('nombre').value;
+                        const apellido = document.getElementById('apellido').value;
+                        const email = document.getElementById('email').value;
+                        const telefono = document.getElementById('telefono').value;
+                        const asuntoSelect = document.getElementById('asunto');
+                        const asuntoTexto = asuntoSelect.options[asuntoSelect.selectedIndex].text;
+                        const mensaje = document.getElementById('mensaje').value;
+                        
+                        // Crear el mensaje para WhatsApp
+                        let mensajeWhatsApp = 
+                            `*NUEVO CONTACTO DESDE LLEVATELOEXPRESS*%0A%0A` +
+                            `*Nombre:* ${nombre} ${apellido}%0A` +
+                            `*Email:* ${email}%0A` +
+                            `*Teléfono:* ${telefono}%0A` +
+                            `*Asunto:* ${asuntoTexto}%0A` +
+                            `*Mensaje:*%0A${mensaje}`;
+                        
+                        // Crear el enlace de WhatsApp
+                        const whatsappLink = `https://api.whatsapp.com/send?phone=584121010744&text=${mensajeWhatsApp}`;
+                        
+                        // Mostrar mensaje de confirmación
+                        if(confirm('¿Deseas enviar este mensaje por WhatsApp?')) {
+                            // Abrir WhatsApp en una nueva ventana
+                            window.open(whatsappLink, '_blank');
+                            
+                            // Limpiar el formulario
+                            this.reset();
+                            this.classList.remove('was-validated');
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html> 
