@@ -296,4 +296,29 @@ body {
     transform: scale(1.05);
     filter: grayscale(0%);
     opacity: 1;
+}
+
+/* Estilos para sección de Marcas Oficiales */
+.brands-carousel {
+    background-color: var(--light-bg);
+    padding: 3rem 0;
+}
+
+.brand-logo {
+    max-height: 100px;
+    margin: 0 auto;
+    display: block;
+    transition: all 0.3s ease;
+}
+
+.brand-logo:hover {
+    transform: scale(1.1);
+}
+
+#brandsCarousel .carousel-control-prev-icon,
+#brandsCarousel .carousel-control-next-icon {
+    background-color: var(--primary-color);
+    border-radius: 50%;
+    padding: 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 } 
