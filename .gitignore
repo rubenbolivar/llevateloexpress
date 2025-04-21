@@ -38,6 +38,8 @@ ENV/
 .env
 .env.local
 .env.*.local
+.env.production
+.env.development
 
 # Editor directories and files
 .idea/
@@ -56,13 +58,6 @@ node_modules/
 
 # Archivos de caché
 .cache/
-
-# Archivos de configuración sensibles
-.env.production
-.env.development
-
-# Base de datos SQLite (si se usa en desarrollo)
-*.sqlite3
 
 # Logs
 npm-debug.log*
