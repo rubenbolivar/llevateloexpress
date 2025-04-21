@@ -55,4 +55,20 @@ node_modules/
 *.tmp
 
 # Archivos de caché
-.cache/ 
+.cache/
+
+# Archivos de configuración sensibles
+.env.production
+.env.development
+
+# Base de datos SQLite (si se usa en desarrollo)
+*.sqlite3
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Archivos temporales de despliegue
+tmp_deploy/
+deploy.tar.gz 
