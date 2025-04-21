@@ -198,7 +198,8 @@ X_FRAME_OPTIONS = 'SAMEORIGIN'
 SILENCED_SYSTEM_CHECKS = ['security.W019']
 
 # Import local settings if exists (for development)
-try:
-    from .local_settings import *
-except ImportError:
-    pass
+if DEBUG:
+    try:
+        from .local_settings import *
+    except ImportError:
+        pass

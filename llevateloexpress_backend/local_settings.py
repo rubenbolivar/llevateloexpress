@@ -1,8 +1,12 @@
 """
 Local settings for development without database
-This overrides settings.py for local development
+This overrides settings.py for local development - ONLY FOR DEVELOPMENT!
 """
 
+# Este archivo solo debe ser usado en desarrollo, NO EN PRODUCCIÓN
+# Archivo comentado para evitar problemas en producción
+
+"""
 import os
 from pathlib import Path
 
@@ -34,4 +38,5 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(Path(__file__).resolve().parent.parent, 'media')
 
 # CORS settings for development
-CORS_ALLOW_ALL_ORIGINS = True 
+CORS_ALLOW_ALL_ORIGINS = True
+""" 

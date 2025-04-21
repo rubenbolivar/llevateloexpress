@@ -1,8 +1,9 @@
 # Gunicorn config file
 import multiprocessing
+import os
 
 # Servidor y workers
-bind = "unix:/run/llevateloexpress.sock"
+bind = "unix:/tmp/llevateloexpress.sock"
 workers = multiprocessing.cpu_count() * 2 + 1
 worker_class = "gevent"
 worker_connections = 1000
