@@ -267,7 +267,6 @@
                                                     <li class="mb-2"><strong>Aporte inicial:</strong> <span id="creditoInitialPayment">$0</span></li>
                                                     <li class="mb-2"><strong>Monto a financiar:</strong> <span id="creditoFinanceAmount">$0</span></li>
                                                     <li class="mb-2"><strong>Plazo seleccionado:</strong> <span id="creditoTerm">0 meses</span></li>
-                                                    <li class="mb-2"><strong>Tasa de interés anual:</strong> <span id="creditoInterestRate">0%</span></li>
                                                     <li class="mb-2"><strong>Cuota mensual:</strong> <span id="creditoMonthlyPayment">$0</span></li>
                                                     <li><strong>Costo total del crédito:</strong> <span id="creditoTotalCost">$0</span></li>
                                                 </ul>
@@ -842,30 +841,25 @@
             
             // Determinar porcentaje inicial según el plan
             let initialPercentage = 0;
-            let interestRate = 0;
             
             if (planType === 'basic') {
                 initialPercentage = 0.45; // 45% inicial
-                interestRate = 0.12; // 12% anual
             } else if (planType === 'intermediate') {
                 initialPercentage = 0.50; // 50% inicial
-                interestRate = 0.10; // 10% anual
             } else {
                 initialPercentage = 0.60; // 60% inicial
-                interestRate = 0.08; // 8% anual
             }
             
             // Calcular valores
             const initialPayment = vehicleValue * initialPercentage;
             const financeAmount = vehicleValue - initialPayment;
             
-            // Calcular cuota mensual
-            // Fórmula: M = P * [r(1+r)^n] / [(1+r)^n-1]
-            const monthlyRate = interestRate / 12;
-            const monthlyPayment = financeAmount * (monthlyRate * Math.pow(1 + monthlyRate, financingTerm)) / (Math.pow(1 + monthlyRate, financingTerm) - 1);
+            // Calcular cuota mensual (simplemente dividiendo el monto entre el plazo)
+            const monthlyPayment = financeAmount / financingTerm;
             
             // Calcular costo total
-            const totalCost = initialPayment + (monthlyPayment * financingTerm);
+            const totalPayment = monthlyPayment * financingTerm;
+            const totalCost = initialPayment + totalPayment;
             
             // Calcular fechas
             const today = new Date();
@@ -880,7 +874,6 @@
             document.getElementById('creditoInitialPayment').textContent = `$${initialPayment.toLocaleString()}`;
             document.getElementById('creditoFinanceAmount').textContent = `$${financeAmount.toLocaleString()}`;
             document.getElementById('creditoTerm').textContent = `${financingTerm} meses`;
-            document.getElementById('creditoInterestRate').textContent = `${(interestRate * 100).toFixed(1)}%`;
             document.getElementById('creditoMonthlyPayment').textContent = `$${monthlyPayment.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
             document.getElementById('creditoTotalCost').textContent = `$${totalCost.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
             
@@ -890,11 +883,11 @@
             // Actualizar beneficio según el plan
             let benefitText = "";
             if (planType === 'basic') {
-                benefitText = "Financiamiento con mínimo inicial y cuotas accesibles.";
+                benefitText = "Plan con menor inicial y mayor plazo de pago.";
             } else if (planType === 'intermediate') {
-                benefitText = "Balance perfecto entre inicial y financiamiento.";
+                benefitText = "Balance perfecto entre inicial y cuotas mensuales.";
             } else {
-                benefitText = "Menor costo financiero total con la tasa más baja.";
+                benefitText = "Mayor inicial con menor plazo y cuotas más bajas.";
             }
             document.getElementById('creditoBenefit').textContent = benefitText;
             
