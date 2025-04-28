@@ -234,9 +234,9 @@
                                     <div class="col-md-6 mb-3 mb-md-0">
                                         <div class="form-floating">
                                             <select class="form-select" id="planType">
-                                                <option value="basic">Inicial 45%</option>
-                                                <option value="intermediate" selected>Inicial 50%</option>
-                                                <option value="premium">Inicial 60%</option>
+                                                <option value="basic">Monto a calcular</option>
+                                                <option value="intermediate" selected>Monto a calcular</option>
+                                                <option value="premium">Monto a calcular</option>
                                             </select>
                                             <label for="planType">Monto Inicial</label>
                                         </div>
@@ -624,9 +624,9 @@
                     const intermediateAmount = (vehicleValue * 0.50).toLocaleString('es-ES');
                     const premiumAmount = (vehicleValue * 0.60).toLocaleString('es-ES');
                     
-                    options[0].textContent = `$${basicAmount} (45%)`;
-                    options[1].textContent = `$${intermediateAmount} (50%)`;
-                    options[2].textContent = `$${premiumAmount} (60%)`;
+                    options[0].textContent = `$${basicAmount}`;
+                    options[1].textContent = `$${intermediateAmount}`;
+                    options[2].textContent = `$${premiumAmount}`;
                 }
             }
             
