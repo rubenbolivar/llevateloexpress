@@ -234,11 +234,11 @@
                                     <div class="col-md-6 mb-3 mb-md-0">
                                         <div class="form-floating">
                                             <select class="form-select" id="planType">
-                                                <option value="basic">Plan Básico (40%)</option>
-                                                <option value="intermediate" selected>Plan Intermedio (50%)</option>
-                                                <option value="premium">Plan Premium (60%)</option>
+                                                <option value="basic">Inicial 45%</option>
+                                                <option value="intermediate" selected>Inicial 50%</option>
+                                                <option value="premium">Inicial 60%</option>
                                             </select>
-                                            <label for="planType">Tipo de Plan</label>
+                                            <label for="planType">Monto Inicial</label>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -538,7 +538,9 @@
             const vehicleModel = document.getElementById('vehicleModel');
             const customPriceCheck = document.getElementById('customPriceCheck');
             const customPriceContainer = document.getElementById('customPriceContainer');
+            const customPrice = document.getElementById('customPrice');
             const calculateBtn = document.getElementById('calculateBtn');
+            const planType = document.getElementById('planType');
             
             // Inicializar formularios
             const programadaForm = document.getElementById('programadaForm');
@@ -553,6 +555,8 @@
                     } else {
                         programadaForm.style.display = 'none';
                         creditoForm.style.display = 'block';
+                        // Actualizar montos al cambiar a crédito
+                        setTimeout(updatePlanDisplay, 100);
                     }
                 });
             });
@@ -567,6 +571,8 @@
                         customPriceContainer.style.display = 'none';
                         vehicleModelContainer.style.display = 'block';
                     }
+                    // Actualizar montos cuando cambia el método de precio
+                    updatePlanDisplay();
                 });
             }
             
@@ -592,7 +598,45 @@
                     } else {
                         calculateCredito();
                     }
+                    
+                    // Actualizar montos después de calcular
+                    updatePlanDisplay();
                 });
+            }
+            
+            // Para actualizar la visualización del plan con montos absolutos
+            function updatePlanDisplay() {
+                // Obtener el valor del vehículo
+                let vehicleValue = 0;
+                
+                if (customPriceCheck && customPriceCheck.checked) {
+                    vehicleValue = parseFloat(customPrice.value);
+                } else if (vehicleModel && vehicleModel.value) {
+                    vehicleValue = parseFloat(vehicleModel.value);
+                } else {
+                    return; // No hay valor del vehículo disponible
+                }
+                
+                // Actualizar textos de opciones con montos absolutos
+                if (planType) {
+                    const options = planType.options;
+                    const basicAmount = (vehicleValue * 0.45).toLocaleString('es-ES');
+                    const intermediateAmount = (vehicleValue * 0.50).toLocaleString('es-ES');
+                    const premiumAmount = (vehicleValue * 0.60).toLocaleString('es-ES');
+                    
+                    options[0].textContent = `$${basicAmount} (45%)`;
+                    options[1].textContent = `$${intermediateAmount} (50%)`;
+                    options[2].textContent = `$${premiumAmount} (60%)`;
+                }
+            }
+            
+            // Agregar eventos para actualizar los montos
+            if (vehicleModel) {
+                vehicleModel.addEventListener('change', updatePlanDisplay);
+            }
+            
+            if (customPrice) {
+                customPrice.addEventListener('input', updatePlanDisplay);
             }
             
             // Verificar si hay un modelo en la URL
@@ -600,6 +644,11 @@
             const modelId = urlParams.get('modelo');
             if (modelId) {
                 selectModelFromId(modelId);
+                // Actualizar montos después de cargar el modelo
+                setTimeout(updatePlanDisplay, 200);
+            } else {
+                // Inicializar con valores predeterminados si no hay modelo específico
+                setTimeout(updatePlanDisplay, 200);
             }
         });
         
@@ -796,7 +845,7 @@
             let interestRate = 0;
             
             if (planType === 'basic') {
-                initialPercentage = 0.40; // 40% inicial
+                initialPercentage = 0.45; // 45% inicial
                 interestRate = 0.12; // 12% anual
             } else if (planType === 'intermediate') {
                 initialPercentage = 0.50; // 50% inicial
