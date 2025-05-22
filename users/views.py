@@ -10,8 +10,14 @@ from .serializers.user_serializers import (
     CustomerSerializer,
     RegisterSerializer,
     ApplicationSerializer,
-    ApplicationCreateSerializer
+    ApplicationCreateSerializer,
+    CustomTokenObtainPairSerializer
 )
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+# Vista personalizada para tokens JWT
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
 
 # Create your views here.
 
