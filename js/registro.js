@@ -28,15 +28,15 @@ function initializeFormValidation() {
     if(form) {
         // Prevenir envío por defecto
         form.addEventListener('submit', function(event) {
-            if (!form.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-            } else {
-                event.preventDefault();
-                showSuccessModal();
-            }
+            event.preventDefault();
+            event.stopPropagation();
             
-            form.classList.add('was-validated');
+            if (form.checkValidity()) {
+                // Recopilar datos del formulario
+                registerUser(form);
+            } else {
+                form.classList.add('was-validated');
+            }
         });
         
         // Validar cédula de identidad con formato venezolano
@@ -272,4 +272,111 @@ function setupSuccessModal() {
 function showSuccessModal() {
     const modal = new bootstrap.Modal(document.getElementById('registrationSuccessModal'));
     modal.show();
+}
+
+/**
+ * Registrar nuevo usuario usando la API
+ */
+async function registerUser(form) {
+    // Mostrar indicador de carga
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalBtnText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Procesando...';
+    
+    try {
+        // Recopilar datos del formulario para el registro (campos requeridos en el backend)
+        const userData = {
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value,
+            password2: document.getElementById('confirmPassword').value,
+            first_name: document.getElementById('firstName').value,
+            last_name: document.getElementById('lastName').value,
+            phone: document.getElementById('phone').value,
+            identity_document: document.getElementById('idNumber').value
+        };
+        
+        // Llamar a la API para registro
+        console.log('Enviando datos de registro:', userData);
+        const result = await API.users.register(userData);
+        
+        if (result && result.success) {
+            // Registro exitoso
+            console.log('Registro exitoso:', result.data);
+            showSuccessModal();
+            
+            // Configurar redirección al hacer clic en el botón del modal
+            const goToProfileBtn = document.getElementById('goToProfileBtn');
+            if (goToProfileBtn) {
+                goToProfileBtn.textContent = 'Iniciar Sesión';
+                goToProfileBtn.addEventListener('click', function() {
+                    // Redirigir a la página de inicio de sesión con parámetro para mensaje
+                    window.location.href = 'login.html?registered=true&email=' + encodeURIComponent(userData.email);
+                }, { once: true }); // Solo escuchar una vez para evitar múltiples listeners
+            }
+        } else {
+            // Error en el registro
+            console.error('Error en registro:', result);
+            showErrorMessage(getErrorMessage(result));
+        }
+    } catch (error) {
+        console.error('Error durante el registro:', error);
+        showErrorMessage('Ocurrió un error durante el registro. Por favor, intenta de nuevo.');
+    } finally {
+        // Restaurar botón
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+    }
+}
+
+/**
+ * Mostrar mensaje de error en el formulario
+ */
+function showErrorMessage(message) {
+    const alertContainer = document.getElementById('alert-container');
+    if (!alertContainer) {
+        // Crear contenedor de alertas si no existe
+        const container = document.createElement('div');
+        container.id = 'alert-container';
+        container.className = 'mb-4';
+        
+        const form = document.getElementById('registrationForm');
+        if (form) {
+            form.parentNode.insertBefore(container, form);
+        }
+    }
+    
+    // Mostrar mensaje
+    const container = document.getElementById('alert-container') || document.createElement('div');
+    container.innerHTML = `
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+    `;
+}
+
+/**
+ * Extraer mensaje de error de la respuesta de la API
+ */
+function getErrorMessage(result) {
+    if (!result) return 'Error desconocido';
+    
+    if (result.data) {
+        const errorMessages = [];
+        
+        // Recorrer todos los campos con errores
+        Object.keys(result.data).forEach(key => {
+            const errors = result.data[key];
+            if (Array.isArray(errors)) {
+                errorMessages.push(`${key}: ${errors.join(', ')}`);
+            } else if (typeof errors === 'string') {
+                errorMessages.push(`${key}: ${errors}`);
+            }
+        });
+        
+        return errorMessages.join('<br>') || 'Error en el formulario';
+    }
+    
+    return result.message || 'Error desconocido';
 } 
