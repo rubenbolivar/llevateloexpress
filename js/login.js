@@ -1,232 +1,192 @@
+/**
+ * Login.js - Controlador para la página de inicio de sesión
+ * Utiliza el módulo Auth para realizar la autenticación
+ */
+
 document.addEventListener('DOMContentLoaded', function() {
     // Elementos del formulario
     const loginForm = document.getElementById('loginForm');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const submitButton = loginForm ? loginForm.querySelector('button[type="submit"]') : null;
+    const alertContainer = document.getElementById('alert-container');
     
     // Verificar parámetros de URL (para mostrar mensajes después del registro)
     checkUrlParams();
     
-    // Inicializar validación de Bootstrap
+    // Inicializar validación del formulario
     if (loginForm) {
-        initializeFormValidation();
+        loginForm.addEventListener('submit', handleLoginSubmit);
     }
     
     // Configurar botones de mostrar/ocultar contraseña
     setupPasswordToggle();
     
-    // Manejar la redirección después del inicio de sesión
-    setupLoginRedirection();
-});
-
-/**
- * Verificar parámetros de URL para mostrar mensajes
- */
-function checkUrlParams() {
-    const urlParams = new URLSearchParams(window.location.search);
-    
-    // Verificar si el usuario acaba de registrarse
-    if (urlParams.get('registered') === 'true') {
-        const email = urlParams.get('email');
-        showSuccessMessage(`¡Registro exitoso! Ahora puedes iniciar sesión${email ? ' con ' + email : ''}.`);
-        
-        // Prellenar el campo de email si está disponible
-        const emailInput = document.getElementById('email');
-        if (emailInput && email) {
-            emailInput.value = email;
-        }
-    }
-    
-    // Verificar si hubo un error de login anterior
-    if (urlParams.get('error') === 'auth') {
-        showErrorMessage('Credenciales incorrectas. Por favor, verifica tu email y contraseña.');
-    }
-}
-
-/**
- * Inicializar validación del formulario
- */
-function initializeFormValidation() {
-    const form = document.getElementById('loginForm');
-    
-    form.addEventListener('submit', function(event) {
+    /**
+     * Maneja el envío del formulario de login
+     */
+    async function handleLoginSubmit(event) {
         event.preventDefault();
-        event.stopPropagation();
         
-        if (form.checkValidity()) {
-            // Recopilar datos del formulario
-            loginUser(form);
-        } else {
-            form.classList.add('was-validated');
+        // Validar formulario
+        if (!loginForm.checkValidity()) {
+            loginForm.classList.add('was-validated');
+            return;
         }
-    });
-}
-
-/**
- * Iniciar sesión del usuario
- */
-async function loginUser(form) {
-    // Mostrar indicador de carga
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const originalBtnText = submitBtn.innerHTML;
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Procesando...';
-    
-    try {
-        // Obtener email (usado como username) y contraseña
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
         
-        console.log("Iniciando sesión con email:", email);
+        // Obtener datos
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
         
-        // Llamar a la API para iniciar sesión
-        const result = await API.users.login(email, password);
+        // Mostrar indicador de carga
+        const originalBtnText = submitButton.innerHTML;
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Procesando...';
         
-        if (result && result.success) {
-            console.log("Inicio de sesión exitoso");
+        try {
+            // Asegurar que tenemos token CSRF antes de intentar login
+            await Auth.fetchCsrfToken();
             
-            // Redirigir a la página principal o dashboard
-            redirectAfterLogin();
-        } else {
-            console.error("Error de inicio de sesión:", result);
+            // Intentar login
+            const result = await Auth.login(email, password);
             
-            // Mostrar mensaje de error
-            showErrorMessage(getErrorMessage(result));
-        }
-    } catch (error) {
-        console.error('Error durante el inicio de sesión:', error);
-        showErrorMessage('Ocurrió un error durante el inicio de sesión. Por favor, intenta de nuevo.');
-    } finally {
-        // Restaurar botón
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalBtnText;
-    }
-}
-
-/**
- * Configurar botones de mostrar/ocultar contraseña
- */
-function setupPasswordToggle() {
-    const toggleButtons = document.querySelectorAll('.toggle-password');
-    
-    toggleButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const input = this.parentElement.querySelector('input');
-            const icon = this.querySelector('i');
-            
-            // Cambiar tipo de input
-            if(input.type === 'password') {
-                input.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
+            if (result.success) {
+                // Login exitoso
+                showSuccessMessage('Inicio de sesión exitoso. Redirigiendo...');
+                
+                // Evitar cualquier posible carrera de condición con un pequeño retraso
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1000);
             } else {
-                input.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
+                // Error en el login
+                showErrorMessage(getErrorMessage(result));
             }
-        });
-    });
-}
-
-/**
- * Configurar la redirección después del inicio de sesión
- */
-function setupLoginRedirection() {
-    // Verificar si hay un parámetro redirect en la URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const redirectUrl = urlParams.get('redirect');
-    
-    // Si ya hay un usuario autenticado, redirigir
-    if (API.users.isAuthenticated()) {
-        redirectAfterLogin(redirectUrl);
-    }
-}
-
-/**
- * Redirigir después del inicio de sesión
- */
-function redirectAfterLogin(redirectUrl) {
-    // Si hay una URL de redirección, ir a esa URL
-    if (redirectUrl) {
-        window.location.href = redirectUrl;
-        return;
-    }
-    
-    // Redirección predeterminada
-    window.location.href = 'index.html';
-}
-
-/**
- * Mostrar mensaje de éxito
- */
-function showSuccessMessage(message) {
-    showMessage(message, 'success');
-}
-
-/**
- * Mostrar mensaje de error
- */
-function showErrorMessage(message) {
-    showMessage(message, 'danger');
-}
-
-/**
- * Mostrar mensaje en el contenedor de alertas
- */
-function showMessage(message, type = 'info') {
-    const alertContainer = document.getElementById('alert-container');
-    if (!alertContainer) {
-        // Crear contenedor de alertas si no existe
-        const container = document.createElement('div');
-        container.id = 'alert-container';
-        container.className = 'mb-4';
-        
-        const form = document.getElementById('loginForm');
-        if (form) {
-            form.parentNode.insertBefore(container, form);
+        } catch (error) {
+            console.error('Error durante el inicio de sesión:', error);
+            showErrorMessage('Error de conexión. Por favor, intente de nuevo más tarde.');
+        } finally {
+            // Restaurar botón
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalBtnText;
         }
     }
     
-    // Mostrar mensaje
-    const container = document.getElementById('alert-container') || document.createElement('div');
-    container.innerHTML = `
-        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-        </div>
-    `;
-}
-
-/**
- * Extraer mensaje de error de la respuesta de la API
- */
-function getErrorMessage(result) {
-    if (!result) return 'Error desconocido';
+    /**
+     * Configura la funcionalidad de mostrar/ocultar contraseña
+     */
+    function setupPasswordToggle() {
+        const toggleButtons = document.querySelectorAll('.toggle-password');
+        toggleButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const input = this.closest('.input-group').querySelector('input');
+                const icon = this.querySelector('i');
+                
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
+        });
+    }
     
-    if (result.data) {
-        // Si hay un mensaje de detalle, mostrarlo
-        if (result.data.detail) {
-            return result.data.detail;
+    /**
+     * Verifica parámetros de URL para mostrar mensajes
+     */
+    function checkUrlParams() {
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Verificar si el usuario acaba de registrarse
+        if (urlParams.get('registered') === 'true') {
+            const email = urlParams.get('email');
+            showSuccessMessage(`¡Registro exitoso! Ahora puedes iniciar sesión${email ? ' con ' + email : ''}.`);
+            
+            // Prellenar el campo de email si está disponible
+            if (emailInput && email) {
+                emailInput.value = email;
+            }
         }
         
-        // Si no, construir mensaje a partir de los errores
-        const errorMessages = [];
+        // Verificar si hay mensaje de error
+        if (urlParams.get('error') === 'auth') {
+            showErrorMessage('Credenciales incorrectas. Por favor, verifica tu email y contraseña.');
+        }
         
-        // Recorrer todos los campos con errores
-        Object.keys(result.data).forEach(key => {
-            const errors = result.data[key];
-            if (Array.isArray(errors)) {
-                errorMessages.push(`${key}: ${errors.join(', ')}`);
-            } else if (typeof errors === 'string') {
-                errorMessages.push(`${key}: ${errors}`);
+        // Verificar si es logout
+        if (urlParams.get('action') === 'logout') {
+            showSuccessMessage('Has cerrado sesión correctamente.');
+        }
+    }
+    
+    /**
+     * Muestra un mensaje de error
+     */
+    function showErrorMessage(message) {
+        showMessage(message, 'danger');
+    }
+    
+    /**
+     * Muestra un mensaje de éxito
+     */
+    function showSuccessMessage(message) {
+        showMessage(message, 'success');
+    }
+    
+    /**
+     * Muestra un mensaje en el contenedor de alertas
+     */
+    function showMessage(message, type = 'info') {
+        if (!alertContainer) {
+            console.warn('No se encontró contenedor de alertas');
+            return;
+        }
+        
+        alertContainer.innerHTML = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
+        `;
+    }
+    
+    /**
+     * Extrae mensaje de error de respuesta API
+     */
+    function getErrorMessage(result) {
+        if (!result) return 'Error desconocido';
+        
+        if (result.data) {
+            // Si hay un mensaje de detalle
+            if (result.data.detail) {
+                return result.data.detail;
             }
-        });
+            
+            // Construir mensaje a partir de campos con error
+            const errorMessages = [];
+            for (const key in result.data) {
+                if (Object.hasOwnProperty.call(result.data, key)) {
+                    const errors = result.data[key];
+                    if (Array.isArray(errors)) {
+                        errorMessages.push(`${key}: ${errors.join(', ')}`);
+                    } else if (typeof errors === 'string') {
+                        errorMessages.push(`${key}: ${errors}`);
+                    }
+                }
+            }
+            
+            return errorMessages.join('<br>') || 'Error en el formulario';
+        }
         
-        return errorMessages.join('<br>') || 'Error en el formulario';
+        // Mensaje genérico para errores no controlados
+        if (result.status === 401) {
+            return 'Email o contraseña incorrectos';
+        }
+        
+        return result.message || 'Error desconocido';
     }
-    
-    // Mensaje genérico para errores no controlados
-    if (result.status === 401) {
-        return 'Email o contraseña incorrectos';
-    }
-    
-    return result.message || 'Error desconocido';
-} 
+}); 

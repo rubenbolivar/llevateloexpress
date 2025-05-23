@@ -11,6 +11,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Inicializar tooltips de Bootstrap
     initTooltips();
+    
+    // Comprobar mensajes por URL
+    checkUrlMessages();
 });
 
 /**
@@ -248,4 +251,56 @@ function setupAnimations() {
             observer.observe(element);
         });
     }
+}
+
+/**
+ * Comprobar mensajes del URL y mostrar notificaciones
+ */
+function checkUrlMessages() {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Mensaje de cierre de sesión
+    if (urlParams.get('logout') === 'true') {
+        showMessage('Has cerrado sesión correctamente.', 'success');
+        
+        // Limpiar la URL para evitar que el mensaje se muestre después de recargar
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+}
+
+/**
+ * Mostrar un mensaje en la página
+ */
+function showMessage(message, type = 'info') {
+    // Crear el contenedor para el mensaje si no existe
+    let alertContainer = document.getElementById('main-alert-container');
+    if (!alertContainer) {
+        alertContainer = document.createElement('div');
+        alertContainer.id = 'main-alert-container';
+        alertContainer.className = 'container mt-3';
+        
+        // Insertar después del header y antes del primer section
+        const header = document.querySelector('header');
+        header.insertAdjacentElement('afterend', alertContainer);
+    }
+    
+    // Crear el mensaje
+    const alertHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `;
+    
+    // Mostrar el mensaje
+    alertContainer.innerHTML = alertHTML;
+    
+    // Auto-ocultar después de 5 segundos
+    setTimeout(() => {
+        const alert = alertContainer.querySelector('.alert');
+        if (alert) {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }
+    }, 5000);
 } 
