@@ -804,9 +804,12 @@
                 interestRate = 0.08; // 8% anual
             }
             
-            // Calcular valores
-            const initialPayment = vehicleValue * initialPercentage;
-            const financeAmount = vehicleValue - initialPayment;
+            // NUEVA LÓGICA DE CÁLCULO
+            // Valor total del financiamiento = Valor del vehículo / (1 - porcentaje inicial)
+            const totalFinancingValue = vehicleValue / (1 - initialPercentage);
+            // Valor a diferir (Monto a financiar) = Valor total - Inicial
+            const initialPayment = totalFinancingValue * initialPercentage;
+            const financeAmount = totalFinancingValue - initialPayment;
             
             // Calcular cuota mensual
             // Fórmula: M = P * [r(1+r)^n] / [(1+r)^n-1]
@@ -826,8 +829,8 @@
             
             // Actualizar la interfaz con los resultados
             document.getElementById('creditoVehicleValue').textContent = `$${vehicleValue.toLocaleString()}`;
-            document.getElementById('creditoInitialPayment').textContent = `$${initialPayment.toLocaleString()}`;
-            document.getElementById('creditoFinanceAmount').textContent = `$${financeAmount.toLocaleString()}`;
+            document.getElementById('creditoInitialPayment').textContent = `$${initialPayment.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
+            document.getElementById('creditoFinanceAmount').textContent = `$${financeAmount.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
             document.getElementById('creditoTerm').textContent = `${financingTerm} meses`;
             document.getElementById('creditoInterestRate').textContent = `${(interestRate * 100).toFixed(1)}%`;
             document.getElementById('creditoMonthlyPayment').textContent = `$${monthlyPayment.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
@@ -839,9 +842,9 @@
             // Actualizar beneficio según el plan
             let benefitText = "";
             if (planType === 'basic') {
-                benefitText = "Financiamiento con mínimo inicial y cuotas accesibles.";
+                benefitText = "Plan con menor inicial y cuotas accesibles.";
             } else if (planType === 'intermediate') {
-                benefitText = "Balance perfecto entre inicial y financiamiento.";
+                benefitText = "Plan con menor inicial y mayor plazo de pago.";
             } else {
                 benefitText = "Menor costo financiero total con la tasa más baja.";
             }

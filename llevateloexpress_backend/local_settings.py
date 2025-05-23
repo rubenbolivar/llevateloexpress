@@ -1,5 +1,5 @@
 """
-Local settings for development without database
+Local settings for development with PostgreSQL database
 This overrides settings.py for local development - ONLY FOR DEVELOPMENT!
 """
 
@@ -10,11 +10,15 @@ This overrides settings.py for local development - ONLY FOR DEVELOPMENT!
 import os
 from pathlib import Path
 
-# Override DATABASE settings for local development without a database
+# Override DATABASE settings for local development with PostgreSQL
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'llevateloexpress_dev',
+        'USER': 'llevateloexpress_user',
+        'PASSWORD': 'llevateloexpress_pass',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 

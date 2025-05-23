@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro Directo | LlévateloExpress</title>
+    <link rel="icon" type="image/png" href="static/img/favicon.png">
+    <link rel="apple-touch-icon" href="static/img/favicon.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="sticky-top">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm">
+            <div class="container">
+                <a class="navbar-brand" href="index.html">
+                    <img src="img/banners/logo.png" alt="LlévateloExpress" height="40" class="d-inline-block align-middle">
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link" href="index.html">Inicio</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="catalogo.html">Catálogo</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="planes.html">Planes de Financiamiento</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="nosotros.html">Nosotros</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="contacto.html">Contáctanos</a>
+                        </li>
+                    </ul>
+                    <div class="d-flex">
+                        <a href="registro.html" class="btn btn-outline-primary me-2 active">Registrarse</a>
+                        <a href="login.html" class="btn btn-primary">Iniciar Sesión</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Registration Form -->
+    <section class="registration py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card shadow-lg border-0 rounded-lg">
+                        <div class="card-header bg-primary text-white text-center py-4">
+                            <h2 class="fs-4 mb-0">Registro Directo en LlévateloExpress</h2>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="mb-4 text-center">
+                                <p>Complete el formulario para registrarse (método directo).</p>
+                                <div class="divider d-flex align-items-center my-4">
+                                    <p class="text-center fw-bold mx-3 mb-0 text-muted">Formulario Alternativo</p>
+                                </div>
+                            </div>
+
+                            <!-- Mensaje de éxito/error -->
+                            <div id="result-message" class="alert d-none mb-4" role="alert"></div>
+
+                            <!-- Formulario directo -->
+                            <form action="https://llevateloexpress.com/api/users/public-register/" method="POST" id="directForm">
+                                <!-- Información Personal -->
+                                <h5 class="mb-3">Información Personal</h5>
+                                <div class="row mb-3">
+                                    <div class="col-md-6 mb-3 mb-md-0">
+                                        <label for="first_name" class="form-label">Nombre <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="first_name" name="first_name" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="last_name" class="form-label">Apellido <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="last_name" name="last_name" required>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="identity_document" class="form-label">Cédula de Identidad <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="identity_document" name="identity_document" placeholder="V-12345678" required>
+                                </div>
+
+                                <!-- Información de Contacto -->
+                                <h5 class="mb-3 mt-4">Información de Contacto</h5>
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Correo Electrónico <span class="text-danger">*</span></label>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="phone" class="form-label">WhatsApp <span class="text-danger">*</span></label>
+                                    <input type="tel" class="form-control" id="phone" name="phone" placeholder="+58 4XX-XXXXXXX" required>
+                                    <small class="text-muted">Este número se usará para contactarte sobre tu solicitud de crédito.</small>
+                                </div>
+
+                                <!-- Credenciales -->
+                                <h5 class="mb-3 mt-4">Credenciales de Acceso</h5>
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">Contraseña <span class="text-danger">*</span></label>
+                                    <input type="password" class="form-control" id="password" name="password" required>
+                                    <small class="text-muted">Mínimo 8 caracteres, incluyendo mayúsculas, minúsculas y números.</small>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label for="password2" class="form-label">Confirmar Contraseña <span class="text-danger">*</span></label>
+                                    <input type="password" class="form-control" id="password2" name="password2" required>
+                                </div>
+
+                                <!-- Términos y Condiciones -->
+                                <div class="mb-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="termsCheck" required>
+                                        <label class="form-check-label" for="termsCheck">
+                                            He leído y acepto los <a href="terminos-condiciones.html" class="text-decoration-none" target="_blank">Términos y Condiciones</a> y la <a href="politicas-privacidad.html" class="text-decoration-none" target="_blank">Política de Privacidad</a> de LlévateloExpress.
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Submit Button -->
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary btn-lg">Registrarme Ahora</button>
+                                </div>
+                                
+                                <div class="mt-3 text-center">
+                                    <a href="registro.html" class="text-decoration-none">Volver al formulario normal</a>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="card-footer text-center py-3 bg-light">
+                            <div class="small">¿Ya tienes cuenta? <a href="login.html" class="text-decoration-none">Inicia sesión aquí</a></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer bg-dark text-white py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5 class="mb-3">LlévateloExpress</h5>
+                    <p class="mb-3">Tu aliado financiero para la adquisición de vehículos, motocicletas y maquinaria agrícola en Venezuela.</p>
+                    <div class="social-links">
+                        <a href="#" class="text-white me-3"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-white me-3"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-white me-3"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+                <div class="col-md-2 mb-4 mb-md-0">
+                    <h5 class="mb-3">Enlaces</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="index.html" class="text-white text-decoration-none">Inicio</a></li>
+                        <li class="mb-2"><a href="catalogo.html" class="text-white text-decoration-none">Catálogo</a></li>
+                        <li class="mb-2"><a href="planes.html" class="text-white text-decoration-none">Planes</a></li>
+                        <li class="mb-2"><a href="nosotros.html" class="text-white text-decoration-none">Nosotros</a></li>
+                        <li><a href="contacto.html" class="text-white text-decoration-none">Contáctanos</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <h5 class="mb-3">Contacto</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-map-marker-alt me-2"></i> Caracas, Venezuela</li>
+                        <li class="mb-2"><i class="fas fa-phone me-2"></i> (0212) 555-1234</li>
+                        <li><i class="fas fa-envelope me-2"></i> info@llevateloexpress.com</li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5 class="mb-3">Horario de Atención</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">Lunes a Viernes: 8:00 AM - 5:00 PM</li>
+                        <li>Sábados: 9:00 AM - 1:00 PM</li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+                    <p class="mb-0">&copy; 2023 LlévateloExpress. Todos los derechos reservados.</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <a href="terminos-condiciones.html" class="text-white text-decoration-none me-3">Términos y Condiciones</a>
+                    <a href="politicas-privacidad.html" class="text-white text-decoration-none">Política de Privacidad</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Script para manejar el envío del formulario
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('directForm');
+            const resultMessage = document.getElementById('result-message');
+            
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Validación básica
+                const password = document.getElementById('password').value;
+                const password2 = document.getElementById('password2').value;
+                
+                if (password !== password2) {
+                    showMessage('Las contraseñas no coinciden', 'danger');
+                    return;
+                }
+                
+                // Enviar formulario como JSON
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
+                
+                // Enviar al servidor
+                fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        showMessage('¡Registro exitoso! Ya puedes <a href="login.html">iniciar sesión</a>.', 'success');
+                        form.reset();
+                    } else {
+                        let errorMsg = 'Hubo un error en el registro';
+                        if (result.errors) {
+                            const errors = [];
+                            for (const key in result.errors) {
+                                errors.push(`${key}: ${result.errors[key]}`);
+                            }
+                            errorMsg = errors.join('<br>');
+                        }
+                        showMessage(errorMsg, 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showMessage('Error de conexión. Por favor, intenta de nuevo más tarde.', 'danger');
+                });
+            });
+            
+            function showMessage(message, type) {
+                resultMessage.innerHTML = message;
+                resultMessage.className = `alert alert-${type} mb-4`;
+                resultMessage.classList.remove('d-none');
+                
+                window.scrollTo({
+                    top: resultMessage.offsetTop - 100,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    </script>
+</body>
+</html> 

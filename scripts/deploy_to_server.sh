@@ -18,6 +18,9 @@ show_usage() {
     echo -e "Uso: $0 [opción]"
     echo -e "Opciones:"
     echo -e "  --sync-code\t\tSincronizar código con el servidor"
+    echo -e "  --sync-from-server\tSincronizar archivos desde el servidor hacia el entorno local"
+    echo -e "  --verify-local\t\tVerificar integridad de los archivos locales antes del despliegue"
+    echo -e "  --verify-remote\t\tVerificar integridad del sitio web después del despliegue"
     echo -e "  --update-deps\t\tActualizar dependencias en el servidor"
     echo -e "  --migrate\t\tEjecutar migraciones en el servidor"
     echo -e "  --collect-static\tRecolectar archivos estáticos"
@@ -27,6 +30,7 @@ show_usage() {
     echo -e "  --execute \"comando\"\tEjecutar un comando personalizado en el servidor"
     echo -e "  --shell\t\tAbrir una shell interactiva en el servidor"
     echo -e "  --full-deploy\t\tEjecutar un despliegue completo (sync + deps + migrate + static + restart)"
+    echo -e "  --safe-deploy\t\tEjecutar un despliegue con verificaciones de integridad (verify + sync + restart + verify)"
 }
 
 # Función para sincronizar el código con el servidor
@@ -231,6 +235,88 @@ full_deploy() {
     check_status
 }
 
+# Función para verificar integridad local
+verify_local_integrity() {
+    echo -e "${YELLOW}Verificando integridad de archivos locales...${NC}"
+    if [ -f "./scripts/verificar_integridad.sh" ]; then
+        chmod +x ./scripts/verificar_integridad.sh
+        ./scripts/verificar_integridad.sh
+        RESULT=$?
+        if [ $RESULT -ne 0 ]; then
+            echo -e "${RED}La verificación de integridad local falló. Abortando despliegue.${NC}"
+            exit 1
+        else
+            echo -e "${GREEN}Verificación de integridad local exitosa.${NC}"
+        fi
+    else
+        echo -e "${RED}No se encontró el script de verificación. Crea scripts/verificar_integridad.sh primero.${NC}"
+        exit 1
+    fi
+}
+
+# Función para verificar integridad remota
+verify_remote_integrity() {
+    echo -e "${YELLOW}Verificando integridad del sitio web después del despliegue...${NC}"
+    if [ -f "./scripts/verificar_despliegue.sh" ]; then
+        chmod +x ./scripts/verificar_despliegue.sh
+        ./scripts/verificar_despliegue.sh
+        RESULT=$?
+        if [ $RESULT -ne 0 ]; then
+            echo -e "${RED}La verificación post-despliegue falló. Revisa los errores reportados.${NC}"
+            return 1
+        else
+            echo -e "${GREEN}Verificación post-despliegue exitosa.${NC}"
+            return 0
+        fi
+    else
+        echo -e "${RED}No se encontró el script de verificación. Crea scripts/verificar_despliegue.sh primero.${NC}"
+        return 1
+    fi
+}
+
+# Función para sincronizar desde el servidor
+sync_from_server() {
+    echo -e "${YELLOW}Sincronizando archivos desde el servidor hacia el entorno local...${NC}"
+    if [ -f "./scripts/sync_from_server.sh" ]; then
+        chmod +x ./scripts/sync_from_server.sh
+        ./scripts/sync_from_server.sh
+        RESULT=$?
+        if [ $RESULT -ne 0 ]; then
+            echo -e "${RED}La sincronización desde el servidor falló.${NC}"
+            exit 1
+        else
+            echo -e "${GREEN}Sincronización desde el servidor completada.${NC}"
+        fi
+    else
+        echo -e "${RED}No se encontró el script de sincronización. Crea scripts/sync_from_server.sh primero.${NC}"
+        exit 1
+    fi
+}
+
+# Función para ejecutar un despliegue seguro
+safe_deploy() {
+    echo -e "${YELLOW}Iniciando despliegue seguro con verificaciones...${NC}"
+    
+    # Paso 1: Verificar integridad local
+    verify_local_integrity
+    
+    # Paso 2: Sincronizar código
+    sync_code
+    
+    # Paso 3: Reiniciar servicios
+    restart_services
+    
+    # Paso 4: Verificar integridad remota
+    verify_remote_integrity
+    RESULT=$?
+    
+    if [ $RESULT -eq 0 ]; then
+        echo -e "${GREEN}¡Despliegue seguro completado con éxito!${NC}"
+    else
+        echo -e "${RED}El despliegue presenta algunos problemas. Revisa los errores reportados.${NC}"
+    fi
+}
+
 # Verificar si se proporcionaron argumentos
 if [ $# -eq 0 ]; then
     show_usage
@@ -241,6 +327,15 @@ fi
 case "$1" in
     --sync-code)
         sync_code
+        ;;
+    --sync-from-server)
+        sync_from_server
+        ;;
+    --verify-local)
+        verify_local_integrity
+        ;;
+    --verify-remote)
+        verify_remote_integrity
         ;;
     --update-deps)
         update_dependencies
@@ -272,6 +367,9 @@ case "$1" in
         ;;
     --full-deploy)
         full_deploy
+        ;;
+    --safe-deploy)
+        safe_deploy
         ;;
     *)
         show_usage

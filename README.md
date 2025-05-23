@@ -98,6 +98,122 @@ El sistema proporciona una API RESTful para comunicación entre el frontend y el
 - `/api/users/profile/`: Perfil de usuario
 - `/api/users/applications/`: Solicitudes de financiamiento
 
+## Sistema de Autenticación
+
+El sistema de autenticación de LlévateloExpress implementa un enfoque moderno basado en tokens JWT (JSON Web Tokens) con protección CSRF adicional. La autenticación está integrada entre el backend Django y el frontend JavaScript, ofreciendo una experiencia segura y fluida.
+
+### Componentes de autenticación
+
+#### Backend (Django + DRF + SimpleJWT)
+
+1. **Middleware y configuración CSRF**:
+   - Django proporciona protección CSRF integrada mediante tokens
+   - El endpoint `/api/users/csrf-token/` establece la cookie CSRF necesaria para operaciones seguras
+   - Decorador `@ensure_csrf_cookie` garantiza la disponibilidad del token
+
+2. **Autenticación JWT**:
+   - La biblioteca `djangorestframework-simplejwt` gestiona la generación y validación de tokens
+   - Dos tokens son generados: access_token (corta duración) y refresh_token (larga duración)
+   - El endpoint `/api/users/token/` emite tokens al autenticar credenciales
+   - El endpoint `/api/users/token/refresh/` permite renovar tokens caducados
+
+3. **Vistas de Django para autenticación**:
+   - `RegisterView`: Para crear nuevas cuentas de usuario
+   - `CustomTokenObtainPairView`: Personalización del proceso de login
+   - `GetCSRFToken`: Para establecer tokens CSRF
+
+#### Frontend (JavaScript)
+
+1. **Módulo de Autenticación (`auth.js`)**:
+   - Sistema centralizado para gestionar todas las operaciones de autenticación
+   - Funciones principales:
+     * `loginUser()`: Gestiona el inicio de sesión y almacenamiento de tokens
+     * `registerUser()`: Maneja el registro de nuevos usuarios
+     * `logoutUser()`: Cierra sesión y limpia tokens almacenados
+     * `isAuthenticated()`: Verifica el estado de autenticación
+     * `refreshAccessToken()`: Renueva tokens caducados automáticamente
+     * `authenticatedFetch()`: Realiza peticiones autenticadas a la API
+
+2. **Gestión de Tokens CSRF**:
+   - La función `fetchCsrfToken()` solicita y almacena el token CSRF de Django
+   - Todas las solicitudes POST incluyen el token CSRF en el encabezado `X-CSRFToken`
+
+3. **Almacenamiento Seguro**:
+   - Los tokens JWT se almacenan en `localStorage` para persistencia
+   - La cookie CSRF se gestiona automáticamente por el navegador
+
+4. **Interfaz de Usuario adaptativa**:
+   - La función `updateAuthUI()` actualiza dinámicamente la interfaz según el estado de autenticación
+   - Botones "Iniciar Sesión"/"Registrarse" o "Cerrar Sesión" se muestran según corresponda
+
+### Flujo de Autenticación
+
+1. **Registro de Usuario**:
+   - Usuario completa formulario en `registro.html`
+   - Frontend solicita token CSRF mediante `fetchCsrfToken()`
+   - `registerUser()` envía los datos a `/api/users/register/` con protección CSRF
+   - Al registrarse exitosamente, se muestra modal de confirmación y redirección a login
+
+2. **Inicio de Sesión**:
+   - Usuario introduce credenciales en `login.html`
+   - `loginUser()` envía datos a `/api/users/token/` con token CSRF
+   - Backend valida credenciales y emite tokens JWT
+   - Frontend almacena tokens y actualiza UI para mostrar estado autenticado
+
+3. **Peticiones Autenticadas**:
+   - Módulo `api.js` utiliza `Auth.fetch()` para solicitudes que requieren autenticación
+   - `authenticatedFetch()` incluye token JWT en encabezado `Authorization`
+   - Si el token está caducado, se renueva automáticamente y reintenta la petición
+
+4. **Cierre de Sesión**:
+   - Al hacer clic en "Cerrar Sesión", `logoutUser()` elimina tokens y limpia cookie CSRF
+   - UI se actualiza para mostrar elementos para usuarios no autenticados
+
+### Integración Backend-Frontend
+
+La comunicación entre el backend y el frontend se realiza mediante:
+
+1. **API RESTful**:
+   - Endpoints JSON bien definidos para cada operación
+   - Respuestas estructuradas con códigos HTTP apropiados
+
+2. **Middleware CORS**:
+   - Configuración de Django usando `django-cors-headers`
+   - Permite solicitudes seguras desde dominios específicos
+
+3. **Serialización de datos**:
+   - Serializers de Django REST Framework transforman modelos a JSON
+   - Frontend deserializa y gestiona respuestas para actualizaciones de UI
+
+4. **Manejo de errores**:
+   - Respuestas de error detalladas desde el backend
+   - Frontend muestra mensajes de error específicos al usuario
+
+### Seguridad Implementada
+
+1. **Protección contra CSRF**:
+   - Token CSRF requerido para todas las operaciones POST/PUT/DELETE
+   - Implementación siguiendo las mejores prácticas de Django
+
+2. **Tokens JWT con corta duración**:
+   - Los tokens de acceso caducan rápidamente (15 minutos)
+   - Renovación automática mediante refresh token (válido por 7 días)
+
+3. **Validación en ambos lados**:
+   - Frontend: Validación de formularios JavaScript y HTML5
+   - Backend: Validación robusta con Django REST Framework serializers
+
+4. **Logging**:
+   - Sistema de logging para rastrear intentos de autenticación
+   - Alertas para intentos fallidos repetidos
+
+### Próximas mejoras
+
+- Implementación de autenticación social (Google, Facebook)
+- Verificación por correo electrónico para nuevos registros
+- Recuperación de contraseña mediante tokens seguros
+- Autenticación de dos factores para operaciones sensibles
+
 ## Panel Administrativo de Django
 
 El panel administrativo de Django permite:
