@@ -16,6 +16,7 @@ class Customer(models.Model):
                                        verbose_name="Ingreso mensual")
     created_at = models.DateTimeField(auto_now_add=True)
     verified = models.BooleanField(default=False, verbose_name="Verificado")
+    is_profile_complete = models.BooleanField(default=False, verbose_name="Perfil completo")
     
     class Meta:
         verbose_name = "Cliente"
