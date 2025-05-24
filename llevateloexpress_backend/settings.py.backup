@@ -13,17 +13,9 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from pathlib import Path
 from datetime import timedelta
-from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-#  Cargar variables de entorno del archivo .env.production
-env_file = BASE_DIR / ".env.production"
-if env_file.exists():
-    load_dotenv(env_file)
-    print("Variables de entorno cargadas desde:", env_file)
-else:
-    print("Archivo no encontrado:", env_file)
 
 
 # Quick-start development settings - unsuitable for production
