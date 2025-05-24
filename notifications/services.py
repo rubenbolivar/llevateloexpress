@@ -77,17 +77,19 @@ class NotificationService:
             html_content = self._render_template(email_template.html_content, full_context)
             text_content = self._render_template(email_template.text_content, full_context) if email_template.text_content else None
             
-            # Crear registro de notificación
-            email_notification = EmailNotification.objects.create(
+            # Crear registro de notificación con serialización segura
+            email_notification = EmailNotification(
                 user=user,
                 notification_type=notification_type,
                 email_template=email_template,
                 recipient_email=recipient,
                 subject=subject,
                 html_content=html_content,
-                text_content=text_content or '',
-                context_data=full_context
+                text_content=text_content or ''
             )
+            # Usar método seguro para caracteres Unicode (crítico para sistemas financieros)
+            email_notification.set_context_data_safe(full_context)
+            email_notification.save()
             
             # Añadir a la cola o enviar inmediatamente
             if schedule_at or priority != 'normal':
@@ -303,7 +305,7 @@ notification_service = NotificationService()
 def send_welcome_email(user: User) -> bool:
     """Envía email de bienvenida a un nuevo usuario"""
     context = {
-        'welcome_message': f'¡Bienvenido a LlévateloExpress, {user.first_name}!',
+                    'welcome_message': f'¡Bienvenido a LlévateloExpress, {user.first_name}!',
         'next_steps': [
             'Explora nuestro catálogo de productos',
             'Descubre nuestros planes de financiamiento',

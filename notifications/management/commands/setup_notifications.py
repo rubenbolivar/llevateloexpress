@@ -26,7 +26,7 @@ class Command(BaseCommand):
         self.create_email_templates(overwrite)
         
         self.stdout.write(
-            self.style.SUCCESS('✓ Configuración completada exitosamente')
+            self.style.SUCCESS('OK Configuración completada exitosamente')
         )
     
     def create_notification_types(self):
@@ -60,7 +60,7 @@ class Command(BaseCommand):
             )
             if created:
                 created_count += 1
-                self.stdout.write(f'  ✓ Creado: {name}')
+                self.stdout.write(f'  OK Creado: {name}')
             else:
                 self.stdout.write(f'  - Ya existe: {name}')
         
@@ -131,7 +131,7 @@ class Command(BaseCommand):
                 
                 if created:
                     created_count += 1
-                    self.stdout.write(f'  ✓ Creada: {notification_type.name}')
+                    self.stdout.write(f'  OK Creada: {notification_type.name}')
                 elif overwrite:
                     template.subject = template_data['subject']
                     template.html_content = template_data['html_content']

@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+import json
 
 
 class NotificationType(models.Model):
@@ -135,8 +136,8 @@ class EmailNotification(models.Model):
     html_content = models.TextField()
     text_content = models.TextField(blank=True)
     
-    # Contexto usado para generar el email
-    context_data = models.JSONField(default=dict)
+    # Contexto usado para generar el email (TextField para compatibilidad total con sistemas bancarios)
+    context_data = models.TextField(default='{}', help_text="Datos de contexto en formato JSON")
     
     # Estado del envío
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
@@ -186,6 +187,40 @@ class EmailNotification(models.Model):
         self.status = 'clicked'
         self.clicked_at = timezone.now()
         self.save()
+    
+    def set_context_data_safe(self, context_data):
+        """
+        Establece context_data con serialización segura para caracteres Unicode.
+        Crítico para sistemas financieros que requieren compatibilidad con bases de datos bancarias.
+        """
+        if isinstance(context_data, dict):
+            # Serializar como texto JSON con caracteres Unicode seguros
+            self.context_data = json.dumps(context_data, ensure_ascii=False, separators=(',', ':'))
+        else:
+            self.context_data = str(context_data) if context_data else '{}'
+    
+    def get_context_data_safe(self):
+        """
+        Obtiene context_data con deserialización segura.
+        Garantiza que los caracteres Unicode se manejen correctamente.
+        """
+        try:
+            return json.loads(self.context_data) if self.context_data else {}
+        except (json.JSONDecodeError, TypeError):
+            return {}
+    
+    def save(self, *args, **kwargs):
+        """
+        Override del método save para garantizar serialización segura automática.
+        Esencial para la integridad de datos en sistemas financieros.
+        """
+        # Garantizar que context_data sea siempre una cadena JSON válida
+        if not isinstance(self.context_data, str):
+            self.set_context_data_safe(self.context_data)
+        elif not self.context_data:
+            self.context_data = '{}'
+        
+        super().save(*args, **kwargs)
     
     def can_retry(self):
         """Verifica si se puede reintentar el envío"""
