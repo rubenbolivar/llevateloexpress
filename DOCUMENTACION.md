@@ -2,6 +2,13 @@
 
 Este archivo sirve como punto central de referencia para toda la documentación del proyecto LlévateloExpress.
 
+## 🆕 Actualizaciones Importantes
+
+### Migración a UTF8 (26 de Mayo 2025)
+- **Base de datos migrada exitosamente de LATIN1 a UTF8**
+- **Soporte completo para caracteres especiales del español** (acentos, ñ, signos)
+- **Ver detalles completos en:** [MIGRACION_UTF8_DOCUMENTACION.md](MIGRACION_UTF8_DOCUMENTACION.md)
+
 ## Documentos Principales
 
 ### 1. [README.md](README.md)
