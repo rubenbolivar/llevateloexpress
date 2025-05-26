@@ -182,14 +182,26 @@ function setupLoginRedirection() {
  * Redirigir después del inicio de sesión
  */
 function redirectAfterLogin(redirectUrl) {
-    // Si hay una URL de redirección, ir a esa URL
+    // Si hay una URL de redirección específica, usarla
     if (redirectUrl) {
+        // Si es 'dashboard', redirigir al dashboard
+        if (redirectUrl === 'dashboard') {
+            window.location.href = '/dashboard.html';
+            return;
+        }
+        // Si es 'financing', guardar el cálculo pendiente y redirigir al catálogo
+        if (redirectUrl === 'financing') {
+            // TODO: Recuperar el cálculo pendiente del sessionStorage
+            window.location.href = '/catalogo.html';
+            return;
+        }
+        // Cualquier otra URL, usarla directamente
         window.location.href = redirectUrl;
         return;
     }
     
-    // Redirección predeterminada
-    window.location.href = 'index.html';
+    // Redirección predeterminada al dashboard
+    window.location.href = '/dashboard.html';
 }
 
 /**

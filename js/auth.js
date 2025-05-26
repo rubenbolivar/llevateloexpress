@@ -319,10 +319,13 @@ function updateAuthUI() {
     const authButtonsContainer = document.getElementById('auth-buttons');
     if (authButtonsContainer) {
         if (authenticated) {
-            // Usuario autenticado: Mostrar "Mi Perfil" y "Cerrar Sesión"
+            // Usuario autenticado: Mostrar "Mi Dashboard" y "Cerrar Sesión"
             const userEmail = localStorage.getItem('user_email') || 'Usuario';
             authButtonsContainer.innerHTML = `
-                <span class="me-3 text-muted">Bienvenido, ${userEmail}</span>
+                <a href="/dashboard.html" class="btn btn-outline-primary me-2">
+                    <i class="fas fa-user-circle"></i> Mi Dashboard
+                </a>
+                <span class="me-3 text-muted">${userEmail}</span>
                 <button id="logoutBtn" class="btn btn-outline-danger">Cerrar Sesión</button>
             `;
             
@@ -395,10 +398,19 @@ document.addEventListener('DOMContentLoaded', function() {
 // Exportar funciones públicas
 window.Auth = {
     login: loginUser,
+    loginUser: loginUser, // Alias para compatibilidad
     register: registerUser,
+    registerUser: registerUser, // Alias para compatibilidad
     logout: logoutUser,
+    logoutUser: logoutUser, // Alias para compatibilidad
     isAuthenticated,
     getProfile: getUserProfile,
     fetch: authenticatedFetch,
-    fetchCsrfToken: fetchCsrfToken
-}; 
+    fetchCsrfToken: fetchCsrfToken,
+    getCsrfToken: getCsrfToken,
+    updateAuthUI: updateAuthUI,
+    refreshAccessToken: refreshAccessToken
+};
+
+// Exportar como módulo ES6 también
+export const Auth = window.Auth; 

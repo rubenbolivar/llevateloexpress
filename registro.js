@@ -260,8 +260,21 @@ function setupSuccessModal() {
     
     if(goToProfileBtn) {
         goToProfileBtn.addEventListener('click', function() {
-            // Redireccionar a la página principal (simulación de perfil)
-            window.location.href = 'index.html';
+            // Obtener parámetro de redirección de la URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const redirectUrl = urlParams.get('redirect');
+            
+            // Si hay un parámetro redirect, ir a esa página
+            if (redirectUrl === 'financing') {
+                window.location.href = '/catalogo.html';
+            } else if (redirectUrl === 'dashboard') {
+                window.location.href = '/dashboard.html';
+            } else if (redirectUrl) {
+                window.location.href = redirectUrl;
+            } else {
+                // Redirección predeterminada al dashboard
+                window.location.href = '/dashboard.html';
+            }
         });
     }
 }
@@ -337,10 +350,22 @@ async function registerUser(form) {
             // Configurar redirección al hacer clic en el botón del modal
             const goToProfileBtn = document.getElementById('goToProfileBtn');
             if (goToProfileBtn) {
-                goToProfileBtn.textContent = 'Iniciar Sesión';
+                goToProfileBtn.textContent = 'Ir a Mi Dashboard';
                 goToProfileBtn.addEventListener('click', function() {
-                    // Redirigir a la página de inicio de sesión con parámetro para mensaje
-                    window.location.href = 'login.html?registered=true&email=' + encodeURIComponent(userData.email);
+                    // Obtener parámetro de redirección de la URL
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const redirectUrl = urlParams.get('redirect');
+                    
+                    // Si hay un parámetro redirect específico
+                    if (redirectUrl === 'financing') {
+                        // Recuperar cálculo pendiente si existe
+                        window.location.href = '/catalogo.html';
+                    } else if (redirectUrl === 'dashboard') {
+                        window.location.href = '/dashboard.html';
+                    } else {
+                        // Redirección predeterminada: primero login para establecer sesión
+                        window.location.href = 'login.html?registered=true&email=' + encodeURIComponent(userData.email);
+                    }
                 }, { once: true }); // Solo escuchar una vez para evitar múltiples listeners
             }
         } else {
