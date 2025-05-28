@@ -12,7 +12,7 @@ const FinancingRequest = {
     // Inicialización
     async init() {
         // Verificar autenticación
-        if (!Auth.isAuthenticated()) {
+        if (!API.users.isAuthenticated()) {
             window.location.href = '/login.html?redirect=solicitud-financiamiento';
             return;
         }
@@ -24,7 +24,9 @@ const FinancingRequest = {
         this.loadCalculationData();
         
         // Actualizar UI de autenticación
-        Auth.updateAuthUI();
+        if (typeof Auth !== 'undefined' && Auth.updateAuthUI) {
+            Auth.updateAuthUI();
+        }
         
         // Renderizar paso inicial
         this.renderCurrentStep();
@@ -37,7 +39,7 @@ const FinancingRequest = {
         if (logoutBtn) {
             logoutBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                Auth.logoutUser();
+                API.users.logout();
             });
         }
 
@@ -115,7 +117,7 @@ const FinancingRequest = {
     // Cargar solicitud existente
     async loadExistingRequest() {
         try {
-            const result = await Auth.fetch(`/api/financing/requests/${this.requestId}/`);
+            const result = await API.users.authFetch(`/api/financing/requests/${this.requestId}/`);
             if (result.success) {
                 const request = result.data;
                 this.calculationData = {
@@ -163,26 +165,39 @@ const FinancingRequest = {
     renderCalculationSummary() {
         if (!this.calculationData) return;
 
-        const { product, financing_plan, calculation } = this.calculationData;
+        // Normalizar datos de diferentes fuentes (calculadora vs backend)
+        const calc = this.calculationData.calculation || this.calculationData;
+        const product = this.calculationData.product || {};
+        const mode = this.calculationData.mode || {};
+        
+        // Mapear campos con diferentes nombres
+        const productPrice = calc.vehicle_value || calc.product_price || product.price || 0;
+        const downPaymentAmount = calc.down_payment_amount || 0;
+        const downPaymentPercentage = calc.down_payment_percentage || 0;
+        const paymentAmount = calc.payment_amount || calc.monthly_payment || 0;
+        const numberOfPayments = calc.number_of_payments || calc.term_months || 0;
+        const financedAmount = calc.financed_amount || (productPrice - downPaymentAmount);
+        const totalAmount = calc.total_cost || calc.total_amount || productPrice;
+        const paymentFrequency = calc.payment_frequency || 'monthly';
 
         // Resumen principal
         const summaryContainer = document.getElementById('calculationSummary');
         summaryContainer.innerHTML = `
             <div class="row text-center">
                 <div class="col-md-3">
-                    <h3>$${this.formatNumber(calculation.product_price)}</h3>
+                    <h3>$${this.formatNumber(productPrice)}</h3>
                     <small>Precio del Producto</small>
                 </div>
                 <div class="col-md-3">
-                    <h3>$${this.formatNumber(calculation.down_payment_amount)}</h3>
-                    <small>Inicial (${calculation.down_payment_percentage}%)</small>
+                    <h3>$${this.formatNumber(downPaymentAmount)}</h3>
+                    <small>Inicial (${downPaymentPercentage}%)</small>
                 </div>
                 <div class="col-md-3">
-                    <h3>$${this.formatNumber(calculation.payment_amount)}</h3>
-                    <small>Cuota ${this.getFrequencyText(calculation.payment_frequency)}</small>
+                    <h3>$${this.formatNumber(paymentAmount)}</h3>
+                    <small>Cuota ${this.getFrequencyText(paymentFrequency)}</small>
                 </div>
                 <div class="col-md-3">
-                    <h3>${calculation.number_of_payments}</h3>
+                    <h3>${numberOfPayments}</h3>
                     <small>Número de Cuotas</small>
                 </div>
             </div>
@@ -191,20 +206,32 @@ const FinancingRequest = {
         // Detalles del producto
         const productContainer = document.getElementById('productDetails');
         productContainer.innerHTML = `
-            <p><strong>Producto:</strong> ${product?.name || 'Producto Seleccionado'}</p>
-            <p><strong>Categoría:</strong> ${product?.category?.name || 'N/A'}</p>
-            <p><strong>Precio:</strong> $${this.formatNumber(calculation.product_price)}</p>
-            <p><strong>Monto a Financiar:</strong> $${this.formatNumber(calculation.financed_amount)}</p>
+            <p><strong>Producto:</strong> ${product.name || 'Producto Seleccionado'}</p>
+            <p><strong>Categoría:</strong> ${product.category || product.category?.name || 'N/A'}</p>
+            <p><strong>Precio:</strong> $${this.formatNumber(productPrice)}</p>
+            <p><strong>Monto a Financiar:</strong> $${this.formatNumber(financedAmount)}</p>
         `;
 
         // Detalles del financiamiento
         const financingContainer = document.getElementById('financingDetails');
         financingContainer.innerHTML = `
-            <p><strong>Plan:</strong> ${financing_plan?.name || 'Plan Seleccionado'}</p>
-            <p><strong>Frecuencia:</strong> ${this.getFrequencyText(calculation.payment_frequency)}</p>
-            <p><strong>Plazo:</strong> ${calculation.number_of_payments} cuotas</p>
-            <p><strong>Total a Pagar:</strong> $${this.formatNumber(calculation.total_amount)}</p>
+            <p><strong>Plan:</strong> ${mode.name || 'Plan Seleccionado'}</p>
+            <p><strong>Frecuencia:</strong> ${this.getFrequencyText(paymentFrequency)}</p>
+            <p><strong>Plazo:</strong> ${numberOfPayments} cuotas</p>
+            <p><strong>Total a Pagar:</strong> $${this.formatNumber(totalAmount)}</p>
         `;
+
+        // Actualizar datos normalizados para uso posterior
+        this.calculationData.normalizedData = {
+            product_price: productPrice,
+            down_payment_amount: downPaymentAmount,
+            down_payment_percentage: downPaymentPercentage,
+            financed_amount: financedAmount,
+            payment_frequency: paymentFrequency,
+            number_of_payments: numberOfPayments,
+            payment_amount: paymentAmount,
+            total_amount: totalAmount
+        };
     },
 
     // Navegación entre pasos
@@ -320,7 +347,8 @@ const FinancingRequest = {
     renderFinalSummary() {
         if (!this.calculationData) return;
 
-        const { product, calculation } = this.calculationData;
+        const product = this.calculationData.product || {};
+        const normalized = this.calculationData.normalizedData || {};
         const employmentType = document.getElementById('employment_type').value;
         const monthlyIncome = document.getElementById('monthly_income').value;
 
@@ -329,13 +357,13 @@ const FinancingRequest = {
             <div class="row">
                 <div class="col-md-6">
                     <h6>Producto Seleccionado</h6>
-                    <p>${product?.name || 'Producto Seleccionado'}</p>
-                    <p><strong>Precio:</strong> $${this.formatNumber(calculation.product_price)}</p>
+                    <p>${product.name || 'Producto Seleccionado'}</p>
+                    <p><strong>Precio:</strong> $${this.formatNumber(normalized.product_price)}</p>
                     
                     <h6 class="mt-3">Plan de Financiamiento</h6>
-                    <p><strong>Inicial:</strong> $${this.formatNumber(calculation.down_payment_amount)} (${calculation.down_payment_percentage}%)</p>
-                    <p><strong>Cuota:</strong> $${this.formatNumber(calculation.payment_amount)} ${this.getFrequencyText(calculation.payment_frequency)}</p>
-                    <p><strong>Plazo:</strong> ${calculation.number_of_payments} cuotas</p>
+                    <p><strong>Inicial:</strong> $${this.formatNumber(normalized.down_payment_amount)} (${normalized.down_payment_percentage}%)</p>
+                    <p><strong>Cuota:</strong> $${this.formatNumber(normalized.payment_amount)} ${this.getFrequencyText(normalized.payment_frequency)}</p>
+                    <p><strong>Plazo:</strong> ${normalized.number_of_payments} cuotas</p>
                 </div>
                 <div class="col-md-6">
                     <h6>Información Personal</h6>
@@ -423,14 +451,14 @@ const FinancingRequest = {
             let result;
             if (this.requestId) {
                 // Actualizar solicitud existente
-                result = await Auth.fetch(`/api/financing/requests/${this.requestId}/`, {
+                result = await API.users.authFetch(`/api/financing/requests/${this.requestId}/`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(requestData)
                 });
             } else {
                 // Crear nueva solicitud
-                result = await Auth.fetch('/api/financing/requests/', {
+                result = await API.users.authFetch('/api/financing/requests/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(requestData)
@@ -469,21 +497,23 @@ const FinancingRequest = {
 
     // Preparar datos de la solicitud
     prepareRequestData() {
-        const { product, financing_plan, calculation } = this.calculationData;
+        const product = this.calculationData.product || {};
+        const mode = this.calculationData.mode || {};
+        const normalized = this.calculationData.normalizedData || {};
 
         return {
-            product: product?.id,
-            financing_plan: financing_plan?.id,
-            product_price: calculation.product_price,
-            down_payment_percentage: calculation.down_payment_percentage,
-            down_payment_amount: calculation.down_payment_amount,
-            financed_amount: calculation.financed_amount,
-            interest_rate: financing_plan?.interest_rate || 0,
-            total_interest: calculation.total_amount - calculation.financed_amount,
-            total_amount: calculation.total_amount,
-            payment_frequency: calculation.payment_frequency,
-            number_of_payments: calculation.number_of_payments,
-            payment_amount: calculation.payment_amount,
+            product: product.id,
+            financing_plan: 1, // Plan por defecto, ajustar según necesidad
+            product_price: normalized.product_price,
+            down_payment_percentage: normalized.down_payment_percentage,
+            down_payment_amount: normalized.down_payment_amount,
+            financed_amount: normalized.financed_amount,
+            interest_rate: 0, // Ajustar según plan
+            total_interest: normalized.total_amount - normalized.financed_amount,
+            total_amount: normalized.total_amount,
+            payment_frequency: normalized.payment_frequency,
+            number_of_payments: normalized.number_of_payments,
+            payment_amount: normalized.payment_amount,
             employment_type: document.getElementById('employment_type').value,
             monthly_income: parseFloat(document.getElementById('monthly_income').value)
         };
@@ -498,7 +528,7 @@ const FinancingRequest = {
             formData.append('documents', file);
         });
 
-        const result = await Auth.fetch(
+        const result = await API.users.authFetch(
             `/api/financing/requests/${requestId}/upload_documents/`,
             {
                 method: 'POST',
@@ -513,7 +543,7 @@ const FinancingRequest = {
 
     // Enviar para revisión
     async submitForReview(requestId) {
-        const result = await Auth.fetch(
+        const result = await API.users.authFetch(
             `/api/financing/requests/${requestId}/submit/`,
             { method: 'POST' }
         );

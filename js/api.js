@@ -382,4 +382,7 @@ function updateAuthUI() {
             `;
         }
     }
-} 
+}
+
+// Exportar el módulo API
+export { API }; 
