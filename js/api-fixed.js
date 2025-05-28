@@ -354,9 +354,9 @@ function updateAuthUI() {
     
     if (authButtonsContainer) {
         if (isAuthenticated) {
-            // Usuario autenticado: Mostrar "Mi Perfil" y "Cerrar Sesión"
+            // Usuario autenticado: Mostrar "Mi Dashboard" y "Cerrar Sesión"
             authButtonsContainer.innerHTML = `
-                <a href="#" class="btn btn-outline-primary me-2">Mi Perfil</a>
+                <a href="dashboard.html" class="btn btn-outline-primary me-2">Mi Dashboard</a>
                 <button id="logoutBtn" class="btn btn-primary">Cerrar Sesión</button>
             `;
             
