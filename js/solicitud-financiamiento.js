@@ -1,4 +1,3 @@
-import { Auth } from './auth.js';
 import { API } from './api.js';
 
 // Módulo de Solicitud de Financiamiento
@@ -23,10 +22,7 @@ const FinancingRequest = {
         // Cargar datos de la calculadora desde URL
         this.loadCalculationData();
         
-        // Actualizar UI de autenticación
-        if (typeof Auth !== 'undefined' && Auth.updateAuthUI) {
-            Auth.updateAuthUI();
-        }
+        // La UI de autenticación se actualiza automáticamente por api.js
         
         // Renderizar paso inicial
         this.renderCurrentStep();
