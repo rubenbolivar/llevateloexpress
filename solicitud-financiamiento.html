@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitud de Financiamiento | LlévateloExpress</title>
+    <link rel="icon" type="image/png" href="static/img/favicon.png">
+    <link rel="apple-touch-icon" href="static/img/favicon.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        .step {
+            display: flex;
+            align-items: center;
+            margin: 0 1rem;
+        }
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #e9ecef;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+        .step.active .step-number {
+            background-color: #007bff;
+            color: white;
+        }
+        .step.completed .step-number {
+            background-color: #28a745;
+            color: white;
+        }
+        .step-line {
+            width: 50px;
+            height: 2px;
+            background-color: #e9ecef;
+            margin: 0 1rem;
+        }
+        .step.completed + .step-line {
+            background-color: #28a745;
+        }
+        .form-section {
+            display: none;
+        }
+        .form-section.active {
+            display: block;
+        }
+        .calculation-summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .upload-zone {
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 1rem;
+        }
+        .upload-zone:hover {
+            border-color: #007bff;
+            background-color: #f8f9fa;
+        }
+        .upload-zone.drag-over {
+            border-color: #007bff;
+            background-color: #e7f3ff;
+        }
+        .file-item {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            padding: 0.5rem;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            margin-bottom: 0.5rem;
+        }
+        .required-docs {
+            background-color: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="sticky-top">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm">
+            <div class="container">
+                <a class="navbar-brand" href="index.html">
+                    <img src="img/banners/logo.png" alt="LlévateloExpress" height="40" class="d-inline-block align-middle">
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link" href="index.html">Inicio</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="catalogo.html">Catálogo</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="planes.html">Planes de Financiamiento</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="nosotros.html">Nosotros</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="contacto.html">Contáctanos</a>
+                        </li>
+                    </ul>
+                    <div class="d-flex">
+                        <a href="dashboard.html" class="btn btn-outline-primary me-2">Mi Dashboard</a>
+                        <a href="#" id="logoutBtn" class="btn btn-primary">Cerrar Sesión</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="text-center mb-4">
+                        <h1 class="display-6 fw-bold text-primary">Solicitud de Financiamiento</h1>
+                        <p class="lead">Complete los siguientes pasos para procesar su solicitud</p>
+                    </div>
+
+                    <!-- Indicador de Pasos -->
+                    <div class="step-indicator">
+                        <div class="step active" id="step1">
+                            <div class="step-number">1</div>
+                            <span>Resumen</span>
+                        </div>
+                        <div class="step-line"></div>
+                        <div class="step" id="step2">
+                            <div class="step-number">2</div>
+                            <span>Información Personal</span>
+                        </div>
+                        <div class="step-line"></div>
+                        <div class="step" id="step3">
+                            <div class="step-number">3</div>
+                            <span>Documentos</span>
+                        </div>
+                        <div class="step-line"></div>
+                        <div class="step" id="step4">
+                            <div class="step-number">4</div>
+                            <span>Confirmación</span>
+                        </div>
+                    </div>
+
+                    <!-- Mensajes de Estado -->
+                    <div id="alertContainer"></div>
+
+                    <!-- Formulario -->
+                    <form id="financingRequestForm">
+                        <!-- Paso 1: Resumen del Cálculo -->
+                        <div class="form-section active" id="section1">
+                            <div class="card shadow-lg border-0">
+                                <div class="card-header bg-primary text-white">
+                                    <h4 class="mb-0">Resumen de su Financiamiento</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div class="calculation-summary" id="calculationSummary">
+                                        <!-- Se llenará dinámicamente -->
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h5>Detalles del Producto</h5>
+                                            <div id="productDetails">
+                                                <!-- Se llenará dinámicamente -->
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h5>Plan de Financiamiento</h5>
+                                            <div id="financingDetails">
+                                                <!-- Se llenará dinámicamente -->
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between mt-4">
+                                        <a href="calculadora.html" class="btn btn-outline-secondary">
+                                            <i class="fas fa-arrow-left"></i> Volver a Calculadora
+                                        </a>
+                                        <button type="button" class="btn btn-primary" onclick="FinancingRequest.nextStep()">
+                                            Continuar <i class="fas fa-arrow-right"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Paso 2: Información Personal -->
+                        <div class="form-section" id="section2">
+                            <div class="card shadow-lg border-0">
+                                <div class="card-header bg-primary text-white">
+                                    <h4 class="mb-0">Información Personal y Laboral</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="employment_type" class="form-label">Tipo de Empleo <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="employment_type" name="employment_type" required>
+                                                <option value="">Seleccione...</option>
+                                                <option value="empleado_publico">Empleado Público</option>
+                                                <option value="empleado_privado">Empleado Privado</option>
+                                                <option value="independiente">Trabajador Independiente</option>
+                                                <option value="empresario">Empresario</option>
+                                                <option value="pensionado">Pensionado</option>
+                                                <option value="otro">Otro</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="monthly_income" class="form-label">Ingreso Mensual (USD) <span class="text-danger">*</span></label>
+                                            <input type="number" class="form-control" id="monthly_income" name="monthly_income" 
+                                                   placeholder="1000" min="0" step="0.01" required>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="company_name" class="form-label">Empresa/Empleador</label>
+                                            <input type="text" class="form-control" id="company_name" name="company_name" 
+                                                   placeholder="Nombre de la empresa">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="job_position" class="form-label">Cargo/Posición</label>
+                                            <input type="text" class="form-control" id="job_position" name="job_position" 
+                                                   placeholder="Su cargo actual">
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="work_phone" class="form-label">Teléfono de Trabajo</label>
+                                            <input type="tel" class="form-control" id="work_phone" name="work_phone" 
+                                                   placeholder="+58 212-XXXXXXX">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="years_employed" class="form-label">Años en el Empleo Actual</label>
+                                            <input type="number" class="form-control" id="years_employed" name="years_employed" 
+                                                   placeholder="2" min="0" step="0.1">
+                                        </div>
+                                    </div>
+
+                                    <h5 class="mt-4 mb-3">Referencias Personales</h5>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="reference1_name" class="form-label">Referencia 1 - Nombre Completo</label>
+                                            <input type="text" class="form-control" id="reference1_name" name="reference1_name" 
+                                                   placeholder="Nombre y apellido">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="reference1_phone" class="form-label">Referencia 1 - Teléfono</label>
+                                            <input type="tel" class="form-control" id="reference1_phone" name="reference1_phone" 
+                                                   placeholder="+58 4XX-XXXXXXX">
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="reference2_name" class="form-label">Referencia 2 - Nombre Completo</label>
+                                            <input type="text" class="form-control" id="reference2_name" name="reference2_name" 
+                                                   placeholder="Nombre y apellido">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="reference2_phone" class="form-label">Referencia 2 - Teléfono</label>
+                                            <input type="tel" class="form-control" id="reference2_phone" name="reference2_phone" 
+                                                   placeholder="+58 4XX-XXXXXXX">
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between mt-4">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="FinancingRequest.prevStep()">
+                                            <i class="fas fa-arrow-left"></i> Anterior
+                                        </button>
+                                        <button type="button" class="btn btn-primary" onclick="FinancingRequest.nextStep()">
+                                            Continuar <i class="fas fa-arrow-right"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Paso 3: Documentos -->
+                        <div class="form-section" id="section3">
+                            <div class="card shadow-lg border-0">
+                                <div class="card-header bg-primary text-white">
+                                    <h4 class="mb-0">Documentos Requeridos</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div class="required-docs">
+                                        <h6><i class="fas fa-info-circle"></i> Documentos Necesarios:</h6>
+                                        <ul class="mb-0">
+                                            <li>Cédula de Identidad (ambas caras)</li>
+                                            <li>Comprobante de Ingresos (últimos 3 meses)</li>
+                                            <li>Comprobante de Domicilio (recibo de servicios)</li>
+                                            <li>Referencias Bancarias (estados de cuenta)</li>
+                                        </ul>
+                                        <small class="text-muted">Formatos permitidos: PDF, JPG, PNG (máx. 5MB por archivo)</small>
+                                    </div>
+
+                                    <!-- Zona de Subida -->
+                                    <div class="upload-zone" id="uploadZone">
+                                        <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                        <h5>Arrastra tus documentos aquí</h5>
+                                        <p class="text-muted">o haz clic para seleccionar archivos</p>
+                                        <input type="file" id="documentInput" class="d-none" multiple 
+                                               accept=".pdf,.jpg,.jpeg,.png">
+                                    </div>
+
+                                    <!-- Lista de Archivos -->
+                                    <div id="filesList"></div>
+
+                                    <div class="alert alert-info mt-3">
+                                        <i class="fas fa-lightbulb"></i>
+                                        <strong>Nota:</strong> Puede subir los documentos ahora o más tarde desde su dashboard. 
+                                        Su solicitud se guardará como borrador hasta que complete toda la documentación.
+                                    </div>
+
+                                    <div class="d-flex justify-content-between mt-4">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="FinancingRequest.prevStep()">
+                                            <i class="fas fa-arrow-left"></i> Anterior
+                                        </button>
+                                        <button type="button" class="btn btn-primary" onclick="FinancingRequest.nextStep()">
+                                            Continuar <i class="fas fa-arrow-right"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Paso 4: Confirmación -->
+                        <div class="form-section" id="section4">
+                            <div class="card shadow-lg border-0">
+                                <div class="card-header bg-success text-white">
+                                    <h4 class="mb-0">Confirmación de Solicitud</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-success">
+                                        <i class="fas fa-check-circle"></i>
+                                        <strong>¡Excelente!</strong> Ha completado todos los pasos de su solicitud.
+                                    </div>
+
+                                    <div id="finalSummary">
+                                        <!-- Resumen final se llenará dinámicamente -->
+                                    </div>
+
+                                    <div class="form-check mb-4">
+                                        <input class="form-check-input" type="checkbox" id="termsAccept" required>
+                                        <label class="form-check-label" for="termsAccept">
+                                            Acepto los <a href="terminos-condiciones.html" target="_blank">Términos y Condiciones</a> 
+                                            y la <a href="politicas-privacidad.html" target="_blank">Política de Privacidad</a> 
+                                            de LlévateloExpress.
+                                        </label>
+                                    </div>
+
+                                    <div class="form-check mb-4">
+                                        <input class="form-check-input" type="checkbox" id="dataConsent" required>
+                                        <label class="form-check-label" for="dataConsent">
+                                            Autorizo el tratamiento de mis datos personales para fines de evaluación crediticia 
+                                            y procesamiento de mi solicitud de financiamiento.
+                                        </label>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between mt-4">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="FinancingRequest.prevStep()">
+                                            <i class="fas fa-arrow-left"></i> Anterior
+                                        </button>
+                                        <button type="submit" class="btn btn-success btn-lg" id="submitBtn">
+                                            <i class="fas fa-paper-plane"></i> Enviar Solicitud
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer bg-dark text-white py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5 class="mb-3">LlévateloExpress</h5>
+                    <p class="mb-3">Tu aliado financiero para la adquisición de vehículos, motocicletas y maquinaria agrícola en Venezuela.</p>
+                </div>
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5 class="mb-3">Contacto</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-map-marker-alt me-2"></i> Caracas, Venezuela</li>
+                        <li class="mb-2"><i class="fas fa-phone me-2"></i> (0212) 555-1234</li>
+                        <li><i class="fas fa-envelope me-2"></i> info@llevateloexpress.com</li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h5 class="mb-3">Horario de Atención</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">Lunes a Viernes: 8:00 AM - 5:00 PM</li>
+                        <li>Sábados: 9:00 AM - 1:00 PM</li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+                    <p class="mb-0">&copy; 2023 LlévateloExpress. Todos los derechos reservados.</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <a href="terminos-condiciones.html" class="text-white text-decoration-none me-3">Términos y Condiciones</a>
+                    <a href="politicas-privacidad.html" class="text-white text-decoration-none">Política de Privacidad</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/api.js"></script>
+    <script type="module" src="js/solicitud-financiamiento.js"></script>
+</body>
+</html> 
