@@ -376,3 +376,6 @@ function updateAuthUI() {
         }
     }
 } 
+// Hacer API disponible globalmente
+window.API = API;
+console.log("API cargado correctamente");
