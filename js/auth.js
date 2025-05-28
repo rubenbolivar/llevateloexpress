@@ -413,7 +413,7 @@ window.Auth = {
 };
 
 // Exportar como módulo ES6 también
-export const Auth = window.Auth; 
+// export const Auth = window.Auth; 
 // Actualizar UI automáticamente cuando se carga la página
 document.addEventListener("DOMContentLoaded", function() {
     updateAuthUI();
