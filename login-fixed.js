@@ -93,6 +93,12 @@ async function loginUser(form) {
             return;
         }
         
+        // Verificar que API esté disponible
+        if (typeof API === "undefined") {
+            console.error("API no está definido");
+            showErrorMessage("Error del sistema. Por favor, recarga la página.");
+            return;
+        }
         console.log("Iniciando sesión con email:", email);
         
         // Llamar a la API para iniciar sesión
@@ -279,4 +285,4 @@ function getErrorMessage(result) {
     }
     
     return result.message || 'Error desconocido';
-} 
+} }

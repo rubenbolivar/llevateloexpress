@@ -15,23 +15,6 @@ function getCSRFToken() {
         }
     }
     return cookieValue;
-n// Función para obtener token CSRF del servidor
-async function fetchCSRFToken() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/users/csrf-token/`, {
-            method: "GET",
-            credentials: "include"
-        });
-        if (response.ok) {
-            console.log("Token CSRF obtenido correctamente");
-            return true;
-        }
-        return false;
-    } catch (error) {
-        console.error("Error al obtener token CSRF:", error);
-        return false;
-    }
-}
 }
 
 // Objeto principal de la API
@@ -41,15 +24,11 @@ const API = {
         // Iniciar sesión
         async login(email, password) {
             try {
-                console.log("Iniciando proceso de login...");
-                await fetchCSRFToken();
                 const response = await fetch(`${API_BASE_URL}/users/token/`, {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
                         'X-CSRFToken': getCSRFToken()
-                    },
-                    credentials: "include",
                     },
                     body: JSON.stringify({ username: email, password })
                 });
@@ -62,8 +41,7 @@ const API = {
                     localStorage.setItem('refresh_token', data.refresh);
                     // Guardar email del usuario para el dashboard
                     localStorage.setItem('user_email', email);
-                    localStorage.setItem("userEmail", email);
-                    console.log("Login exitoso");
+                    localStorage.setItem('userEmail', email); // Compatibilidad con dashboard.js
                     return { success: true };
                 } else {
                     return { error: true, data, status: response.status };
@@ -82,8 +60,6 @@ const API = {
                     headers: { 
                         'Content-Type': 'application/json',
                         'X-CSRFToken': getCSRFToken()
-                    },
-                    credentials: "include",
                     },
                     body: JSON.stringify(userData)
                 });
@@ -411,6 +387,6 @@ function updateAuthUI() {
 // Exportar el módulo API
 // Hacer API disponible globalmente
 window.API = API;
-console.log("API cargado correctamente");
 
-// export { API }; // Comentado para evitar errores 
+// También exportar como módulo ES6 para compatibilidad
+export { API }; 

@@ -1,3 +1,4 @@
+console.log("Iniciando carga de API...");
 // API Client para LlévateloExpress
 const API_BASE_URL = '/api';
 
@@ -412,5 +413,7 @@ function updateAuthUI() {
 // Hacer API disponible globalmente
 window.API = API;
 console.log("API cargado correctamente");
+// Disparar evento personalizado cuando API esté listo
+window.dispatchEvent(new CustomEvent("apiReady"));
 
 // export { API }; // Comentado para evitar errores 

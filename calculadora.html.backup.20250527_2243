@@ -231,30 +231,25 @@
                             </div>
                             <div class="card-body p-4">
                                 <div class="row mb-4">
-                                    <div class="col-md-4 mb-3 mb-md-0">
+                                    <div class="col-md-6 mb-3 mb-md-0">
                                         <div class="form-floating">
                                             <select class="form-select" id="planType">
-                                                <option value="" disabled selected>Selecciona monto de inicial</option>
+                                                <option value="basic">Monto a calcular</option>
+                                                <option value="intermediate" selected>Monto a calcular</option>
+                                                <option value="premium">Monto a calcular</option>
                                             </select>
-                                            <label for="planType">Monto de Inicial</label>
+                                            <label for="planType">Monto Inicial</label>
                                         </div>
                                     </div>
-                                    <div class="col-md-4 mb-3 mb-md-0">
+                                    <div class="col-md-6">
                                         <div class="form-floating">
                                             <select class="form-select" id="financingTerm">
-                                                <option value="" disabled selected>Selecciona plazo</option>
+                                                <option value="6">6 meses</option>
+                                                <option value="12">12 meses</option>
+                                                <option value="18" selected>18 meses</option>
+                                                <option value="24">24 meses</option>
                                             </select>
                                             <label for="financingTerm">Plazo de Financiamiento</label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="form-floating">
-                                            <select class="form-select" id="paymentFrequency">
-                                                <option value="weekly">Semanal</option>
-                                                <option value="biweekly">Quincenal</option>
-                                                <option value="monthly" selected>Mensual</option>
-                                            </select>
-                                            <label for="paymentFrequency">Frecuencia de Pago</label>
                                         </div>
                                     </div>
                                 </div>
@@ -272,7 +267,7 @@
                                                     <li class="mb-2"><strong>Aporte inicial:</strong> <span id="creditoInitialPayment">$0</span></li>
                                                     <li class="mb-2"><strong>Monto a financiar:</strong> <span id="creditoFinanceAmount">$0</span></li>
                                                     <li class="mb-2"><strong>Plazo seleccionado:</strong> <span id="creditoTerm">0 meses</span></li>
-                                                    <li class="mb-2"><strong id="creditoPaymentLabel">Cuota mensual:</strong> <span id="creditoMonthlyPayment">$0</span></li>
+                                                    <li class="mb-2"><strong>Cuota mensual:</strong> <span id="creditoMonthlyPayment">$0</span></li>
                                                     <li><strong>Costo total del crédito:</strong> <span id="creditoTotalCost">$0</span></li>
                                                 </ul>
                                             </div>
@@ -532,9 +527,388 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/calculadora-integrada.js"></script>
     <script src="js/products.js"></script>
     <script src="js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elementos del formulario
+            const financingType = document.querySelectorAll('input[name="financingType"]');
+            const vehicleType = document.getElementById('vehicleType');
+            const vehicleModel = document.getElementById('vehicleModel');
+            const customPriceCheck = document.getElementById('customPriceCheck');
+            const customPriceContainer = document.getElementById('customPriceContainer');
+            const customPrice = document.getElementById('customPrice');
+            const calculateBtn = document.getElementById('calculateBtn');
+            const planType = document.getElementById('planType');
+            
+            // Inicializar formularios
+            const programadaForm = document.getElementById('programadaForm');
+            const creditoForm = document.getElementById('creditoForm');
+            
+            // Mostrar/ocultar formularios según el tipo de financiamiento
+            financingType.forEach(type => {
+                type.addEventListener('change', function() {
+                    if (this.value === 'programada') {
+                        programadaForm.style.display = 'block';
+                        creditoForm.style.display = 'none';
+                    } else {
+                        programadaForm.style.display = 'none';
+                        creditoForm.style.display = 'block';
+                        // Actualizar montos al cambiar a crédito
+                        setTimeout(updatePlanDisplay, 100);
+                    }
+                });
+            });
+            
+            // Manejar el checkbox para ingresar precio personalizado
+            if (customPriceCheck) {
+                customPriceCheck.addEventListener('change', function() {
+                    if (this.checked) {
+                        customPriceContainer.style.display = 'block';
+                        vehicleModelContainer.style.display = 'none';
+                    } else {
+                        customPriceContainer.style.display = 'none';
+                        vehicleModelContainer.style.display = 'block';
+                    }
+                    // Actualizar montos cuando cambia el método de precio
+                    updatePlanDisplay();
+                });
+            }
+            
+            // Cargar modelos disponibles según el tipo de vehículo
+            if (vehicleType && vehicleModel) {
+                // Cargar modelos iniciales
+                populateModelOptions(vehicleType.value);
+                
+                // Actualizar modelos cuando cambie el tipo
+                vehicleType.addEventListener('change', function() {
+                    populateModelOptions(this.value);
+                });
+            }
+            
+            // Manejar botón de cálculo
+            if (calculateBtn) {
+                calculateBtn.addEventListener('click', function() {
+                    // Determinar qué formulario está activo
+                    const activeForm = document.querySelector('input[name="financingType"]:checked').value;
+                    
+                    if (activeForm === 'programada') {
+                        calculateProgramada();
+                    } else {
+                        calculateCredito();
+                    }
+                    
+                    // Actualizar montos después de calcular
+                    updatePlanDisplay();
+                });
+            }
+            
+            // Para actualizar la visualización del plan con montos absolutos
+            function updatePlanDisplay() {
+                // Obtener el valor del vehículo
+                let vehicleValue = 0;
+                
+                if (customPriceCheck && customPriceCheck.checked) {
+                    vehicleValue = parseFloat(customPrice.value);
+                } else if (vehicleModel && vehicleModel.value) {
+                    vehicleValue = parseFloat(vehicleModel.value);
+                } else {
+                    return; // No hay valor del vehículo disponible
+                }
+                
+                // Actualizar textos de opciones con montos absolutos
+                if (planType) {
+                    const options = planType.options;
+                    const basicAmount = (vehicleValue * 0.45).toLocaleString('es-ES');
+                    const intermediateAmount = (vehicleValue * 0.50).toLocaleString('es-ES');
+                    const premiumAmount = (vehicleValue * 0.60).toLocaleString('es-ES');
+                    
+                    options[0].textContent = `$${basicAmount}`;
+                    options[1].textContent = `$${intermediateAmount}`;
+                    options[2].textContent = `$${premiumAmount}`;
+                }
+            }
+            
+            // Agregar eventos para actualizar los montos
+            if (vehicleModel) {
+                vehicleModel.addEventListener('change', updatePlanDisplay);
+            }
+            
+            if (customPrice) {
+                customPrice.addEventListener('input', updatePlanDisplay);
+            }
+            
+            // Verificar si hay un modelo en la URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const modelId = urlParams.get('modelo');
+            if (modelId) {
+                selectModelFromId(modelId);
+                // Actualizar montos después de cargar el modelo
+                setTimeout(updatePlanDisplay, 200);
+            } else {
+                // Inicializar con valores predeterminados si no hay modelo específico
+                setTimeout(updatePlanDisplay, 200);
+            }
+        });
+        
+        // Función para poblar el selector de modelos
+        function populateModelOptions(vehicleCategory) {
+            const vehicleModel = document.getElementById('vehicleModel');
+            if (!vehicleModel) return;
+            
+            // Limpiar opciones actuales
+            vehicleModel.innerHTML = '<option value="" disabled selected>Selecciona un modelo</option>';
+            
+            // Verificar que los productos estén disponibles
+            if (!window.products || !Array.isArray(window.products)) {
+                console.error('No hay productos disponibles');
+                return;
+            }
+            
+            // Filtrar productos por categoría
+            let availableProducts = [];
+            if (vehicleCategory === 'moto') {
+                availableProducts = window.products.filter(product => product.category === 'motocicletas');
+            } else if (vehicleCategory === 'vehiculo') {
+                availableProducts = window.products.filter(product => product.category === 'vehiculos');
+            } else if (vehicleCategory === 'maquinaria') {
+                availableProducts = window.products.filter(product => product.category === 'maquinaria');
+            }
+            
+            // Agregar opciones al selector
+            if (availableProducts.length === 0) {
+                const noOption = document.createElement('option');
+                noOption.textContent = 'No hay modelos disponibles en esta categoría';
+                noOption.disabled = true;
+                vehicleModel.appendChild(noOption);
+            } else {
+                availableProducts.forEach(product => {
+                    const option = document.createElement('option');
+                    option.value = product.price;
+                    option.dataset.id = product.id;
+                    option.dataset.category = product.category;
+                    option.textContent = `${product.brand} ${product.name} - $${product.price.toLocaleString()}`;
+                    vehicleModel.appendChild(option);
+                });
+            }
+        }
+        
+        // Seleccionar modelo por ID (para usar desde URL)
+        function selectModelFromId(modelId) {
+            const id = parseInt(modelId);
+            if (!id) return;
+            
+            // Buscar el producto
+            const product = window.products ? window.products.find(p => p.id === id) : null;
+            if (!product) return;
+            
+            // Establecer el tipo de vehículo correcto
+            const vehicleType = document.getElementById('vehicleType');
+            if (vehicleType) {
+                if (product.category === 'motocicletas') {
+                    vehicleType.value = 'moto';
+                } else if (product.category === 'vehiculos') {
+                    vehicleType.value = 'vehiculo';
+                } else if (product.category === 'maquinaria') {
+                    vehicleType.value = 'maquinaria';
+                }
+                
+                // Actualizar las opciones de modelo
+                populateModelOptions(vehicleType.value);
+                
+                // Esperar a que se carguen las opciones
+                setTimeout(() => {
+                    // Buscar y seleccionar el modelo
+                    const vehicleModel = document.getElementById('vehicleModel');
+                    if (vehicleModel) {
+                        for (let i = 0; i < vehicleModel.options.length; i++) {
+                            if (vehicleModel.options[i].dataset.id == id) {
+                                vehicleModel.selectedIndex = i;
+                                break;
+                            }
+                        }
+                    }
+                }, 100);
+            }
+        }
+        
+        // Calcular para Compra Programada
+        function calculateProgramada() {
+            // Obtener valores del formulario
+            let vehicleValue = 0;
+            
+            if (document.getElementById('customPriceCheck').checked) {
+                vehicleValue = parseFloat(document.getElementById('customPrice').value);
+            } else {
+                const vehicleModel = document.getElementById('vehicleModel');
+                vehicleValue = parseFloat(vehicleModel.value);
+            }
+            
+            const initialContributionPercent = parseFloat(document.getElementById('initialContribution').value);
+            const monthlyPayment = parseFloat(document.getElementById('monthlyPayment').value);
+            const punctuality = document.getElementById('paymentPunctuality').value;
+            
+            // Validar que los valores sean numéricos
+            if (isNaN(vehicleValue) || isNaN(initialContributionPercent) || isNaN(monthlyPayment)) {
+                alert('Por favor, introduce valores válidos');
+                return;
+            }
+            
+            // Calcular valores
+            const initialFee = vehicleValue * 0.05; // 5% cuota inicial
+            const initialContribution = (vehicleValue * initialContributionPercent) / 100; // Aporte inicial
+            const totalInitialPayment = initialFee + initialContribution; // Total pagado inicialmente
+            const remainingToAdjudication = (vehicleValue * 0.45) - totalInitialPayment; // Falta para adjudicación (45%)
+            const monthsToAdjudication = Math.ceil(remainingToAdjudication / monthlyPayment); // Meses hasta adjudicación
+            
+            // Calcular puntos por puntualidad
+            let points = 0;
+            if (punctuality === 'always') {
+                points = monthsToAdjudication * 2; // 2 puntos por mes si siempre paga a tiempo
+            } else if (punctuality === 'mostly') {
+                points = Math.floor(monthsToAdjudication * 1.5); // 1.5 puntos por mes si casi siempre paga a tiempo
+            } else {
+                points = monthsToAdjudication; // 1 punto por mes si a veces se atrasa
+            }
+            
+            // Calcular reducción de meses por puntos
+            const reducedMonths = Math.floor(points / 20); // Cada 20 puntos reduce 1 mes
+            const finalMonthsToAdjudication = Math.max(1, monthsToAdjudication - reducedMonths);
+            
+            // Calcular fechas
+            const today = new Date();
+            const adjudicationDate = new Date(today);
+            adjudicationDate.setMonth(today.getMonth() + monthsToAdjudication);
+            
+            const finalAdjudicationDate = new Date(today);
+            finalAdjudicationDate.setMonth(today.getMonth() + finalMonthsToAdjudication);
+            
+            // Calcular monto post-adjudicación
+            const postAdjudicationAmount = vehicleValue * 0.55; // 55% del valor total
+            
+            // Actualizar la interfaz con los resultados
+            document.getElementById('vehicleValue').textContent = `$${vehicleValue.toLocaleString()}`;
+            document.getElementById('initialFee').textContent = `$${initialFee.toLocaleString()}`;
+            document.getElementById('initialContributionValue').textContent = `$${initialContribution.toLocaleString()}`;
+            document.getElementById('financeAmount').textContent = `$${remainingToAdjudication.toLocaleString()}`;
+            document.getElementById('monthlyPaymentValue').textContent = `$${monthlyPayment.toLocaleString()}`;
+            document.getElementById('postAdjudicationAmount').textContent = `$${postAdjudicationAmount.toLocaleString()}`;
+            
+            document.getElementById('monthsToAdjudication').textContent = monthsToAdjudication;
+            document.getElementById('adjudicationDate').textContent = formatDate(adjudicationDate);
+            document.getElementById('accumulatedPoints').textContent = points;
+            document.getElementById('reducedMonths').textContent = reducedMonths;
+            document.getElementById('finalAdjudicationDate').textContent = formatDate(finalAdjudicationDate);
+            
+            // Actualizar la barra de progreso
+            const initialFeePercentage = 5;
+            const initialContributionPercentage = initialContributionPercent;
+            const monthlyPaymentsPercentage = 45 - initialFeePercentage - initialContributionPercentage;
+            
+            document.getElementById('initialFeeProgress').style.width = `${initialFeePercentage}%`;
+            document.getElementById('initialFeeProgress').textContent = `${initialFeePercentage}%`;
+            
+            document.getElementById('initialContributionProgress').style.width = `${initialContributionPercentage}%`;
+            document.getElementById('initialContributionProgress').textContent = `${initialContributionPercentage}%`;
+            
+            document.getElementById('monthlyPaymentsProgress').style.width = `${monthlyPaymentsPercentage}%`;
+            document.getElementById('monthlyPaymentsProgress').textContent = `${monthlyPaymentsPercentage}%`;
+            
+            // Mostrar resultados
+            document.getElementById('programadaResults').style.display = 'block';
+        }
+        
+        // Calcular para Crédito Inmediato
+        function calculateCredito() {
+            // Obtener valores del formulario
+            let vehicleValue = 0;
+            
+            if (document.getElementById('customPriceCheck').checked) {
+                vehicleValue = parseFloat(document.getElementById('customPrice').value);
+            } else {
+                const vehicleModel = document.getElementById('vehicleModel');
+                vehicleValue = parseFloat(vehicleModel.value);
+            }
+            
+            const planType = document.getElementById('planType').value;
+            const financingTerm = parseInt(document.getElementById('financingTerm').value);
+            
+            // Validar que los valores sean numéricos
+            if (isNaN(vehicleValue) || isNaN(financingTerm)) {
+                alert('Por favor, introduce valores válidos');
+                return;
+            }
+            
+            // Determinar porcentaje inicial según el plan
+            let initialPercentage = 0;
+            
+            if (planType === 'basic') {
+                initialPercentage = 0.45; // 45% inicial
+            } else if (planType === 'intermediate') {
+                initialPercentage = 0.50; // 50% inicial
+            } else {
+                initialPercentage = 0.60; // 60% inicial
+            }
+            
+            // Calcular valores
+            const initialPayment = vehicleValue * initialPercentage;
+            const financeAmount = vehicleValue - initialPayment;
+            
+            // Calcular cuota mensual (simplemente dividiendo el monto entre el plazo)
+            const monthlyPayment = financeAmount / financingTerm;
+            
+            // Calcular costo total
+            const totalPayment = monthlyPayment * financingTerm;
+            const totalCost = initialPayment + totalPayment;
+            
+            // Calcular fechas
+            const today = new Date();
+            const firstPaymentDate = new Date(today);
+            firstPaymentDate.setMonth(today.getMonth() + 1);
+            
+            const payoffDate = new Date(today);
+            payoffDate.setMonth(today.getMonth() + financingTerm);
+            
+            // Actualizar la interfaz con los resultados
+            document.getElementById('creditoVehicleValue').textContent = `$${vehicleValue.toLocaleString()}`;
+            document.getElementById('creditoInitialPayment').textContent = `$${initialPayment.toLocaleString()}`;
+            document.getElementById('creditoFinanceAmount').textContent = `$${financeAmount.toLocaleString()}`;
+            document.getElementById('creditoTerm').textContent = `${financingTerm} meses`;
+            document.getElementById('creditoMonthlyPayment').textContent = `$${monthlyPayment.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
+            document.getElementById('creditoTotalCost').textContent = `$${totalCost.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
+            
+            document.getElementById('creditoFirstPaymentDate').textContent = formatDate(firstPaymentDate);
+            document.getElementById('creditoPayoffDate').textContent = formatDate(payoffDate);
+            
+            // Actualizar beneficio según el plan
+            let benefitText = "";
+            if (planType === 'basic') {
+                benefitText = "Plan con menor inicial y mayor plazo de pago.";
+            } else if (planType === 'intermediate') {
+                benefitText = "Balance perfecto entre inicial y cuotas mensuales.";
+            } else {
+                benefitText = "Mayor inicial con menor plazo y cuotas más bajas.";
+            }
+            document.getElementById('creditoBenefit').textContent = benefitText;
+            
+            // Actualizar la barra de progreso
+            document.getElementById('initialPaymentProgress').style.width = `${initialPercentage * 100}%`;
+            document.getElementById('initialPaymentProgress').textContent = `${(initialPercentage * 100).toFixed(0)}%`;
+            
+            document.getElementById('financedAmountProgress').style.width = `${(1 - initialPercentage) * 100}%`;
+            document.getElementById('financedAmountProgress').textContent = `${((1 - initialPercentage) * 100).toFixed(0)}%`;
+            
+            document.getElementById('progressMidpoint').textContent = `${(initialPercentage * 100).toFixed(0)}%`;
+            
+            // Mostrar resultados
+            document.getElementById('creditoResults').style.display = 'block';
+        }
+        
+        // Función para formatear fechas
+        function formatDate(date) {
+            const options = { day: 'numeric', month: 'long', year: 'numeric' };
+            return date.toLocaleDateString('es-VE', options);
+        }
+    </script>
 </body>
 </html> 

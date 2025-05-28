@@ -96,6 +96,21 @@ async function loginUser(form) {
         console.log("Iniciando sesión con email:", email);
         
         // Llamar a la API para iniciar sesión
+        // Verificar que API esté disponible con reintentos
+        let apiCheckAttempts = 0;
+        while (typeof API === "undefined" && apiCheckAttempts < 10) {
+            console.log("Esperando a que API esté disponible...", apiCheckAttempts + 1);
+            await new Promise(resolve => setTimeout(resolve, 200));
+            apiCheckAttempts++;
+        }
+        
+        if (typeof API === "undefined") {
+            console.error("API no se cargó después de esperar");
+            showErrorMessage("Error del sistema. Por favor, recarga la página.");
+            return;
+        }
+        
+        console.log("API disponible, procediendo con login");
         const result = await API.users.login(email, password);
         
         if (result && result.success) {
