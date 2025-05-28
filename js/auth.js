@@ -9,7 +9,7 @@
  */
 
 // Configuración base
-const API_BASE_URL = '/api';
+// const API_BASE_URL = "/api"; // Ya declarado en api-fixed.js
 
 // --------------------------------------
 // FUNCIONES AUXILIARES DE AUTENTICACIÓN
