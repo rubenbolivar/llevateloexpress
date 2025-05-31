@@ -280,3 +280,6 @@ if DEBUG:
         from .local_settings import *
     except ImportError:
         pass
+# CONFIGURACION UTF-8 EMAILS
+EMAIL_CHARSET = "utf-8"
+FILE_CHARSET = "utf-8"
