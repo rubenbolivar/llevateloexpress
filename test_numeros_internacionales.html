@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de Números Internacionales | LlévateloExpress</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .valid { background-color: #d1e7dd; border: 1px solid #badbcc; }
+        .invalid { background-color: #f8d7da; border: 1px solid #f5c6cb; }
+        .country-flag { font-size: 1.2em; margin-right: 8px; }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white text-center">
+                        <h2><i class="fas fa-globe me-2"></i>Prueba de Números Internacionales</h2>
+                        <p class="mb-0">Verifica que tu número WhatsApp sea aceptado por el sistema</p>
+                    </div>
+                    <div class="card-body">
+                        <!-- Prueba Manual -->
+                        <div class="mb-5">
+                            <h4><i class="fas fa-phone me-2"></i>Prueba tu Número</h4>
+                            <div class="input-group mb-3">
+                                <span class="input-group-text"><i class="fab fa-whatsapp"></i></span>
+                                <input type="tel" class="form-control form-control-lg" id="phoneTest" 
+                                       placeholder="Ej: +52 1553974676, +34 612345678, +1 2125551234">
+                                <button class="btn btn-success" onclick="testMyNumber()">
+                                    <i class="fas fa-check-circle me-1"></i>Probar
+                                </button>
+                            </div>
+                            <div id="testResult" class="test-result" style="display: none;"></div>
+                        </div>
+
+                        <!-- Ejemplos por País -->
+                        <div class="mb-4">
+                            <h4><i class="fas fa-list me-2"></i>Números de Ejemplo por País</h4>
+                            <button class="btn btn-outline-primary" onclick="runCountryTests()">
+                                <i class="fas fa-play me-1"></i>Probar Todos los Ejemplos
+                            </button>
+                        </div>
+                        <div id="countryTestResults"></div>
+
+                        <!-- Enlace al Registro -->
+                        <div class="mt-4 text-center">
+                            <hr>
+                            <p class="text-muted">¿Tu número funciona correctamente?</p>
+                            <a href="registro.html" class="btn btn-primary btn-lg">
+                                <i class="fas fa-user-plus me-2"></i>Ir al Registro
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Misma lógica de validación que en el registro
+        function validatePhone(phone) {
+            const value = phone.trim();
+            
+            // Validación original
+            const originalPattern = /^\+[1-9]\d{0,3}\s?\d{7,12}$/;
+            
+            if (originalPattern.test(value) || value === '') {
+                if (value !== '' && !isPhoneValidForRegistration(value)) {
+                    return { valid: false, message: 'Número no válido para registro.' };
+                } else {
+                    return { valid: true, message: 'Número válido' };
+                }
+            } else {
+                return { valid: false, message: 'Formato inválido.' };
+            }
+        }
+
+        function isPhoneValidForRegistration(phone) {
+            if (phone.startsWith('+58')) return true;
+            
+            const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
+            const numberPart = cleanPhone.slice(1);
+            
+            if (!/^\d+$/.test(numberPart)) return false;
+            if (numberPart.length < 7 || numberPart.length > 15) return false;
+            if (numberPart.charAt(0) === '0') return false;
+            
+            const countryCode = getCountryCodeFromNumber(numberPart);
+            return countryCode && isValidCountryCode(countryCode);
+        }
+
+        function getCountryCodeFromNumber(numberPart) {
+            for (let i = 1; i <= 4 && i <= numberPart.length; i++) {
+                const potentialCode = numberPart.substring(0, i);
+                if (isValidCountryCode(potentialCode)) {
+                    return potentialCode;
+                }
+            }
+            return null;
+        }
+
+        function isValidCountryCode(code) {
+            if (code === '1') return true;
+            
+            const twoDigitCodes = [
+                '20', '27', '30', '31', '32', '33', '34', '36', '39', '40', '41', 
+                '43', '44', '45', '46', '47', '48', '49', '51', '52', '53', '54', 
+                '55', '56', '57', '58', '60', '61', '62', '63', '64', '65', '66', 
+                '81', '82', '84', '86', '90', '91', '92', '93', '94', '95', '98'
+            ];
+            if (twoDigitCodes.includes(code)) return true;
+            
+            const threeDigitCodes = [
+                '212', '213', '216', '218', '220', '221', '222', '223', '224', '225',
+                '226', '227', '228', '229', '230', '231', '232', '233', '234', '235',
+                '236', '237', '238', '239', '240', '241', '242', '243', '244', '245',
+                '246', '247', '248', '249', '250', '251', '252', '253', '254', '255',
+                '256', '257', '258', '260', '261', '262', '263', '264', '265', '266',
+                '267', '268', '269', '290', '291', '297', '298', '299', '350', '351',
+                '352', '353', '354', '355', '356', '357', '358', '359', '370', '371',
+                '372', '373', '374', '375', '376', '377', '378', '380', '381', '382',
+                '383', '385', '386', '387', '389', '420', '421', '423', '500', '501',
+                '502', '503', '504', '505', '506', '507', '508', '509', '590', '591',
+                '592', '593', '594', '595', '596', '597', '598', '599', '670', '672',
+                '673', '674', '675', '676', '677', '678', '679', '680', '681', '682',
+                '683', '684', '685', '686', '687', '688', '689', '690', '691', '692'
+            ];
+            if (threeDigitCodes.includes(code)) return true;
+            
+            const fourDigitCodes = ['1242', '1246', '1264', '1268', '1284', '1340', '1345', '1441', '1473', '1649', '1664', '1670', '1671', '1684', '1721', '1758', '1767', '1784', '1787', '1809', '1829', '1849', '1868', '1869', '1876', '1939'];
+            if (fourDigitCodes.includes(code)) return true;
+            
+            return false;
+        }
+
+        function testMyNumber() {
+            const phone = document.getElementById('phoneTest').value;
+            const result = validatePhone(phone);
+            const resultDiv = document.getElementById('testResult');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = `test-result ${result.valid ? 'valid' : 'invalid'}`;
+            resultDiv.innerHTML = `
+                <strong><i class="fas fa-${result.valid ? 'check-circle' : 'times-circle'} me-2"></i>
+                ${result.valid ? 'VÁLIDO' : 'NO VÁLIDO'}</strong><br>
+                Número: ${phone}<br>
+                ${result.message}
+            `;
+        }
+
+        function runCountryTests() {
+            const testNumbers = [
+                { country: '🇻🇪 Venezuela', number: '+58 4141234567' },
+                { country: '🇲🇽 México', number: '+52 1553974676' },
+                { country: '🇺🇸 Estados Unidos', number: '+1 2125551234' },
+                { country: '🇪🇸 España', number: '+34 612345678' },
+                { country: '🇦🇷 Argentina', number: '+54 11 12345678' },
+                { country: '🇨🇴 Colombia', number: '+57 3001234567' },
+                { country: '🇧🇷 Brasil', number: '+55 11987654321' },
+                { country: '🇨🇱 Chile', number: '+56 912345678' },
+                { country: '🇵🇪 Perú', number: '+51 987654321' },
+                { country: '🇩🇪 Alemania', number: '+49 1571234567' },
+                { country: '🇫🇷 Francia', number: '+33 612345678' },
+                { country: '🇬🇧 Reino Unido', number: '+44 7700123456' },
+                { country: '🇮🇹 Italia', number: '+39 3123456789' },
+                { country: '🇯🇵 Japón', number: '+81 9012345678' },
+                { country: '🇨🇳 China', number: '+86 13812345678' }
+            ];
+
+            let output = '<h5>Resultados de Pruebas por País:</h5>';
+            
+            testNumbers.forEach(test => {
+                const result = validatePhone(test.number);
+                output += `
+                    <div class="test-result ${result.valid ? 'valid' : 'invalid'} d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${test.country}</strong><br>
+                            <code>${test.number}</code>
+                        </div>
+                        <div class="text-end">
+                            <i class="fas fa-${result.valid ? 'check-circle text-success' : 'times-circle text-danger'} fa-2x"></i>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('countryTestResults').innerHTML = output;
+        }
+
+        // Auto-validar mientras se escribe
+        document.getElementById('phoneTest').addEventListener('input', function() {
+            if (this.value.length > 5) { // Solo validar cuando hay suficientes caracteres
+                testMyNumber();
+            }
+        });
+    </script>
+</body>
+</html> 
