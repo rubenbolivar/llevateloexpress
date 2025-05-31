@@ -309,6 +309,236 @@ El proyecto incluye un script `deploy.sh` que automatiza:
 - Dominio configurado apuntando al servidor
 - Puertos 80 y 443 abiertos
 
+## Acceso al Admin
+
+- Local: http://localhost:8000/admin/
+- Producción: https://llevateloexpress.com/admin/
+
+## Flujo de Git y Control de Versiones
+
+### 🎯 Principio Fundamental: VPS como Fuente de Verdad
+
+En este proyecto, el **servidor VPS de producción (203.161.55.87)** es la **fuente de verdad absoluta**. Esto significa que:
+
+- ✅ **VPS** = Estado real y actualizado del sistema en producción
+- ⚠️ **GitHub** = Respaldo y colaboración, se sincroniza desde VPS
+- 💻 **Local** = Desarrollo, se sincroniza desde VPS
+
+### 📋 Configuración de Remotos
+
+Cada desarrollador debe tener configurados **dos remotos**:
+
+```bash
+# Verificar remotos configurados
+git remote -v
+
+# Configuración recomendada:
+origin    ssh://root@203.161.55.87/var/www/llevateloexpress/.git (fetch)
+origin    ssh://root@203.161.55.87/var/www/llevateloexpress/.git (push)
+github    https://github.com/rubenbolivar/llevateloexpress.git (fetch)
+github    https://github.com/rubenbolivar/llevateloexpress.git (push)
+```
+
+**Configurar remotos inicialmente:**
+```bash
+# Clonar desde VPS (fuente de verdad)
+git clone ssh://root@203.161.55.87/var/www/llevateloexpress/.git
+
+# Agregar GitHub como remoto secundario
+git remote add github https://github.com/rubenbolivar/llevateloexpress.git
+```
+
+### 🔄 Flujos de Trabajo Recomendados
+
+#### 1. **Sincronización Diaria (Desarrollo → Producción)**
+
+**Desde tu entorno local:**
+```bash
+# 1. Obtener últimos cambios del VPS
+git fetch origin
+
+# 2. Verificar diferencias
+git log HEAD..origin/main --oneline
+
+# 3. Sincronizar con VPS (fuente de verdad)
+git reset --hard origin/main
+git clean -fd
+
+# 4. Verificar estado limpio
+git status
+```
+
+#### 2. **Subir Cambios al VPS (Desarrollo → VPS)**
+
+**Cuando tengas cambios listos para producción:**
+```bash
+# 1. Hacer commit de tus cambios
+git add .
+git commit -m "feat: descripción del cambio"
+
+# 2. Subir al VPS (fuente de verdad)
+git push origin main
+
+# 3. Conectarse al VPS y aplicar cambios
+ssh root@203.161.55.87
+cd /var/www/llevateloexpress
+sudo systemctl restart llevateloexpress
+sudo systemctl restart nginx
+```
+
+#### 3. **Sincronizar GitHub con VPS**
+
+**Desde el VPS (solo cuando sea necesario actualizar GitHub):**
+```bash
+# Conectarse al servidor
+ssh root@203.161.55.87
+cd /var/www/llevateloexpress
+
+# Configurar credenciales temporalmente (con token PAT)
+git remote set-url github https://TOKEN@github.com/rubenbolivar/llevateloexpress.git
+
+# Subir estado actual a GitHub
+git push --force github main
+
+# Limpiar credenciales
+git remote set-url github https://github.com/rubenbolivar/llevateloexpress.git
+```
+
+### 🚨 Resolución de Conflictos
+
+#### Conflicto: GitHub tiene commits que VPS no tiene
+
+**Solución (VPS siempre gana):**
+```bash
+# Desde el VPS
+cd /var/www/llevateloexpress
+git push --force github main
+```
+
+#### Conflicto: Local no puede hacer push al VPS
+
+**Solución:**
+```bash
+# 1. Respaldar cambios locales
+git stash
+
+# 2. Sincronizar con VPS
+git fetch origin
+git reset --hard origin/main
+
+# 3. Aplicar cambios locales
+git stash pop
+
+# 4. Resolver conflictos si los hay
+git add .
+git commit -m "merge: sincronización con VPS"
+
+# 5. Subir al VPS
+git push origin main
+```
+
+### 📊 Comandos de Verificación
+
+**Verificar estado de sincronización:**
+```bash
+# Ver último commit en cada remoto
+git log --oneline origin/main -1    # VPS
+git log --oneline github/main -1    # GitHub  
+git log --oneline HEAD -1           # Local
+
+# Ver diferencias entre remotos
+git log origin/main..github/main --oneline  # Commits en GitHub que no están en VPS
+git log github/main..origin/main --oneline  # Commits en VPS que no están en GitHub
+```
+
+**Verificar configuración:**
+```bash
+# Ver información de remotos
+git remote show origin
+git remote show github
+
+# Ver ramas trackeadas
+git branch -vv
+```
+
+### 🛡️ Mejores Prácticas
+
+1. **🎯 VPS Primero**: Siempre sincroniza desde el VPS antes de trabajar
+2. **📅 Sincronización Diaria**: Ejecuta `git fetch origin && git reset --hard origin/main` cada día
+3. **🔒 Commits Atómicos**: Haz commits pequeños y descriptivos
+4. **✅ Pruebas Locales**: Verifica que todo funcione antes de subir al VPS
+5. **📝 Mensajes Claros**: Usa mensajes de commit descriptivos con prefijos:
+   - `feat:` para nuevas características
+   - `fix:` para correcciones
+   - `refactor:` para refactorización
+   - `docs:` para documentación
+
+### 🆘 Comandos de Emergencia
+
+**Si el repositorio local está muy desincronizado:**
+```bash
+# Reinicio completo desde VPS
+git fetch origin
+git reset --hard origin/main
+git clean -fdx
+```
+
+**Si necesitas forzar actualización de GitHub:**
+```bash
+# Desde el VPS (requiere token de acceso)
+ssh root@203.161.55.87
+cd /var/www/llevateloexpress
+git push --force github main
+```
+
+### 📋 Checklist de Sincronización
+
+**Antes de trabajar cada día:**
+- [ ] `git fetch origin`
+- [ ] `git status` (verificar estado limpio)
+- [ ] `git reset --hard origin/main` (si hay diferencias)
+- [ ] Verificar que el servidor esté funcionando
+
+**Antes de subir cambios:**
+- [ ] Probar cambios localmente
+- [ ] `git add .` y `git commit`
+- [ ] `git push origin main`
+- [ ] Verificar en producción
+- [ ] Sincronizar GitHub si es necesario
+
+### 🔧 Configuración SSH Recomendada
+
+**Para acceso sin contraseña al VPS:**
+```bash
+# Generar clave SSH (si no existe)
+ssh-keygen -t rsa -b 4096 -C "tu-email@example.com"
+
+# Copiar clave al servidor
+ssh-copy-id root@203.161.55.87
+
+# Configurar SSH config (~/.ssh/config)
+Host llevateloexpress
+    HostName 203.161.55.87
+    User root
+    IdentityFile ~/.ssh/id_rsa
+```
+
+**Uso con configuración SSH:**
+```bash
+# Clonar usando alias
+git clone ssh://llevateloexpress/var/www/llevateloexpress/.git
+
+# Conectarse al servidor
+ssh llevateloexpress
+```
+
+---
+
+## Recursos adicionales
+
+- [DEPLOYMENT_PROTOCOL.md](DEPLOYMENT_PROTOCOL.md): Protocolo detallado de despliegue
+- [ADMIN_FIX_INSTRUCCIONES.md](ADMIN_FIX_INSTRUCCIONES.md): Solución para problemas con el admin en producción 
+
 ## Mantenimiento
 
 ### Actualización de Productos
