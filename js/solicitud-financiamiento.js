@@ -443,7 +443,7 @@ const FinancingRequest = {
 
         try {
             // Preparar datos de la solicitud
-            const requestData = this.prepareRequestData();
+            let requestData = this.prepareRequestData();
             
             // PATCH SEGURO: Normalizar datos antes del envío
             if (typeof window.FinancingDataFixer !== "undefined") {
