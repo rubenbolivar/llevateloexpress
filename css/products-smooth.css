@@ -1,0 +1,158 @@
+/* CSS para transiciones suaves del sistema de productos */
+
+/* Transiciones generales para containers */
+#products-container,
+#featured-products-container {
+    transition: opacity 0.3s ease-in-out;
+}
+
+/* Animación de entrada para tarjetas de productos */
+.product-card {
+    animation: fadeInUp 0.5s ease-out forwards;
+    transform: translateY(20px);
+    opacity: 0;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mejoras para imágenes de productos */
+.product-image {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    background-color: #f8f9fa;
+}
+
+.product-image:hover {
+    transform: scale(1.05);
+}
+
+/* Placeholder para imágenes que están cargando */
+.product-image::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    z-index: 1;
+}
+
+.product-image[src]:not([src=""]) {
+    z-index: 2;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Mejoras para badges y estados */
+.badge {
+    transition: all 0.2s ease;
+}
+
+.btn {
+    transition: all 0.2s ease;
+}
+
+.btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Mejoras para el indicador de carga */
+.loading-indicator {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Responsive design para tarjetas */
+@media (max-width: 768px) {
+    .product-card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Hover effects para tarjetas */
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+/* Mejoras para el contador de productos */
+#productCount {
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Estado de error mejorado */
+.alert {
+    animation: slideInDown 0.5s ease;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mejoras para filtros */
+.form-check-input:checked {
+    transition: all 0.2s ease;
+}
+
+/* Preloader para evitar flash inicial */
+.preloader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease;
+}
+
+.preloader.hidden {
+    opacity: 0;
+    pointer-events: none;
+} 

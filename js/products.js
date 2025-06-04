@@ -1,638 +1,681 @@
-// Datos de productos
-window.products = [
-    {
-        id: 1,
-        name: "Voge Rally 300",
-        category: "motocicletas",
-        brand: "Voge",
-        price: 4500,
-        image: "img/products/300.jpg",
-        description: "La Voge Rally 300 es una motocicleta de aventura ligera que combina versatilidad y rendimiento. Perfecta para quienes buscan una moto capaz tanto en ciudad como en caminos de tierra.",
-        features: [
-            "Motor monocilíndrico de 292cc refrigerado por líquido",
-            "Potencia máxima de 29 HP a 8500 rpm",
-            "Transmisión de 6 velocidades",
-            "Frenos de disco con ABS desconectable",
-            "Suspensión invertida ajustable",
-            "Panel de instrumentos TFT a color",
-            "Iluminación full LED",
-            "Capacidad de tanque: 16 litros"
-        ],
-        specs: {
-            general: [
-                { label: 'Marca', value: 'Voge' },
-                { label: 'Modelo', value: 'Rally 300' },
-                { label: 'Año', value: '2023' },
-                { label: 'Tipo', value: 'Adventure' },
-                { label: 'País de Origen', value: 'China' },
-                { label: 'Garantía', value: '2 años o 20,000 km' },
-                { label: 'Colores disponibles', value: 'Negro, Rojo, Gris' },
-                { label: 'Peso', value: '178 kg' }
-            ],
-            engine: [
-                { label: 'Tipo de motor', value: 'Monocilíndrico 4T, DOHC, 4 válvulas' },
-                { label: 'Cilindrada', value: '292 cc' },
-                { label: 'Potencia máxima', value: '29 HP a 8500 rpm' },
-                { label: 'Torque máximo', value: '25.3 Nm a 6500 rpm' },
-                { label: 'Transmisión', value: '6 velocidades' },
-                { label: 'Sistema de refrigeración', value: 'Líquido' },
-                { label: 'Capacidad de tanque', value: '16 litros' },
-                { label: 'Consumo promedio', value: '3.3 L/100km' }
-            ],
-            comfort: [
-                { label: 'Asiento', value: 'Doble altura, ergonómico' },
-                { label: 'Altura del asiento', value: '825 mm' },
-                { label: 'Panel de instrumentos', value: 'TFT a color de 5"' },
-                { label: 'Iluminación', value: 'Full LED' },
-                { label: 'USB', value: 'Sí, puerto cargador 2.1A' },
-                { label: 'Posición de manejo', value: 'Adventure, semi-erguida' },
-                { label: 'Capacidad de carga', value: '12 kg' },
-                { label: 'Parabrisas', value: 'Ajustable 3 posiciones' }
-            ],
-            safety: [
-                { label: 'Freno delantero', value: 'Disco 300mm, pinza de 4 pistones, ABS' },
-                { label: 'Freno trasero', value: 'Disco 240mm, pinza de 1 pistón, ABS' },
-                { label: 'Sistema de frenos', value: 'Hidráulico, doble disco, ABS desconectable' },
-                { label: 'ABS', value: 'Bosch 9.1 MB, desconectable' },
-                { label: 'Control de tracción', value: 'No disponible' },
-                { label: 'Suspensión delantera', value: 'Horquilla invertida 41mm, ajustable' },
-                { label: 'Suspensión trasera', value: 'Monoamortiguador con depósito separado' },
-                { label: 'Tipo de suspensión', value: 'Invertida delantera, monoamortiguador trasero' },
-                { label: 'Recorrido suspensiones', value: '160mm delantero / 150mm trasero' },
-                { label: 'Neumático delantero', value: '100/90-19' },
-                { label: 'Neumático trasero', value: '140/80-17' },
-                { label: 'Tamaño de ruedas', value: '19" delantera, 17" trasera' }
-            ]
-        },
-        stock: 8,
-        featured: true
-    },
-    {
-        id: 2,
-        name: "Voge 525 DSX",
-        category: "motocicletas",
-        brand: "Voge",
-        price: 6800,
-        image: "img/products/525dsx.jpg",
-        description: "La Voge 525 DSX es una motocicleta trail de media cilindrada que ofrece excelentes prestaciones para aventuras on/off-road. Su diseño moderno y equipamiento premium la hacen destacar en su segmento.",
-        features: [
-            "Motor bicilíndrico en línea de 494cc",
-            "Potencia de 46.2 HP a 8500 rpm",
-            "Transmisión de 6 velocidades",
-            "Sistema de frenos ABS Bosch de doble canal",
-            "Suspensión KYB totalmente ajustable",
-            "Pantalla TFT de 7 pulgadas",
-            "Modos de conducción",
-            "Control de tracción"
-        ],
-        specs: {
-            general: [
-                { label: 'Marca', value: 'Voge' },
-                { label: 'Modelo', value: '525 DSX' },
-                { label: 'Año', value: '2023' },
-                { label: 'Tipo', value: 'Trail Adventure' },
-                { label: 'País de Origen', value: 'China' },
-                { label: 'Garantía', value: '2 años o 20,000 km' },
-                { label: 'Colores disponibles', value: 'Negro, Azul, Gris mate' },
-                { label: 'Peso', value: '205 kg' }
-            ],
-            engine: [
-                { label: 'Tipo de motor', value: 'Bicilíndrico en línea, 4T, DOHC, 8 válvulas' },
-                { label: 'Cilindrada', value: '494 cc' },
-                { label: 'Potencia máxima', value: '46.2 HP a 8500 rpm' },
-                { label: 'Torque máximo', value: '45 Nm a 7000 rpm' },
-                { label: 'Transmisión', value: '6 velocidades' },
-                { label: 'Sistema de refrigeración', value: 'Líquido' },
-                { label: 'Capacidad de tanque', value: '19 litros' },
-                { label: 'Consumo promedio', value: '4.1 L/100km' }
-            ],
-            comfort: [
-                { label: 'Asiento', value: 'Ergonómico, tapizado antideslizante' },
-                { label: 'Altura del asiento', value: '840 mm' },
-                { label: 'Panel de instrumentos', value: 'TFT a color de 7 pulgadas' },
-                { label: 'Iluminación', value: 'Full LED con DRL' },
-                { label: 'USB', value: 'Sí, puerto cargador tipo C' },
-                { label: 'Posición de manejo', value: 'Adventure/Touring' },
-                { label: 'Capacidad de carga', value: '18 kg' },
-                { label: 'Parabrisas', value: 'Regulable en altura' }
-            ],
-            safety: [
-                { label: 'Freno delantero', value: 'Doble disco 320mm, pinzas radiales de 4 pistones' },
-                { label: 'Freno trasero', value: 'Disco 260mm, pinza flotante de 2 pistones' },
-                { label: 'Sistema de frenos', value: 'Hidráulico, doble disco delantero, ABS en ambos ejes' },
-                { label: 'ABS', value: 'Bosch 9.1 MB, modos Road/Off-road' },
-                { label: 'Control de tracción', value: 'Sí, desconectable, 2 modos' },
-                { label: 'Suspensión delantera', value: 'KYB invertida de 43mm, totalmente ajustable' },
-                { label: 'Suspensión trasera', value: 'KYB monoamortiguador con depósito separado' },
-                { label: 'Tipo de suspensión', value: 'Invertida delantera, monoamortiguador trasero, ambas ajustables' },
-                { label: 'Recorrido suspensiones', value: '170mm delantero / 175mm trasero' },
-                { label: 'Neumático delantero', value: '110/80-R19' },
-                { label: 'Neumático trasero', value: '150/70-R17' },
-                { label: 'Tamaño de ruedas', value: '19" delantera, 17" trasera' }
-            ]
-        },
-        stock: 5,
-        featured: true
-    },
-    {
-        id: 3,
-        name: "Voge AC 525 X",
-        category: "motocicletas",
-        brand: "Voge",
-        price: 7200,
-        image: "img/products/ac525.jpg",
-        description: "La Voge AC 525 X representa la evolución en el segmento adventure touring. Con su diseño sofisticado y tecnología avanzada, ofrece el equilibrio perfecto entre confort y capacidad todoterreno.",
-        features: [
-            "Motor bicilíndrico de 494cc refrigerado por líquido",
-            "48 HP de potencia máxima",
-            "Transmisión de 6 velocidades con embrague anti-rebote",
-            "Sistema de frenos ABS Bosch con modo off-road",
-            "Suspensión KYB con recorrido extendido",
-            "Pantalla TFT con conectividad bluetooth",
-            "Control de crucero",
-            "Protectores de motor y manos incluidos"
-        ],
-        specs: {
-            general: [
-                { label: 'Marca', value: 'Voge' },
-                { label: 'Modelo', value: 'AC 525 X' },
-                { label: 'Año', value: '2023' },
-                { label: 'Tipo', value: 'Adventure Touring' },
-                { label: 'País de Origen', value: 'China' },
-                { label: 'Garantía', value: '2 años o 20,000 km' },
-                { label: 'Colores disponibles', value: 'Negro, Rojo Rally, Azul' },
-                { label: 'Peso', value: '215 kg' }
-            ],
-            engine: [
-                { label: 'Tipo de motor', value: 'Bicilíndrico en línea, 4T, DOHC, 8 válvulas' },
-                { label: 'Cilindrada', value: '494 cc' },
-                { label: 'Potencia máxima', value: '48 HP a 8750 rpm' },
-                { label: 'Torque máximo', value: '47 Nm a 7000 rpm' },
-                { label: 'Transmisión', value: '6 velocidades con embrague anti-rebote' },
-                { label: 'Sistema de refrigeración', value: 'Líquido' },
-                { label: 'Capacidad de tanque', value: '21 litros' },
-                { label: 'Consumo promedio', value: '4.3 L/100km' }
-            ],
-            comfort: [
-                { label: 'Asiento', value: 'Touring, altura ajustable 830-850 mm' },
-                { label: 'Altura del asiento', value: '830-850 mm (ajustable)' },
-                { label: 'Panel de instrumentos', value: 'TFT a color de 7" con conectividad bluetooth' },
-                { label: 'Iluminación', value: 'Full LED con iluminación adaptativa en curvas' },
-                { label: 'USB', value: 'Sí, dos puertos (tipo A y tipo C)' },
-                { label: 'Posición de manejo', value: 'Touring, protegida del viento' },
-                { label: 'Capacidad de carga', value: '25 kg' },
-                { label: 'Parabrisas', value: 'Regulable en altura y ángulo' }
-            ],
-            safety: [
-                { label: 'Freno delantero', value: 'Doble disco 320mm, pinzas Brembo monobloque de 4 pistones' },
-                { label: 'Freno trasero', value: 'Disco 260mm, pinza Brembo de 2 pistones' },
-                { label: 'Sistema de frenos', value: 'Hidráulico, Brembo, doble disco delantero, ABS de triple modo' },
-                { label: 'ABS', value: 'Bosch 9.3 MP, modos Road/Off-road/Desconectable' },
-                { label: 'Control de tracción', value: 'Sí, 3 modos + desconectable' },
-                { label: 'Suspensión delantera', value: 'KYB invertida de 43mm, totalmente ajustable, 170mm recorrido' },
-                { label: 'Suspensión trasera', value: 'KYB monoamortiguador con depósito separado, 180mm recorrido' },
-                { label: 'Tipo de suspensión', value: 'Invertida delantera, monoamortiguador trasero, ambas ajustables' },
-                { label: 'Recorrido suspensiones', value: '170mm delantero / 180mm trasero' },
-                { label: 'Neumático delantero', value: '120/70-R19' },
-                { label: 'Neumático trasero', value: '170/60-R17' },
-                { label: 'Tamaño de ruedas', value: '19" delantera, 17" trasera' }
-            ]
-        },
-        stock: 6,
-        featured: true
-    },
-    {
-        id: 4,
-        name: "Suzuki DR 650",
-        category: "motocicletas",
-        brand: "Suzuki",
-        price: 8500,
-        image: "img/products/dr650.jpg",
-        description: "La legendaria Suzuki DR 650 es sinónimo de confiabilidad y versatilidad. Una moto dual-purpose que ha probado su valor tanto en largas travesías como en el uso diario.",
-        features: [
-            "Motor monocilíndrico SOHC de 644cc refrigerado por aire",
-            "Potencia de 46 HP",
-            "Transmisión de 5 velocidades",
-            "Freno de disco delantero y trasero",
-            "Suspensión de largo recorrido",
-            "Altura de asiento ajustable",
-            "Peso en seco de 166 kg",
-            "Tanque de combustible de 13 litros"
-        ],
-        specs: {
-            general: [
-                { label: 'Marca', value: 'Suzuki' },
-                { label: 'Modelo', value: 'DR 650' },
-                { label: 'Año', value: '2023' },
-                { label: 'Tipo', value: 'Dual Purpose' },
-                { label: 'País de Origen', value: 'Japón' },
-                { label: 'Garantía', value: '1 año sin límite de kilometraje' },
-                { label: 'Colores disponibles', value: 'Blanco, Negro' },
-                { label: 'Peso', value: '166 kg (seco)' }
-            ],
-            engine: [
-                { label: 'Tipo de motor', value: 'Monocilíndrico SOHC, 4T, 4 válvulas' },
-                { label: 'Cilindrada', value: '644 cc' },
-                { label: 'Potencia máxima', value: '46 HP a 6400 rpm' },
-                { label: 'Torque máximo', value: '58 Nm a 5000 rpm' },
-                { label: 'Transmisión', value: '5 velocidades' },
-                { label: 'Sistema de refrigeración', value: 'Aire/aceite' },
-                { label: 'Capacidad de tanque', value: '13 litros' },
-                { label: 'Consumo promedio', value: '4.5 L/100km' }
-            ],
-            comfort: [
-                { label: 'Asiento', value: 'Altura ajustable 840-870 mm' },
-                { label: 'Altura del asiento', value: '840-870 mm (ajustable)' },
-                { label: 'Panel de instrumentos', value: 'Analógico' },
-                { label: 'Iluminación', value: 'Halógena' },
-                { label: 'USB', value: 'No disponible de serie' },
-                { label: 'Posición de manejo', value: 'Erguida, off-road' },
-                { label: 'Capacidad de carga', value: '20 kg' },
-                { label: 'Parabrisas', value: 'No incluido de serie' }
-            ],
-            safety: [
-                { label: 'Freno delantero', value: 'Disco 290mm, pinza de 2 pistones' },
-                { label: 'Freno trasero', value: 'Disco 240mm, pinza de 1 pistón' },
-                { label: 'Sistema de frenos', value: 'Hidráulico, disco simple en ambos ejes, sin ABS' },
-                { label: 'ABS', value: 'No disponible' },
-                { label: 'Control de tracción', value: 'No disponible' },
-                { label: 'Suspensión delantera', value: 'Telescópica convencional, 260mm recorrido' },
-                { label: 'Suspensión trasera', value: 'Monoamortiguador con sistema de bieletas, 280mm recorrido' },
-                { label: 'Tipo de suspensión', value: 'Convencional delantera, monoamortiguador trasero' },
-                { label: 'Recorrido suspensiones', value: '260mm delantero / 280mm trasero' },
-                { label: 'Neumático delantero', value: '90/90-21' },
-                { label: 'Neumático trasero', value: '120/90-17' },
-                { label: 'Tamaño de ruedas', value: '21" delantera, 17" trasera' }
-            ]
-        },
-        stock: 4,
-        featured: true
-    },
-    {
-        id: 5,
-        name: "Suzuki GN 125",
-        category: "motocicletas",
-        brand: "Suzuki",
-        price: 2200,
-        image: "img/products/gn125.jpg",
-        description: "La Suzuki GN 125 es una motocicleta clásica ideal para principiantes y uso urbano. Su diseño atemporal, bajo consumo y fácil mantenimiento la han convertido en un referente de su categoría.",
-        features: [
-            "Motor monocilíndrico de 124cc refrigerado por aire",
-            "Potencia de 12.5 HP a 9500 rpm",
-            "Transmisión de 5 velocidades",
-            "Freno de disco delantero y tambor trasero",
-            "Arranque eléctrico y por patada",
-            "Consumo aproximado de 2.2L/100km",
-            "Peso en orden de marcha: 113 kg",
-            "Capacidad de tanque: 10.5 litros"
-        ],
-        specs: {
-            general: [
-                { label: 'Marca', value: 'Suzuki' },
-                { label: 'Modelo', value: 'GN 125' },
-                { label: 'Año', value: '2023' },
-                { label: 'Tipo', value: 'Street / Commuter' },
-                { label: 'País de Origen', value: 'Japón' },
-                { label: 'Garantía', value: '1 año sin límite de kilometraje' },
-                { label: 'Colores disponibles', value: 'Negro, Rojo, Azul' },
-                { label: 'Peso', value: '113 kg' }
-            ],
-            engine: [
-                { label: 'Tipo de motor', value: 'Monocilíndrico, 4T, SOHC, 2 válvulas' },
-                { label: 'Cilindrada', value: '124 cc' },
-                { label: 'Potencia máxima', value: '12.5 HP a 9500 rpm' },
-                { label: 'Torque máximo', value: '9.8 Nm a 8000 rpm' },
-                { label: 'Transmisión', value: '5 velocidades' },
-                { label: 'Sistema de refrigeración', value: 'Aire' },
-                { label: 'Capacidad de tanque', value: '10.5 litros' },
-                { label: 'Consumo promedio', value: '2.2 L/100km' }
-            ],
-            comfort: [
-                { label: 'Asiento', value: 'Biplaza, estilo clásico' },
-                { label: 'Altura del asiento', value: '770 mm' },
-                { label: 'Panel de instrumentos', value: 'Analógico, velocímetro y tacómetro' },
-                { label: 'Iluminación', value: 'Halógena' },
-                { label: 'USB', value: 'No disponible de serie' },
-                { label: 'Posición de manejo', value: 'Erguida, urbana' },
-                { label: 'Capacidad de carga', value: '10 kg' },
-                { label: 'Parabrisas', value: 'No incluido' }
-            ],
-            safety: [
-                { label: 'Freno delantero', value: 'Disco 240mm, pinza de 2 pistones' },
-                { label: 'Freno trasero', value: 'Tambor 130mm' },
-                { label: 'Sistema de frenos', value: 'Hidráulico delantero, mecánico trasero' },
-                { label: 'ABS', value: 'No disponible' },
-                { label: 'Control de tracción', value: 'No disponible' },
-                { label: 'Suspensión delantera', value: 'Horquilla telescópica convencional' },
-                { label: 'Suspensión trasera', value: 'Doble amortiguador con precarga ajustable' },
-                { label: 'Tipo de suspensión', value: 'Convencional delantera, doble amortiguador trasero' },
-                { label: 'Recorrido suspensiones', value: '120mm delantero / 95mm trasero' },
-                { label: 'Neumático delantero', value: '2.75-18' },
-                { label: 'Neumático trasero', value: '3.50-16' },
-                { label: 'Tamaño de ruedas', value: '18" delantera, 16" trasera' }
-            ]
-        },
-        stock: 12,
-        featured: true
-    },
-    {
-        id: 6,
-        name: "Voge SR4",
-        category: "motocicletas",
-        brand: "Voge",
-        price: 5500,
-        image: "img/products/sr4.jpg",
-        description: "La Voge SR4 es una motocicleta deportiva que combina estilo y rendimiento. Su diseño moderno y tecnología avanzada la convierten en una opción atractiva para los amantes de las motos deportivas.",
-        features: [
-            "Motor bicilíndrico en línea de 350cc",
-            "Potencia de 42.5 HP a 9000 rpm",
-            "Transmisión de 6 velocidades",
-            "Sistema de frenos ABS de doble canal",
-            "Suspensión invertida ajustable",
-            "Pantalla TFT a color",
-            "Iluminación full LED",
-            "Modos de conducción seleccionables"
-        ],
-        specs: {
-            general: [
-                { label: 'Marca', value: 'Voge' },
-                { label: 'Modelo', value: 'SR4' },
-                { label: 'Año', value: '2023' },
-                { label: 'Tipo', value: 'Sport' },
-                { label: 'País de Origen', value: 'China' },
-                { label: 'Garantía', value: '2 años o 20,000 km' },
-                { label: 'Colores disponibles', value: 'Negro, Rojo, Blanco' },
-                { label: 'Peso', value: '185 kg' }
-            ],
-            engine: [
-                { label: 'Tipo de motor', value: 'Bicilíndrico en línea, 4T, DOHC, 8 válvulas' },
-                { label: 'Cilindrada', value: '350 cc' },
-                { label: 'Potencia máxima', value: '42.5 HP a 9000 rpm' },
-                { label: 'Torque máximo', value: '35 Nm a 7500 rpm' },
-                { label: 'Transmisión', value: '6 velocidades' },
-                { label: 'Sistema de refrigeración', value: 'Líquido' },
-                { label: 'Capacidad de tanque', value: '15 litros' },
-                { label: 'Consumo promedio', value: '3.8 L/100km' }
-            ],
-            comfort: [
-                { label: 'Asiento', value: 'Deportivo biplaza' },
-                { label: 'Altura del asiento', value: '810 mm' },
-                { label: 'Panel de instrumentos', value: 'TFT a color de 5"' },
-                { label: 'Iluminación', value: 'Full LED' },
-                { label: 'USB', value: 'Sí, puerto cargador tipo C' },
-                { label: 'Posición de manejo', value: 'Deportiva, semi-inclinada' },
-                { label: 'Capacidad de carga', value: '8 kg' },
-                { label: 'Parabrisas', value: 'Deportivo aerodinámico' }
-            ],
-            safety: [
-                { label: 'Freno delantero', value: 'Doble disco 300mm, pinzas radiales de 4 pistones' },
-                { label: 'Freno trasero', value: 'Disco 240mm, pinza flotante de 1 pistón' },
-                { label: 'Sistema de frenos', value: 'Hidráulico, doble disco delantero, ABS en ambos ejes' },
-                { label: 'ABS', value: 'Bosch 9.1 MB, doble canal' },
-                { label: 'Control de tracción', value: 'Sí, 2 modos + desconectable' },
-                { label: 'Suspensión delantera', value: 'Horquilla invertida de 41mm, ajustable' },
-                { label: 'Suspensión trasera', value: 'Monoamortiguador ajustable en precarga' },
-                { label: 'Tipo de suspensión', value: 'Invertida delantera, monoamortiguador trasero' },
-                { label: 'Recorrido suspensiones', value: '140mm delantero / 130mm trasero' },
-                { label: 'Neumático delantero', value: '120/70-ZR17' },
-                { label: 'Neumático trasero', value: '160/60-ZR17' },
-                { label: 'Tamaño de ruedas', value: '17" delantera, 17" trasera' }
-            ]
-        },
-        stock: 7,
-        featured: true
-    },
-    {
-        id: 7,
-        name: "Suzuki V-Strom 250",
-        category: "motocicletas",
-        brand: "Suzuki",
-        price: 5800,
-        image: "img/products/vstrom.jpg",
-        description: "La Suzuki V-Strom 250 es una aventurera ligera que hereda el ADN de la familia V-Strom. Perfecta para iniciarse en el mundo adventure, ofrece comodidad y versatilidad en un paquete accesible.",
-        features: [
-            "Motor bicilíndrico paralelo de 248cc",
-            "Potencia de 25 HP a 8000 rpm",
-            "Transmisión de 6 velocidades",
-            "Sistema ABS de serie",
-            "Suspensión telescópica delantera",
-            "Panel LCD multifunción",
-            "Parabrisas ajustable",
-            "Capacidad de tanque: 17.3 litros"
-        ],
-        specs: {
-            general: [
-                { label: 'Marca', value: 'Suzuki' },
-                { label: 'Modelo', value: 'V-Strom 250' },
-                { label: 'Año', value: '2023' },
-                { label: 'Tipo', value: 'Adventure' },
-                { label: 'País de Origen', value: 'Japón' },
-                { label: 'Garantía', value: '2 años o 24,000 km' },
-                { label: 'Colores disponibles', value: 'Amarillo, Negro, Gris' },
-                { label: 'Peso', value: '188 kg' }
-            ],
-            engine: [
-                { label: 'Tipo de motor', value: 'Bicilíndrico paralelo, 4T, SOHC, 4 válvulas' },
-                { label: 'Cilindrada', value: '248 cc' },
-                { label: 'Potencia máxima', value: '25 HP a 8000 rpm' },
-                { label: 'Torque máximo', value: '23.4 Nm a 6500 rpm' },
-                { label: 'Transmisión', value: '6 velocidades' },
-                { label: 'Sistema de refrigeración', value: 'Líquido' },
-                { label: 'Capacidad de tanque', value: '17.3 litros' },
-                { label: 'Consumo promedio', value: '3.1 L/100km' }
-            ],
-            comfort: [
-                { label: 'Asiento', value: 'Biplaza escalonado' },
-                { label: 'Altura del asiento', value: '800 mm' },
-                { label: 'Panel de instrumentos', value: 'LCD multifunción' },
-                { label: 'Iluminación', value: 'LED (posición) y halógena (principal)' },
-                { label: 'USB', value: 'Sí, puerto cargador' },
-                { label: 'Posición de manejo', value: 'Erguida, confortable' },
-                { label: 'Capacidad de carga', value: '15 kg' },
-                { label: 'Parabrisas', value: 'Ajustable en 3 posiciones' }
-            ],
-            safety: [
-                { label: 'Freno delantero', value: 'Disco 290mm, pinza de 2 pistones' },
-                { label: 'Freno trasero', value: 'Disco 240mm, pinza de 1 pistón' },
-                { label: 'Sistema de frenos', value: 'Hidráulico, disco simple en ambos ejes, ABS' },
-                { label: 'ABS', value: 'Bosch, doble canal' },
-                { label: 'Control de tracción', value: 'No disponible' },
-                { label: 'Suspensión delantera', value: 'Horquilla telescópica convencional, 120mm recorrido' },
-                { label: 'Suspensión trasera', value: 'Monoamortiguador con sistema de bieletas, 125mm recorrido' },
-                { label: 'Tipo de suspensión', value: 'Convencional delantera, monoamortiguador trasero' },
-                { label: 'Recorrido suspensiones', value: '120mm delantero / 125mm trasero' },
-                { label: 'Neumático delantero', value: '110/80-17' },
-                { label: 'Neumático trasero', value: '140/70-17' },
-                { label: 'Tamaño de ruedas', value: '17" delantera, 17" trasera' }
-            ]
-        },
-        stock: 9,
-        featured: true
-    }
-];
+// Sistema de productos dinámico - Consume API de Django REST Framework
+// Versión 2.0 - Migración de datos estáticos a API dinámica
 
-// Asignar a una variable global normal para compatibilidad con el código existente
-const products = window.products;
+// Variables globales para almacenar datos de la API
+window.products = [];
+window.categories = [];
+let isDataLoaded = false;
 
-// Cargar productos destacados en la página principal
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('[products.js] DOM cargado, productos disponibles:', window.products.length);
-    
-    const featuredContainer = document.getElementById('featured-products-container');
-    
-    if(featuredContainer) {
-        console.log('[products.js] Cargando productos destacados');
-        // Filtrar productos destacados
-        const featuredProducts = window.products.filter(product => product.featured);
+// Configuración de la API
+const PRODUCTS_API_BASE_URL = '/api/products';
+const API_ENDPOINTS = {
+    categories: `${PRODUCTS_API_BASE_URL}/categories/`,
+    products: `${PRODUCTS_API_BASE_URL}/products/`,
+    productDetail: (id) => `${PRODUCTS_API_BASE_URL}/products/${id}/`
+};
+
+// Función para cargar categorías desde la API
+async function loadCategories() {
+    try {
+        console.log('[products-dynamic.js] Cargando categorías desde API...');
+        const response = await fetch(API_ENDPOINTS.categories);
         
-        // Generar HTML para cada producto
-        featuredProducts.forEach(product => {
-            const productCard = createProductCard(product);
-            featuredContainer.appendChild(productCard);
-        });
+        if (!response.ok) {
+            throw new Error(`Error al cargar categorías: ${response.status}`);
+        }
         
-        // Configurar filtros
-        setupFilters();
+        const data = await response.json();
+        window.categories = data.results || data;
+        console.log('[products-dynamic.js] Categorías cargadas:', window.categories.length);
+        return window.categories;
+    } catch (error) {
+        console.error('[products-dynamic.js] Error cargando categorías:', error);
+        return [];
     }
-});
+}
 
-// Crear tarjeta de producto
+// Función para cargar productos desde la API (TODAS las páginas)
+async function loadProducts() {
+    try {
+        console.log('[products-dynamic.js] Cargando productos desde API...');
+        
+        let allProducts = [];
+        let currentUrl = API_ENDPOINTS.products;
+        let pageCount = 0;
+        
+        // Cargar todas las páginas paginadas
+        while (currentUrl) {
+            pageCount++;
+            console.log(`[products-dynamic.js] Cargando página ${pageCount}: ${currentUrl}`);
+            
+            const response = await fetch(currentUrl);
+            
+            if (!response.ok) {
+                throw new Error(`Error al cargar productos página ${pageCount}: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            const pageProducts = data.results || data;
+            
+            // Agregar productos de esta página al array total
+            allProducts = allProducts.concat(pageProducts);
+            console.log(`[products-dynamic.js] Página ${pageCount} cargada: ${pageProducts.length} productos`);
+            
+            // Verificar si hay siguiente página
+            currentUrl = data.next;
+        }
+        
+        console.log(`[products-dynamic.js] Total de páginas cargadas: ${pageCount}`);
+        console.log(`[products-dynamic.js] Total de productos obtenidos: ${allProducts.length}`);
+        
+        // Transformar todos los datos de la API al formato esperado por el frontend
+        window.products = allProducts.map(transformProductFromAPI);
+        console.log('[products-dynamic.js] Productos cargados y transformados:', window.products.length);
+        return window.products;
+    } catch (error) {
+        console.error('[products-dynamic.js] Error cargando productos:', error);
+        return [];
+    }
+}
+
+// Función para transformar un producto de la API al formato del frontend
+function transformProductFromAPI(apiProduct) {
+    console.log('🔄 [TRANSFORM] Iniciando transformación para:', apiProduct.name);
+    console.log('🔄 [TRANSFORM] Datos crudos de API:', {
+        specs_general: apiProduct.specs_general ? apiProduct.specs_general.substring(0, 100) + '...' : 'null',
+        specs_engine: apiProduct.specs_engine ? apiProduct.specs_engine.substring(0, 100) + '...' : 'null',
+        features: apiProduct.features ? apiProduct.features.substring(0, 100) + '...' : 'null'
+    });
+    
+    // Parsear especificaciones técnicas desde los campos separados de la API
+    let specs = {};
+    
+    // Procesar specs_general
+    if (apiProduct.specs_general) {
+        try {
+            console.log('🔄 [TRANSFORM] Parseando specs_general...');
+            console.log('🔄 [TRANSFORM] specs_general tipo:', typeof apiProduct.specs_general);
+            console.log('🔄 [TRANSFORM] specs_general raw:', apiProduct.specs_general.substring(0, 200));
+            
+            specs.general = typeof apiProduct.specs_general === 'string' ? 
+                JSON.parse(apiProduct.specs_general) : apiProduct.specs_general;
+                
+            console.log('✅ [TRANSFORM] specs_general parseado:', specs.general?.length || 0, 'items');
+            console.log('✅ [TRANSFORM] Primer item specs_general:', specs.general?.[0]);
+        } catch (e) {
+            console.error('❌ [TRANSFORM] Error parseando specs_general:', e);
+            console.error('❌ [TRANSFORM] Datos problemáticos:', apiProduct.specs_general);
+            specs.general = [];
+        }
+    } else {
+        console.log('⚠️ [TRANSFORM] specs_general no disponible');
+        specs.general = [];
+    }
+    
+    // Procesar specs_engine
+    if (apiProduct.specs_engine) {
+        try {
+            console.log('🔄 [TRANSFORM] Parseando specs_engine...');
+            specs.engine = typeof apiProduct.specs_engine === 'string' ? 
+                JSON.parse(apiProduct.specs_engine) : apiProduct.specs_engine;
+            console.log('✅ [TRANSFORM] specs_engine parseado:', specs.engine?.length || 0, 'items');
+        } catch (e) {
+            console.error('❌ [TRANSFORM] Error parseando specs_engine:', e);
+            specs.engine = [];
+        }
+    } else {
+        specs.engine = [];
+    }
+    
+    // Procesar specs_comfort
+    if (apiProduct.specs_comfort) {
+        try {
+            console.log('🔄 [TRANSFORM] Parseando specs_comfort...');
+            specs.comfort = typeof apiProduct.specs_comfort === 'string' ? 
+                JSON.parse(apiProduct.specs_comfort) : apiProduct.specs_comfort;
+            console.log('✅ [TRANSFORM] specs_comfort parseado:', specs.comfort?.length || 0, 'items');
+        } catch (e) {
+            console.error('❌ [TRANSFORM] Error parseando specs_comfort:', e);
+            specs.comfort = [];
+        }
+    } else {
+        specs.comfort = [];
+    }
+    
+    // Procesar specs_safety
+    if (apiProduct.specs_safety) {
+        try {
+            console.log('🔄 [TRANSFORM] Parseando specs_safety...');
+            specs.safety = typeof apiProduct.specs_safety === 'string' ? 
+                JSON.parse(apiProduct.specs_safety) : apiProduct.specs_safety;
+            console.log('✅ [TRANSFORM] specs_safety parseado:', specs.safety?.length || 0, 'items');
+        } catch (e) {
+            console.error('❌ [TRANSFORM] Error parseando specs_safety:', e);
+            specs.safety = [];
+        }
+    } else {
+        specs.safety = [];
+    }
+    
+    // Parsear características si vienen como string JSON
+    let features = [];
+    if (typeof apiProduct.features === 'string') {
+        try {
+            console.log('🔄 [TRANSFORM] Parseando features...');
+            features = JSON.parse(apiProduct.features);
+            console.log('✅ [TRANSFORM] features parseado:', features?.length || 0, 'items');
+        } catch (e) {
+            console.error('❌ [TRANSFORM] Error parseando features:', e);
+            features = [];
+        }
+    } else if (Array.isArray(apiProduct.features)) {
+        features = apiProduct.features;
+    }
+    
+    // Manejar URLs de imagen - ahora todas están en media/products/
+    let imageUrl = apiProduct.image || 'img/products/default.jpg';
+    
+    // Si la imagen viene del API con ruta relativa products/filename.jpg
+    if (imageUrl.startsWith('products/')) {
+        imageUrl = `media/${imageUrl}`;
+    }
+    
+    // Si ya tiene el prefijo media/, mantenerla
+    if (imageUrl.startsWith('media/products/')) {
+        // Ya está correcta
+    }
+    
+    // Si viene con dominio completo, hacer relativa
+    if (imageUrl.startsWith('https://llevateloexpress.com/')) {
+        imageUrl = imageUrl.replace('https://llevateloexpress.com/', '');
+    }
+    
+    // Log final de debugging
+    console.log(`🎯 [TRANSFORM] RESULTADO FINAL para ${apiProduct.name}:`);
+    console.log(`   - specs.general: ${specs.general?.length || 0} items`);
+    console.log(`   - specs.engine: ${specs.engine?.length || 0} items`);
+    console.log(`   - specs.comfort: ${specs.comfort?.length || 0} items`);
+    console.log(`   - specs.safety: ${specs.safety?.length || 0} items`);
+    console.log(`   - features: ${features.length} items`);
+    
+    return {
+        id: apiProduct.id,
+        name: apiProduct.name,
+        category: apiProduct.category_name || apiProduct.category || 'motocicletas',
+        brand: apiProduct.brand,
+        price: parseFloat(apiProduct.price) || 0,
+        image: imageUrl,
+        description: apiProduct.description || '',
+        features: features,
+        specs: specs,
+        stock: parseInt(apiProduct.stock) || 0,
+        featured: apiProduct.featured || false
+    };
+}
+
+// Función para cargar detalle completo de un producto
+async function loadProductDetail(productId) {
+    try {
+        console.log('[products-dynamic.js] Cargando detalle del producto:', productId);
+        const response = await fetch(API_ENDPOINTS.productDetail(productId));
+        
+        if (!response.ok) {
+            throw new Error(`Error al cargar producto ${productId}: ${response.status}`);
+        }
+        
+        const apiProduct = await response.json();
+        return transformProductFromAPI(apiProduct);
+    } catch (error) {
+        console.error('[products-dynamic.js] Error cargando detalle del producto:', error);
+        return null;
+    }
+}
+
+// Función principal para inicializar datos
+async function initializeData() {
+    if (isDataLoaded) {
+        console.log('[products-dynamic.js] Datos ya cargados');
+        return true;
+    }
+    
+    try {
+        console.log('[products-dynamic.js] Inicializando datos desde API...');
+        
+        // Cargar categorías y productos en paralelo
+        const [categories, products] = await Promise.all([
+            loadCategories(),
+            loadProducts()
+        ]);
+        
+        if (products.length > 0) {
+            isDataLoaded = true;
+            console.log('[products-dynamic.js] Datos inicializados correctamente');
+            
+            // Disparar evento personalizado para notificar que los datos están listos
+            const event = new CustomEvent('productsLoaded', {
+                detail: { products: window.products, categories: window.categories }
+            });
+            document.dispatchEvent(event);
+            
+            return true;
+        } else {
+            throw new Error('No se pudieron cargar productos');
+        }
+    } catch (error) {
+        console.error('[products-dynamic.js] Error inicializando datos:', error);
+        return false;
+    }
+}
+
+// Función para obtener productos por categoría
+function getProductsByCategory(categoryName) {
+    return window.products.filter(product => 
+        product.category.toLowerCase() === categoryName.toLowerCase()
+    );
+}
+
+// Función para obtener productos destacados
+function getFeaturedProducts() {
+    return window.products.filter(product => product.featured);
+}
+
+// Función para buscar productos
+function searchProducts(query) {
+    const searchTerm = query.toLowerCase();
+    return window.products.filter(product => 
+        product.name.toLowerCase().includes(searchTerm) ||
+        product.brand.toLowerCase().includes(searchTerm) ||
+        product.description.toLowerCase().includes(searchTerm)
+    );
+}
+
+// Función para filtrar productos por precio
+function getProductsByPriceRange(minPrice, maxPrice) {
+    return window.products.filter(product => 
+        product.price >= minPrice && product.price <= maxPrice
+    );
+}
+
+// Función para obtener un producto por ID
+function getProductById(productId) {
+    const id = parseInt(productId);
+    return window.products.find(product => product.id === id);
+}
+
+// === FUNCIONES DEL FRONTEND ORIGINAL ===
+
+// Crear tarjeta de producto (manteniendo funcionalidad original)
 function createProductCard(product) {
     const card = document.createElement('div');
-    card.className = 'col-md-4 mb-4 product-card';
-    card.dataset.category = product.category;
-    card.dataset.brand = product.brand;
-    card.dataset.price = product.price;
+    card.className = 'col-md-6 col-lg-4 mb-4';
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px)';
+    card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+    
+    // Determinar imagen con fallback mejorado
+    let imageUrl = product.image;
+    if (!imageUrl || imageUrl === 'img/products/default.jpg') {
+        imageUrl = 'img/products/default.jpg';
+    }
     
     card.innerHTML = `
-        <div class="card h-100 border-0 shadow-sm">
+        <div class="card product-card h-100">
             <div class="position-relative">
-                <img src="${product.image || 'img/products/placeholder.jpg'}" class="card-img-top" alt="${product.name}" style="height: 200px; object-fit: cover;">
-                <div class="position-absolute top-0 start-0 m-3">
-                    <span class="badge bg-primary">${getCategoryName(product.category)}</span>
-                </div>
+                <img src="${imageUrl}" 
+                     class="card-img-top product-image" 
+                     alt="${product.name}" 
+                     loading="lazy"
+                     style="height: 200px; object-fit: cover; background-color: #f8f9fa;"
+                     onerror="this.src='img/products/default.jpg'; this.onerror=null;">
+                ${product.featured ? '<span class="badge bg-primary position-absolute top-0 end-0 m-2">Destacado</span>' : ''}
+                ${product.stock <= 3 && product.stock > 0 ? '<span class="badge bg-warning position-absolute top-0 start-0 m-2">Pocas unidades</span>' : ''}
+                ${product.stock === 0 ? '<span class="badge bg-danger position-absolute top-0 start-0 m-2">Agotado</span>' : ''}
             </div>
+            
             <div class="card-body d-flex flex-column">
-                <h5 class="card-title">${product.name}</h5>
-                <p class="card-text text-muted small mb-0">Marca: ${product.brand}</p>
-                <p class="card-text text-primary fw-bold mt-2 mb-3">$${product.price.toLocaleString()}</p>
-                <p class="card-text">${product.description.slice(0, 80)}...</p>
-                <div class="mt-auto d-flex justify-content-between">
-                    <a href="detalle-producto.html?id=${product.id}" class="btn btn-outline-secondary btn-sm">
-                        <i class="fas fa-eye me-1"></i>Ver detalles
-                    </a>
-                    <a href="calculadora.html?modelo=${product.id}" class="btn btn-primary btn-sm">
-                        <i class="fas fa-calculator me-1"></i>Financiar
-                    </a>
+                <div class="mb-2">
+                    <small class="text-muted">${product.brand}</small>
+                    <h5 class="card-title">${product.name}</h5>
+                </div>
+                
+                <p class="card-text text-muted flex-grow-1">${product.description.substring(0, 100)}${product.description.length > 100 ? '...' : ''}</p>
+                
+                <div class="product-features mb-3">
+                    ${product.features && product.features.length > 0 ? 
+                        product.features.slice(0, 3).map(feature => 
+                            `<small class="d-block text-success">• ${feature}</small>`
+                        ).join('') :
+                        '<small class="text-muted">Características no disponibles</small>'
+                    }
+                </div>
+                
+                <div class="mt-auto">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h4 class="text-primary mb-0">$${product.price.toLocaleString()}</h4>
+                            <small class="text-muted">Stock: ${product.stock} unidades</small>
+                        </div>
+                        <span class="badge bg-secondary">${getCategoryName(product.category)}</span>
+                    </div>
+                    
+                    <div class="btn-group w-100" role="group">
+                        <a href="detalle-producto.html?id=${product.id}" class="btn btn-outline-primary">
+                            <i class="fas fa-eye"></i> Ver detalles
+                        </a>
+                        <button class="btn btn-primary" onclick="addToCart(${product.id})" ${product.stock === 0 ? 'disabled' : ''}>
+                            <i class="fas fa-cart-plus"></i> ${product.stock === 0 ? 'Agotado' : 'Agregar'}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     `;
     
+    // Animación de entrada suave
+    setTimeout(() => {
+        card.style.opacity = '1';
+        card.style.transform = 'translateY(0)';
+    }, Math.random() * 200); // Efecto escalonado
+    
     return card;
 }
 
-// Obtener nombre legible de categoría
+// Obtener nombre de categoría (manteniendo funcionalidad original)
 function getCategoryName(category) {
-    const categories = {
-        'motocicletas': 'Motocicleta',
-        'vehiculos': 'Vehículo',
-        'maquinaria': 'Maquinaria Agrícola',
-        'camiones': 'Camión',
-        'equipos': 'Maquinaria y Equipos'
+    const categoryMap = {
+        'motocicletas': 'Motocicletas',
+        'repuestos': 'Repuestos',
+        'accesorios': 'Accesorios',
+        'cascos': 'Cascos',
+        'lubricantes': 'Lubricantes'
     };
-    
-    return categories[category] || category;
+    return categoryMap[category] || category;
 }
 
-// Configurar filtros
+// Configurar filtros (manteniendo funcionalidad original)
 function setupFilters() {
-    // Filtro de categoría
-    const categoryFilter = document.getElementById('categoryFilter');
-    if(categoryFilter) {
-        const categoryMenu = categoryFilter.nextElementSibling;
-        const categoryOptions = categoryMenu.querySelectorAll('.dropdown-item');
-        
-        categoryOptions.forEach(option => {
-            option.addEventListener('click', function(e) {
-                e.preventDefault();
-                const selectedCategory = this.textContent.toLowerCase();
-                filterProducts('category', selectedCategory);
-                categoryFilter.textContent = this.textContent;
-            });
+    console.log('[products-dynamic.js] Configurando filtros');
+    
+    // Filtro por categoría
+    const categoryFilter = document.getElementById('category-filter');
+    if (categoryFilter) {
+        categoryFilter.addEventListener('change', function() {
+            filterProducts('category', this.value);
         });
     }
     
-    // Filtro de marca
-    const brandFilter = document.getElementById('brandFilter');
-    if(brandFilter) {
-        const brandMenu = brandFilter.nextElementSibling;
-        const brandOptions = brandMenu.querySelectorAll('.dropdown-item');
-        
-        brandOptions.forEach(option => {
-            option.addEventListener('click', function(e) {
-                e.preventDefault();
-                const selectedBrand = this.textContent;
-                filterProducts('brand', selectedBrand);
-                brandFilter.textContent = this.textContent;
-            });
+    // Filtro por marca
+    const brandFilter = document.getElementById('brand-filter');
+    if (brandFilter) {
+        brandFilter.addEventListener('change', function() {
+            filterProducts('brand', this.value);
         });
     }
     
-    // Filtro de precio
-    const priceFilter = document.getElementById('priceFilter');
-    if(priceFilter) {
-        const priceMenu = priceFilter.nextElementSibling;
-        const priceOptions = priceMenu.querySelectorAll('.dropdown-item');
-        
-        priceOptions.forEach(option => {
-            option.addEventListener('click', function(e) {
-                e.preventDefault();
-                const selectedPrice = this.textContent;
-                
-                const container = document.getElementById('featured-products-container');
-                const cards = Array.from(container.querySelectorAll('.product-card'));
-                
-                if(selectedPrice === 'Menor precio') {
-                    cards.sort((a, b) => parseInt(a.dataset.price) - parseInt(b.dataset.price));
-                } else {
-                    cards.sort((a, b) => parseInt(b.dataset.price) - parseInt(a.dataset.price));
-                }
-                
-                container.innerHTML = '';
-                cards.forEach(card => container.appendChild(card));
-                
-                priceFilter.textContent = this.textContent;
-            });
+    // Filtro por precio
+    const priceFilter = document.getElementById('price-filter');
+    if (priceFilter) {
+        priceFilter.addEventListener('change', function() {
+            filterProducts('price', this.value);
+        });
+    }
+    
+    // Barra de búsqueda
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            filterProducts('search', this.value);
+        });
+    }
+    
+    // Ordenamiento
+    const sortSelect = document.getElementById('sort-select');
+    if (sortSelect) {
+        sortSelect.addEventListener('change', function() {
+            sortProducts(this.value);
+        });
+    }
+    
+    // Botón de limpiar filtros
+    const clearFilters = document.getElementById('clear-filters');
+    if (clearFilters) {
+        clearFilters.addEventListener('click', function() {
+            clearAllFilters();
         });
     }
 }
 
-// Filtrar productos
+// Filtrar productos (manteniendo funcionalidad original)
 function filterProducts(filterType, filterValue) {
-    const container = document.getElementById('featured-products-container');
-    const cards = container.querySelectorAll('.product-card');
+    console.log('[products-dynamic.js] Filtrando por:', filterType, filterValue);
     
-    cards.forEach(card => {
-        if(filterValue === 'todos' || filterValue === 'todas') {
-            card.style.display = 'block';
+    let filteredProducts = [...window.products];
+    
+    // Aplicar filtros activos
+    const categoryFilter = document.getElementById('category-filter');
+    const brandFilter = document.getElementById('brand-filter');
+    const priceFilter = document.getElementById('price-filter');
+    const searchInput = document.getElementById('search-input');
+    
+    // Filtro por categoría
+    if (categoryFilter && categoryFilter.value) {
+        filteredProducts = filteredProducts.filter(product => 
+            product.category === categoryFilter.value
+        );
+    }
+    
+    // Filtro por marca
+    if (brandFilter && brandFilter.value) {
+        filteredProducts = filteredProducts.filter(product => 
+            product.brand === brandFilter.value
+        );
+    }
+    
+    // Filtro por precio
+    if (priceFilter && priceFilter.value) {
+        const [min, max] = priceFilter.value.split('-').map(Number);
+        filteredProducts = filteredProducts.filter(product => 
+            product.price >= min && (max ? product.price <= max : true)
+        );
+    }
+    
+    // Filtro por búsqueda
+    if (searchInput && searchInput.value.trim()) {
+        const searchTerm = searchInput.value.toLowerCase();
+        filteredProducts = filteredProducts.filter(product => 
+            product.name.toLowerCase().includes(searchTerm) ||
+            product.brand.toLowerCase().includes(searchTerm) ||
+            product.description.toLowerCase().includes(searchTerm)
+        );
+    }
+    
+    displayProducts(filteredProducts);
+}
+
+// Mostrar productos en el DOM
+function displayProducts(products) {
+    const container = document.getElementById('products-container');
+    if (!container) return;
+    
+    // Fade out contenido actual
+    container.style.opacity = '0.5';
+    container.style.transition = 'opacity 0.2s ease';
+    
+    setTimeout(() => {
+        container.innerHTML = '';
+        
+        if (products.length === 0) {
+            container.innerHTML = `
+                <div class="col-12 text-center py-4">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h4>No se encontraron productos</h4>
+                    <p class="text-muted">Intenta con otros criterios de búsqueda</p>
+                </div>
+            `;
         } else {
-            if(filterType === 'category') {
-                const category = card.dataset.category;
-                
-                if(filterValue === 'motocicletas' && category === 'motocicletas') {
-                    card.style.display = 'block';
-                } else if(filterValue === 'vehículos' && category === 'vehiculos') {
-                    card.style.display = 'block';
-                } else if(filterValue === 'maquinaria' && category === 'maquinaria') {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
-            } else if(filterType === 'brand') {
-                const brand = card.dataset.brand;
-                card.style.display = (brand === filterValue) ? 'block' : 'none';
-            }
+            products.forEach((product, index) => {
+                const productCard = createProductCard(product);
+                // Añadir delay escalonado para animación
+                productCard.style.animationDelay = `${index * 0.1}s`;
+                container.appendChild(productCard);
+            });
         }
+        
+        // Fade in nuevo contenido
+        container.style.opacity = '1';
+        
+        // Actualizar contador
+        const counter = document.getElementById('products-counter');
+        if (counter) {
+            counter.textContent = `${products.length} producto${products.length !== 1 ? 's' : ''} encontrado${products.length !== 1 ? 's' : ''}`;
+        }
+    }, 150);
+}
+
+// Ordenar productos
+function sortProducts(sortBy) {
+    let sortedProducts = [...window.products];
+    
+    switch (sortBy) {
+        case 'name-asc':
+            sortedProducts.sort((a, b) => a.name.localeCompare(b.name));
+            break;
+        case 'name-desc':
+            sortedProducts.sort((a, b) => b.name.localeCompare(a.name));
+            break;
+        case 'price-asc':
+            sortedProducts.sort((a, b) => a.price - b.price);
+            break;
+        case 'price-desc':
+            sortedProducts.sort((a, b) => b.price - a.price);
+            break;
+        case 'brand':
+            sortedProducts.sort((a, b) => a.brand.localeCompare(b.brand));
+            break;
+        default:
+            sortedProducts = [...window.products];
+    }
+    
+    displayProducts(sortedProducts);
+}
+
+// Limpiar todos los filtros
+function clearAllFilters() {
+    const filters = ['category-filter', 'brand-filter', 'price-filter', 'search-input'];
+    filters.forEach(filterId => {
+        const element = document.getElementById(filterId);
+        if (element) element.value = '';
     });
-} 
+    
+    displayProducts(window.products);
+}
+
+// Agregar al carrito (mantener funcionalidad existente)
+function addToCart(productId) {
+    console.log('[products-dynamic.js] Agregando al carrito:', productId);
+    // Aquí iría la lógica del carrito
+    alert(`Producto ${productId} agregado al carrito`);
+}
+
+// === INICIALIZACIÓN ===
+
+// Inicializar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('[products-dynamic.js] DOM cargado, inicializando...');
+    
+    // Mostrar indicador de carga mejorado
+    const container = document.getElementById('products-container') || document.getElementById('featured-products-container');
+    if (container) {
+        container.innerHTML = `
+            <div class="col-12 text-center py-5">
+                <div class="d-flex flex-column align-items-center">
+                    <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Cargando productos...</span>
+                    </div>
+                    <h5 class="text-muted mb-2">Cargando productos</h5>
+                    <p class="text-muted small mb-0">Obteniendo información desde el servidor...</p>
+                    <div class="progress mt-3" style="width: 200px; height: 4px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+        // Aplicar fade in suave al indicador
+        container.style.opacity = '0';
+        container.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => {
+            container.style.opacity = '1';
+        }, 100);
+    }
+    
+    // Inicializar datos
+    const success = await initializeData();
+    
+    if (success) {
+        console.log('[products-dynamic.js] Datos cargados exitosamente');
+        
+        // Cargar productos destacados en la página principal
+        const featuredContainer = document.getElementById('featured-products-container');
+        if (featuredContainer) {
+            console.log('[products-dynamic.js] Cargando productos destacados');
+            const featuredProducts = getFeaturedProducts();
+            
+            // Transición suave para productos destacados
+            featuredContainer.style.opacity = '0.5';
+            setTimeout(() => {
+                featuredContainer.innerHTML = '';
+                
+                featuredProducts.forEach((product, index) => {
+                    const productCard = createProductCard(product);
+                    productCard.style.animationDelay = `${index * 0.1}s`;
+                    featuredContainer.appendChild(productCard);
+                });
+                
+                featuredContainer.style.opacity = '1';
+            }, 200);
+        }
+        
+        // Cargar todos los productos en la página de catálogo
+        const productsContainer = document.getElementById('products-container');
+        if (productsContainer) {
+            console.log('[products-dynamic.js] Cargando catálogo completo');
+            displayProducts(window.products);
+        }
+        
+        // Configurar filtros
+        setupFilters();
+        
+    } else {
+        console.error('[products-dynamic.js] Error cargando datos');
+        if (container) {
+            container.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                        <h4>Error cargando productos</h4>
+                        <p class="mb-3">No se pudieron cargar los productos desde el servidor</p>
+                        <button class="btn btn-primary" onclick="location.reload()">
+                            <i class="fas fa-refresh me-2"></i>Recargar página
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+    }
+});
+
+// Exponer funciones para uso externo
+window.ProductsAPI = {
+    initializeData,
+    loadProducts,
+    loadCategories,
+    loadProductDetail,
+    getProductById,
+    getFeaturedProducts,
+    getProductsByCategory,
+    searchProducts,
+    getProductsByPriceRange,
+    isDataLoaded: () => isDataLoaded
+};
+
+console.log('[products-dynamic.js] Script cargado - API de productos dinámicos lista'); 

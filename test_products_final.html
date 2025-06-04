@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Final - Sistema de Productos</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .product { border: 1px solid #ccc; margin: 10px; padding: 15px; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        .warning { color: orange; }
+    </style>
+</head>
+<body>
+    <h2>🧪 Test Final - Sistema de Productos</h2>
+    <div id="test-results">Cargando test...</div>
+    
+    <script>
+        // Test directo del API y transformación
+        fetch('/api/products/products/')
+            .then(response => response.json())
+            .then(data => {
+                const results = [];
+                results.push(`<h3 class="success">✅ API OK: ${data.results.length} productos cargados</h3>`);
+                
+                data.results.forEach(product => {
+                    // Simular transformación del frontend
+                    let imageUrl = product.image;
+                    if (imageUrl.startsWith('products/')) {
+                        imageUrl = `media/${imageUrl}`;
+                    }
+                    
+                    const stock = parseInt(product.stock) || 0;
+                    const stockStatus = stock > 0 ? 
+                        `<span class="success">${stock} unidades</span>` : 
+                        `<span class="error">Agotado</span>`;
+                    
+                    results.push(`
+                        <div class="product">
+                            <strong>${product.name}</strong> (${product.brand})<br>
+                            Stock: ${stockStatus}<br>
+                            Imagen: <a href="${imageUrl}" target="_blank">${imageUrl}</a><br>
+                            Precio: $${parseFloat(product.price).toLocaleString()}<br>
+                            Destacado: ${product.featured ? '⭐ Sí' : 'No'}
+                        </div>
+                    `);
+                });
+                
+                document.getElementById('test-results').innerHTML = results.join('');
+            })
+            .catch(error => {
+                document.getElementById('test-results').innerHTML = 
+                    `<div class="error">❌ Error: ${error}</div>`;
+            });
+    </script>
+</body>
+</html> 

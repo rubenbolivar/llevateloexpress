@@ -303,33 +303,134 @@
     <script src="js/models.js"></script>
     <script src="js/products.js"></script>
     <script>
+        let currentProductId = null;
+        
+        // Esperar a que los productos se carguen desde la API
+        document.addEventListener('productsLoaded', function(event) {
+            console.log('Productos cargados desde API para detalle:', event.detail.products.length);
+            loadProductDetail();
+        });
+
         document.addEventListener('DOMContentLoaded', function() {
             // Obtener ID del producto de la URL
             const urlParams = new URLSearchParams(window.location.search);
-            const productId = parseInt(urlParams.get('id'));
+            currentProductId = parseInt(urlParams.get('id'));
             
-            if (!productId) {
+            if (!currentProductId) {
                 showErrorMessage('No se especificó un producto. <a href="catalogo.html">Volver al catálogo</a>');
                 return;
             }
             
-            // Buscar producto por ID
-            const product = window.products ? window.products.find(p => p.id === productId) : null;
-            
-            if (!product) {
-                showErrorMessage('El producto no fue encontrado. <a href="catalogo.html">Volver al catálogo</a>');
-                return;
+            // Si los productos ya están cargados, cargar inmediatamente
+            if (window.ProductsAPI && window.ProductsAPI.isDataLoaded()) {
+                loadProductDetail();
             }
-            
-            // Mostrar detalle del producto
-            renderProductDetail(product);
-            
-            // Mostrar productos relacionados
-            loadRelatedProducts(product);
-            
-            // Configurar botones CTA
-            document.getElementById('calculate-financing-btn').href = `calculadora.html?modelo=${product.id}`;
+            // Si no, el evento 'productsLoaded' manejará la carga
         });
+        
+        async function loadProductDetail() {
+            if (!currentProductId) return;
+            
+            try {
+                console.log('🔍 [LOAD] Cargando producto ID:', currentProductId);
+                
+                // SIEMPRE cargar desde el endpoint de detalle para obtener especificaciones completas
+                console.log('🔍 [LOAD] Usando endpoint de detalle individual...');
+                let product = null;
+                
+                if (window.ProductsAPI) {
+                    product = await window.ProductsAPI.loadProductDetail(currentProductId);
+                    console.log('✅ [LOAD] Producto cargado desde endpoint de detalle:', product?.name);
+                } else {
+                    console.log('❌ [LOAD] ProductsAPI no disponible, cargando directamente...');
+                    // Cargar directamente si ProductsAPI no está disponible
+                    const response = await fetch(`/api/products/products/${currentProductId}/`);
+                    if (response.ok) {
+                        const apiProduct = await response.json();
+                        console.log('🔄 [LOAD] Transformando producto cargado directamente...');
+                        
+                        // Usar la función de transformación manualmente
+                        let specs = {};
+                        
+                        // Procesar especificaciones técnicas
+                        if (apiProduct.specs_general) {
+                            specs.general = typeof apiProduct.specs_general === 'string' ? 
+                                JSON.parse(apiProduct.specs_general) : apiProduct.specs_general;
+                        }
+                        if (apiProduct.specs_engine) {
+                            specs.engine = typeof apiProduct.specs_engine === 'string' ? 
+                                JSON.parse(apiProduct.specs_engine) : apiProduct.specs_engine;
+                        }
+                        if (apiProduct.specs_comfort) {
+                            specs.comfort = typeof apiProduct.specs_comfort === 'string' ? 
+                                JSON.parse(apiProduct.specs_comfort) : apiProduct.specs_comfort;
+                        }
+                        if (apiProduct.specs_safety) {
+                            specs.safety = typeof apiProduct.specs_safety === 'string' ? 
+                                JSON.parse(apiProduct.specs_safety) : apiProduct.specs_safety;
+                        }
+                        
+                        // Procesar características
+                        let features = [];
+                        if (apiProduct.features) {
+                            features = typeof apiProduct.features === 'string' ? 
+                                JSON.parse(apiProduct.features) : apiProduct.features;
+                        }
+                        
+                        // Crear producto transformado
+                        product = {
+                            id: apiProduct.id,
+                            name: apiProduct.name,
+                            category: apiProduct.category_name || apiProduct.category || 'motocicletas',
+                            brand: apiProduct.brand,
+                            price: parseFloat(apiProduct.price) || 0,
+                            image: apiProduct.image,
+                            description: apiProduct.description || '',
+                            features: features,
+                            specs: specs,
+                            stock: parseInt(apiProduct.stock) || 0,
+                            featured: apiProduct.featured || false
+                        };
+                        
+                        console.log('✅ [LOAD] Producto transformado manualmente:', product.name);
+                        console.log('✅ [LOAD] Specs disponibles:', {
+                            general: product.specs.general?.length || 0,
+                            engine: product.specs.engine?.length || 0,
+                            comfort: product.specs.comfort?.length || 0,
+                            safety: product.specs.safety?.length || 0
+                        });
+                    }
+                }
+                
+                if (!product) {
+                    showErrorMessage('El producto no fue encontrado. <a href="catalogo.html">Volver al catálogo</a>');
+                    return;
+                }
+                
+                console.log('🎯 [LOAD] Producto final para renderizado:', {
+                    name: product.name,
+                    specs_available: !!product.specs,
+                    specs_general: product.specs?.general?.length || 0,
+                    features: product.features?.length || 0
+                });
+                
+                // Mostrar detalle del producto
+                renderProductDetail(product);
+                
+                // Mostrar productos relacionados
+                loadRelatedProducts(product);
+                
+                // Configurar botones CTA
+                const calculateBtn = document.getElementById('calculate-financing-btn');
+                if (calculateBtn) {
+                    calculateBtn.href = `calculadora.html?modelo=${product.id}`;
+                }
+                
+            } catch (error) {
+                console.error('Error cargando detalle del producto:', error);
+                showErrorMessage('Error cargando el producto. <a href="catalogo.html">Volver al catálogo</a>');
+            }
+        }
         
         function showErrorMessage(message) {
             const container = document.getElementById('product-detail-container');
@@ -342,6 +443,14 @@
         }
         
         function renderProductDetail(product) {
+            // DEBUG: Verificar datos recibidos
+            console.log('🔍 [DETALLE] Renderizando producto:', product.name);
+            console.log('🔍 [DETALLE] product.specs existe:', !!product.specs);
+            console.log('🔍 [DETALLE] product.specs tipo:', typeof product.specs);
+            console.log('🔍 [DETALLE] product.specs.general:', product.specs?.general?.length || 'No disponible');
+            console.log('🔍 [DETALLE] product.features:', product.features?.length || 'No disponible');
+            console.log('🔍 [DETALLE] Producto completo:', product);
+            
             // Obtener el template
             const template = document.getElementById('product-template');
             const container = document.getElementById('product-detail-container');
@@ -359,25 +468,31 @@
             content.querySelector('.product-price').textContent = `$${product.price.toLocaleString()}`;
             content.querySelector('.product-brand').textContent = product.brand;
             content.querySelector('.product-model').textContent = product.name;
-            content.querySelector('.product-stock').textContent = product.stock ? `${product.stock} disponibles` : 'Bajo pedido';
+            content.querySelector('.product-stock').textContent = product.stock ? `${product.stock} disponibles` : 'Consultar disponibilidad';
             content.querySelector('.product-finance-btn').href = `calculadora.html?modelo=${product.id}`;
             
             // Actualizar breadcrumb
-            document.getElementById('product-name-breadcrumb').textContent = product.name;
+            const breadcrumb = document.getElementById('product-name-breadcrumb');
+            if (breadcrumb) {
+                breadcrumb.textContent = product.name;
+            }
             
-            // Imagen principal
+            // Actualizar título de la página
+            document.title = `${product.name} | LlévateloExpress`;
+            
+            // Imagen principal con manejo de errores mejorado
             const mainImage = content.querySelector('#main-product-image');
             mainImage.src = product.image;
             mainImage.alt = product.name;
+            mainImage.onerror = function() {
+                this.src = 'img/products/default.jpg';
+                this.onerror = null;
+            };
             
-            // Galería de imágenes (usamos la misma imagen varias veces como ejemplo)
+            // Galería de imágenes (usar la imagen principal como base)
             const galleryContainer = content.querySelector('.product-gallery');
-            const imageSources = [
-                product.image,
-                product.image.replace('.jpg', '-2.jpg'),
-                product.image.replace('.jpg', '-3.jpg'),
-                product.image.replace('.jpg', '-4.jpg')
-            ];
+            const baseImage = product.image;
+            const imageSources = [baseImage]; // Solo la imagen principal por ahora
             
             imageSources.forEach((src, index) => {
                 const col = document.createElement('div');
@@ -385,7 +500,8 @@
                 col.innerHTML = `
                     <img src="${src}" alt="${product.name} - Vista ${index + 1}" 
                          class="img-fluid gallery-img mb-2" 
-                         onclick="document.getElementById('main-product-image').src = this.src">
+                         onclick="document.getElementById('main-product-image').src = this.src"
+                         onerror="this.src='img/products/default.jpg'; this.onerror=null;">
                 `;
                 galleryContainer.appendChild(col);
             });
@@ -394,73 +510,106 @@
             const featuresContainer = content.querySelector('.features-container');
             const featureIcons = ['tachometer-alt', 'bolt', 'cogs', 'sync', 'gas-pump', 'road', 'weight', 'sliders-h'];
             
-            (product.features || []).forEach((feature, index) => {
-                const col = document.createElement('div');
-                col.className = 'col-md-3 col-sm-6 mb-4';
-                col.innerHTML = `
-                    <div class="feature-item text-center">
-                        <i class="fas fa-${featureIcons[index % featureIcons.length]} feature-icon"></i>
-                        <p class="mb-0">${feature}</p>
+            console.log('🔍 [DETALLE] Procesando características, cantidad:', product.features?.length);
+            
+            if (product.features && Array.isArray(product.features)) {
+                product.features.forEach((feature, index) => {
+                    const col = document.createElement('div');
+                    col.className = 'col-md-3 col-sm-6 mb-4';
+                    col.innerHTML = `
+                        <div class="feature-item text-center">
+                            <i class="fas fa-${featureIcons[index % featureIcons.length]} feature-icon"></i>
+                            <p class="mb-0">${feature}</p>
+                        </div>
+                    `;
+                    featuresContainer.appendChild(col);
+                });
+                console.log('✅ [DETALLE] Características renderizadas:', product.features.length);
+            } else {
+                // Fallback si no hay características
+                featuresContainer.innerHTML = `
+                    <div class="col-12 text-center">
+                        <p class="text-muted">Características técnicas disponibles próximamente</p>
                     </div>
                 `;
-                featuresContainer.appendChild(col);
-            });
+                console.log('⚠️ [DETALLE] No hay características disponibles');
+            }
             
-            // Usar especificaciones reales del producto si están disponibles
-            if (product.specs) {
-                renderSpecsSection(content.querySelector('.specs-general'), product.specs.general || []);
-                renderSpecsSection(content.querySelector('.specs-engine'), product.specs.engine || []);
-                renderSpecsSection(content.querySelector('.specs-comfort'), product.specs.comfort || []);
-                renderSpecsSection(content.querySelector('.specs-safety'), product.specs.safety || []);
+            // Especificaciones técnicas
+            console.log('🔍 [DETALLE] Verificando especificaciones técnicas...');
+            console.log('🔍 [DETALLE] product.specs existe:', !!product.specs);
+            console.log('🔍 [DETALLE] product.specs es objeto:', typeof product.specs === 'object');
+            
+            if (product.specs && typeof product.specs === 'object') {
+                console.log('✅ [DETALLE] Condición cumplida, renderizando specs');
+                console.log('🔍 [DETALLE] specs.general:', product.specs.general?.length || 0);
+                console.log('🔍 [DETALLE] specs.engine:', product.specs.engine?.length || 0);
+                console.log('🔍 [DETALLE] specs.comfort:', product.specs.comfort?.length || 0);
+                console.log('🔍 [DETALLE] specs.safety:', product.specs.safety?.length || 0);
+                
+                // DEBUG: Verificar que los contenedores del template existen
+                const generalContainer = content.querySelector('.specs-general');
+                const engineContainer = content.querySelector('.specs-engine');
+                const comfortContainer = content.querySelector('.specs-comfort');
+                const safetyContainer = content.querySelector('.specs-safety');
+                
+                console.log('🔍 [DETALLE] Contenedores del template:');
+                console.log('  - specs-general:', !!generalContainer, generalContainer?.tagName);
+                console.log('  - specs-engine:', !!engineContainer, engineContainer?.tagName);
+                console.log('  - specs-comfort:', !!comfortContainer, comfortContainer?.tagName);
+                console.log('  - specs-safety:', !!safetyContainer, safetyContainer?.tagName);
+                
+                // Verificar datos antes de pasar a renderSpecsSection
+                console.log('🔍 [DETALLE] Datos a renderizar:');
+                console.log('  - general data:', product.specs.general);
+                console.log('  - engine data:', product.specs.engine);
+                console.log('  - comfort data:', product.specs.comfort);
+                console.log('  - safety data:', product.specs.safety);
+                
+                renderSpecsSection(generalContainer, product.specs.general || []);
+                renderSpecsSection(engineContainer, product.specs.engine || []);
+                renderSpecsSection(comfortContainer, product.specs.comfort || []);
+                renderSpecsSection(safetyContainer, product.specs.safety || []);
+                console.log('✅ [DETALLE] Especificaciones renderizadas');
             } else {
-                // Fallback a datos simulados si no hay specs (para compatibilidad)
+                console.log('❌ [DETALLE] Condición no cumplida, usando fallback');
+                // Fallback a datos básicos si no hay specs detalladas
                 const generalSpecs = [
                     { label: 'Marca', value: product.brand },
                     { label: 'Modelo', value: product.name },
-                    { label: 'Año', value: '2023' },
-                    { label: 'Tipo', value: getCategoryName(product.category) },
-                    { label: 'País de Origen', value: 'Importado' },
-                    { label: 'Garantía', value: '1 año' },
-                    { label: 'Colores disponibles', value: 'Consultar disponibilidad' },
-                    { label: 'Peso', value: 'Información no disponible' }
+                    { label: 'Categoría', value: getCategoryName(product.category) },
+                    { label: 'Precio', value: `$${product.price.toLocaleString()}` },
+                    { label: 'Stock', value: product.stock ? `${product.stock} disponibles` : 'Consultar' }
                 ];
                 
-                // Extraer información básica de las características
-                const engineSpecs = [];
-                const comfortSpecs = [];
-                const safetySpecs = [];
-                
-                // Recorrer features para extraer información básica
-                (product.features || []).forEach(feature => {
-                    if (feature.toLowerCase().includes('motor') || feature.toLowerCase().includes('cilindrada') || 
-                        feature.toLowerCase().includes('potencia') || feature.toLowerCase().includes('transmisión')) {
-                        const parts = feature.split(':');
-                        if (parts.length > 1) {
-                            engineSpecs.push({ label: parts[0].trim(), value: parts[1].trim() });
-                        } else {
-                            engineSpecs.push({ label: 'Característica', value: feature });
-                        }
-                    } else if (feature.toLowerCase().includes('asiento') || feature.toLowerCase().includes('panel') || 
-                              feature.toLowerCase().includes('iluminación') || feature.toLowerCase().includes('usb')) {
-                        comfortSpecs.push({ label: 'Característica', value: feature });
-                    } else if (feature.toLowerCase().includes('freno') || feature.toLowerCase().includes('abs') || 
-                              feature.toLowerCase().includes('suspensión') || feature.toLowerCase().includes('neumático')) {
-                        safetySpecs.push({ label: 'Característica', value: feature });
-                    }
-                });
-                
                 renderSpecsSection(content.querySelector('.specs-general'), generalSpecs);
-                renderSpecsSection(content.querySelector('.specs-engine'), engineSpecs.length ? engineSpecs : [{ label: 'Información', value: 'Datos técnicos no disponibles' }]);
-                renderSpecsSection(content.querySelector('.specs-comfort'), comfortSpecs.length ? comfortSpecs : [{ label: 'Información', value: 'Datos de confort no disponibles' }]);
-                renderSpecsSection(content.querySelector('.specs-safety'), safetySpecs.length ? safetySpecs : [{ label: 'Información', value: 'Datos de seguridad no disponibles' }]);
+                
+                // Mensaje para otras secciones
+                const noDataMessage = [{ label: 'Información', value: 'Especificaciones detalladas disponibles próximamente' }];
+                renderSpecsSection(content.querySelector('.specs-engine'), noDataMessage);
+                renderSpecsSection(content.querySelector('.specs-comfort'), noDataMessage);
+                renderSpecsSection(content.querySelector('.specs-safety'), noDataMessage);
             }
             
             // Añadir el contenido al contenedor
             container.appendChild(content);
+            console.log('✅ [DETALLE] Renderizado completo');
         }
         
         function renderSpecsSection(container, specs) {
-            specs.forEach(spec => {
+            console.log('🔍 [RENDER_SPECS] Renderizando sección:', container?.className, 'con', specs?.length || 0, 'specs');
+            console.log('🔍 [RENDER_SPECS] Container existe:', !!container);
+            console.log('🔍 [RENDER_SPECS] Specs es array:', Array.isArray(specs));
+            console.log('🔍 [RENDER_SPECS] Specs datos:', specs);
+            
+            if (!container || !Array.isArray(specs)) {
+                console.log('❌ [RENDER_SPECS] Condiciones no cumplidas - container:', !!container, 'array:', Array.isArray(specs));
+                return;
+            }
+            
+            console.log('✅ [RENDER_SPECS] Iniciando renderizado de', specs.length, 'especificaciones');
+            
+            specs.forEach((spec, index) => {
                 const col = document.createElement('div');
                 col.className = 'col-md-6 col-lg-3';
                 col.innerHTML = `
@@ -469,11 +618,16 @@
                     </div>
                 `;
                 container.appendChild(col);
+                console.log(`✅ [RENDER_SPECS] Spec ${index + 1}:`, spec.label, ':', spec.value);
             });
+            
+            console.log('✅ [RENDER_SPECS] Renderizado completo:', specs.length, 'especificaciones agregadas al container');
         }
         
         function loadRelatedProducts(currentProduct) {
             const container = document.getElementById('related-products-container');
+            
+            // Obtener productos relacionados (misma categoría, diferente ID)
             const relatedProducts = window.products ? 
                 window.products
                     .filter(p => p.category === currentProduct.category && p.id !== currentProduct.id)
@@ -481,16 +635,21 @@
                 [];
                 
             if (relatedProducts.length === 0) {
-                container.innerHTML = '<div class="col-12"><p class="text-center">No se encontraron productos relacionados.</p></div>';
+                container.innerHTML = '<div class="col-12"><p class="text-center text-muted">No se encontraron productos relacionados.</p></div>';
                 return;
             }
+            
+            container.innerHTML = ''; // Limpiar contenedor
             
             relatedProducts.forEach(product => {
                 const col = document.createElement('div');
                 col.className = 'col-md-4 mb-4';
                 col.innerHTML = `
                     <div class="card h-100 border-0 shadow-sm">
-                        <img src="${product.image}" alt="${product.name}" class="card-img-top" style="height: 200px; object-fit: cover;">
+                        <img src="${product.image}" alt="${product.name}" 
+                             class="card-img-top" 
+                             style="height: 200px; object-fit: cover;"
+                             onerror="this.src='img/products/default.jpg'; this.onerror=null;">
                         <div class="card-body d-flex flex-column">
                             <h5 class="card-title">${product.name}</h5>
                             <p class="card-text text-muted small">${getCategoryName(product.category)}</p>
@@ -505,16 +664,16 @@
             });
         }
         
+        // Función auxiliar para nombres de categorías
         function getCategoryName(category) {
-            const categories = {
-                'motocicletas': 'Motocicleta',
-                'vehiculos': 'Vehículo',
+            const categoryMap = {
+                'motocicletas': 'Motocicletas',
+                'vehiculos': 'Vehículos',
                 'maquinaria': 'Maquinaria Agrícola',
-                'camiones': 'Camión',
+                'camiones': 'Camiones',
                 'equipos': 'Maquinaria y Equipos'
             };
-            
-            return categories[category] || category;
+            return categoryMap[category] || category;
         }
     </script>
 </body>

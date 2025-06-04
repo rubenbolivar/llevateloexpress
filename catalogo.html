@@ -9,6 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/products-smooth.css">
 </head>
 <body>
     <!-- Header -->
@@ -254,16 +255,44 @@
     <script src="js/products.js"></script>
     <script src="js/main.js"></script>
     <script>
+        // Variables globales para la gestión del catálogo
+        let currentProducts = [];
+        let isDataReady = false;
+
+        // Esperar a que los productos se carguen de la API
+        document.addEventListener('productsLoaded', function(event) {
+            console.log('Productos cargados desde API:', event.detail.products.length);
+            currentProducts = event.detail.products;
+            isDataReady = true;
+            initializeCatalog();
+        });
+
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM cargado completamente');
             
-            // Depuración para verificar products
-            console.log('Window.products:', window.products);
-            console.log('Products global:', typeof products !== 'undefined' ? products : 'No disponible');
-            
-            // Definir variable de productos (utilizando window.products si existe)
-            const productList = window.products || [];
-            console.log('Productos a mostrar:', productList);
+            // Si los productos ya están cargados, inicializar inmediatamente
+            if (window.ProductsAPI && window.ProductsAPI.isDataLoaded()) {
+                currentProducts = window.products || [];
+                isDataReady = true;
+                initializeCatalog();
+            } else {
+                // Mostrar indicador de carga mientras se cargan los productos
+                const container = document.getElementById('products-container');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="col-12 text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando productos...</span>
+                            </div>
+                            <p class="mt-2">Cargando catálogo desde el servidor...</p>
+                        </div>
+                    `;
+                }
+            }
+        });
+
+        function initializeCatalog() {
+            console.log('Inicializando catálogo con', currentProducts.length, 'productos');
             
             const container = document.getElementById('products-container');
             
@@ -272,8 +301,8 @@
                 return;
             }
             
-            if (!productList || !Array.isArray(productList) || productList.length === 0) {
-                console.error('Error: No hay productos disponibles o el formato es incorrecto');
+            if (!currentProducts || !Array.isArray(currentProducts) || currentProducts.length === 0) {
+                console.error('Error: No hay productos disponibles');
                 container.innerHTML = `
                     <div class="col-12 text-center py-5">
                         <div class="alert alert-warning">
@@ -285,11 +314,9 @@
                 return;
             }
             
-            // Limpiar contenedor
+            // Limpiar contenedor y cargar productos
             container.innerHTML = '';
-            
-            // Cargar todos los productos
-            productList.forEach(product => {
+            currentProducts.forEach(product => {
                 const productCard = createProductCard(product);
                 container.appendChild(productCard);
             });
@@ -297,6 +324,14 @@
             // Actualizar contador
             updateProductCount();
             
+            // Configurar controles
+            setupControls();
+            
+            // Manejar parámetros de URL
+            handleUrlParams();
+        }
+
+        function setupControls() {
             // Actualizar valor del slider de precio
             const priceRange = document.getElementById('priceRange');
             const priceRangeValue = document.getElementById('priceRangeValue');
@@ -311,7 +346,7 @@
             const applyFiltersBtn = document.getElementById('applyFilters');
             if (applyFiltersBtn) {
                 applyFiltersBtn.addEventListener('click', function() {
-                    applyFilters(productList);
+                    applyFilters();
                 });
             }
             
@@ -322,16 +357,13 @@
                     sortProducts(this.value);
                 });
             }
-            
-            // Manejar parámetros de URL para filtrado automático
-            handleUrlParams(productList);
-        });
+        }
         
         // Crear tarjeta de producto
         function createProductCard(product) {
             if (!product || !product.id) {
                 console.error('Error: Producto inválido', product);
-                return document.createElement('div'); // Devolver un div vacío para evitar errores
+                return document.createElement('div');
             }
             
             const card = document.createElement('div');
@@ -353,15 +385,22 @@
             card.innerHTML = `
                 <div class="card h-100 border-0 shadow-sm">
                     <div class="position-relative">
-                        <img src="${product.image || 'img/products/placeholder.jpg'}" class="card-img-top" alt="${product.name}" style="height: 200px; object-fit: cover;">
+                        <img src="${product.image || 'img/products/placeholder.jpg'}" 
+                             class="card-img-top" 
+                             alt="${product.name}" 
+                             style="height: 200px; object-fit: cover;"
+                             loading="lazy"
+                             onerror="this.src='img/products/default.jpg'">
                         <div class="position-absolute top-0 start-0 m-3">
                             <span class="badge bg-primary">${getCategoryName(product.category)}</span>
                         </div>
+                        ${product.featured ? '<div class="position-absolute top-0 end-0 m-3"><span class="badge bg-success">Destacado</span></div>' : ''}
                     </div>
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title">${product.name || 'Producto sin nombre'}</h5>
                         <p class="card-text text-muted small mb-0">Marca: ${product.brand || 'N/A'}</p>
-                        <p class="card-text text-primary fw-bold mt-2 mb-3">$${formattedPrice}</p>
+                        <p class="card-text text-primary fw-bold mt-2 mb-1">$${formattedPrice}</p>
+                        <p class="card-text text-muted small mb-3">Stock: ${product.stock || 0} unidades</p>
                         <p class="card-text">${description}</p>
                         <div class="mt-auto d-flex justify-content-between">
                             <a href="detalle-producto.html?id=${product.id}" class="btn btn-outline-secondary btn-sm">
@@ -392,15 +431,22 @@
         }
         
         // Aplicar filtros
-        function applyFilters(productList) {
+        function applyFilters() {
+            if (!isDataReady || !currentProducts.length) {
+                console.warn('Datos no están listos para filtrar');
+                return;
+            }
+
             const category = document.querySelector('input[name="category"]:checked').value;
             const brands = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
             const maxPrice = parseInt(document.getElementById('priceRange').value);
             
+            console.log('Aplicando filtros:', { category, brands, maxPrice });
+            
             const container = document.getElementById('products-container');
             container.innerHTML = '';
             
-            let filteredProducts = productList || window.products || [];
+            let filteredProducts = [...currentProducts];
             
             // Filtrar por categoría
             if (category !== 'all') {
@@ -414,6 +460,8 @@
             
             // Filtrar por precio
             filteredProducts = filteredProducts.filter(product => product.price <= maxPrice);
+            
+            console.log('Productos filtrados:', filteredProducts.length);
             
             // Mostrar productos filtrados
             if (filteredProducts.length === 0) {
@@ -456,6 +504,9 @@
                 case 'name-desc':
                     cards.sort((a, b) => b.querySelector('.card-title').textContent.localeCompare(a.querySelector('.card-title').textContent));
                     break;
+                default:
+                    // No hacer nada para 'default'
+                    break;
             }
             
             cards.forEach(card => container.appendChild(card));
@@ -464,11 +515,14 @@
         // Actualizar contador de productos
         function updateProductCount() {
             const count = document.getElementById('products-container').querySelectorAll('.product-card').length;
-            document.getElementById('productCount').textContent = count;
+            const countElement = document.getElementById('productCount');
+            if (countElement) {
+                countElement.textContent = count;
+            }
         }
         
         // Manejar parámetros de URL
-        function handleUrlParams(productList) {
+        function handleUrlParams() {
             const urlParams = new URLSearchParams(window.location.search);
             const category = urlParams.get('categoria');
             
@@ -477,7 +531,7 @@
                 const categoryRadio = document.getElementById('category' + category.charAt(0).toUpperCase() + category.slice(1));
                 if (categoryRadio) {
                     categoryRadio.checked = true;
-                    applyFilters(productList);
+                    applyFilters();
                 }
             }
         }

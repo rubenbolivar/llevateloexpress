@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Especificaciones Técnicas</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .spec-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test de Especificaciones Técnicas</h1>
+    <p>Verificando que los datos lleguen correctamente desde la API...</p>
+    
+    <div id="test-results"></div>
+    
+    <script>
+        async function testProductSpecs() {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '<p>⏳ Cargando datos de la API...</p>';
+            
+            try {
+                // Test 1: Cargar producto directamente de la API
+                console.log('🔍 Test 1: Cargando Voge 525 DSX desde API');
+                const response = await fetch('/api/products/products/2/');
+                
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+                
+                const apiProduct = await response.json();
+                console.log('📊 Datos crudos de la API:', apiProduct);
+                
+                let html = '<div class="spec-section">';
+                html += '<h2 class="success">✅ Test 1: API Response (Exitoso)</h2>';
+                html += `<p><strong>Producto:</strong> ${apiProduct.name}</p>`;
+                html += `<p><strong>Descripción:</strong> ${apiProduct.description ? 'Sí (' + apiProduct.description.length + ' caracteres)' : 'No disponible'}</p>`;
+                html += `<p><strong>Features:</strong> ${apiProduct.features ? 'Sí (' + JSON.parse(apiProduct.features).length + ' items)' : 'No disponible'}</p>`;
+                html += `<p><strong>Specs General:</strong> ${apiProduct.specs_general ? 'Sí (' + JSON.parse(apiProduct.specs_general).length + ' items)' : 'No disponible'}</p>`;
+                html += `<p><strong>Specs Engine:</strong> ${apiProduct.specs_engine ? 'Sí (' + JSON.parse(apiProduct.specs_engine).length + ' items)' : 'No disponible'}</p>`;
+                html += `<p><strong>Specs Comfort:</strong> ${apiProduct.specs_comfort ? 'Sí (' + JSON.parse(apiProduct.specs_comfort).length + ' items)' : 'No disponible'}</p>`;
+                html += `<p><strong>Specs Safety:</strong> ${apiProduct.specs_safety ? 'Sí (' + JSON.parse(apiProduct.specs_safety).length + ' items)' : 'No disponible'}</p>`;
+                html += '</div>';
+                
+                // Test 2: Transformar con la función del products.js
+                console.log('🔄 Test 2: Transformando datos con función del frontend');
+                
+                // Simular la función transformProductFromAPI
+                let specs = {};
+                
+                if (apiProduct.specs_general) {
+                    specs.general = JSON.parse(apiProduct.specs_general);
+                }
+                if (apiProduct.specs_engine) {
+                    specs.engine = JSON.parse(apiProduct.specs_engine);
+                }
+                if (apiProduct.specs_comfort) {
+                    specs.comfort = JSON.parse(apiProduct.specs_comfort);
+                }
+                if (apiProduct.specs_safety) {
+                    specs.safety = JSON.parse(apiProduct.specs_safety);
+                }
+                
+                let features = apiProduct.features ? JSON.parse(apiProduct.features) : [];
+                
+                console.log('📋 Datos transformados:', { specs, features });
+                
+                html += '<div class="spec-section">';
+                html += '<h2 class="success">✅ Test 2: Transformación (Exitoso)</h2>';
+                html += `<p><strong>Features transformadas:</strong> ${features.length} items</p>`;
+                html += `<p><strong>Specs.general:</strong> ${specs.general ? specs.general.length + ' items' : 'No disponible'}</p>`;
+                html += `<p><strong>Specs.engine:</strong> ${specs.engine ? specs.engine.length + ' items' : 'No disponible'}</p>`;
+                html += `<p><strong>Specs.comfort:</strong> ${specs.comfort ? specs.comfort.length + ' items' : 'No disponible'}</p>`;
+                html += `<p><strong>Specs.safety:</strong> ${specs.safety ? specs.safety.length + ' items' : 'No disponible'}</p>`;
+                html += '</div>';
+                
+                // Test 3: Mostrar datos reales
+                html += '<div class="spec-section">';
+                html += '<h2>📊 Test 3: Datos Detallados</h2>';
+                
+                if (features.length > 0) {
+                    html += '<h3>Características:</h3><ul>';
+                    features.slice(0, 3).forEach(feature => {
+                        html += `<li>${feature}</li>`;
+                    });
+                    html += '</ul>';
+                }
+                
+                if (specs.general && specs.general.length > 0) {
+                    html += '<h3>Especificaciones Generales:</h3><ul>';
+                    specs.general.slice(0, 3).forEach(spec => {
+                        html += `<li><strong>${spec.label}:</strong> ${spec.value}</li>`;
+                    });
+                    html += '</ul>';
+                }
+                
+                if (specs.engine && specs.engine.length > 0) {
+                    html += '<h3>Especificaciones del Motor:</h3><ul>';
+                    specs.engine.slice(0, 3).forEach(spec => {
+                        html += `<li><strong>${spec.label}:</strong> ${spec.value}</li>`;
+                    });
+                    html += '</ul>';
+                }
+                
+                html += '</div>';
+                
+                // Test 4: Datos JSON completos
+                html += '<div class="spec-section">';
+                html += '<h2>🔍 Test 4: JSON Completo (para debugging)</h2>';
+                html += '<h3>API Response:</h3>';
+                html += `<pre>${JSON.stringify(apiProduct, null, 2)}</pre>`;
+                html += '</div>';
+                
+                resultsDiv.innerHTML = html;
+                
+            } catch (error) {
+                console.error('❌ Error en el test:', error);
+                resultsDiv.innerHTML = `
+                    <div class="spec-section">
+                        <h2 class="error">❌ Error en el Test</h2>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p>Revisa la consola del navegador para más detalles.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Ejecutar test al cargar la página
+        document.addEventListener('DOMContentLoaded', testProductSpecs);
+    </script>
+</body>
+</html> 
