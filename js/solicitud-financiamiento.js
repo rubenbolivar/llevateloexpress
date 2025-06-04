@@ -116,6 +116,7 @@ const FinancingRequest = {
     async loadExistingRequest() {
         try {
             const result = await API.users.authFetch(`/api/financing/requests/${this.requestId}/`);
+            console.log("RESPUESTA DEL BACKEND:", result);
             if (result.success) {
                 const request = result.data;
                 this.calculationData = {
@@ -494,6 +495,7 @@ n    // Preservar parámetros URL durante navegación
                 result = await API.users.authFetch(`/api/financing/requests/${this.requestId}/`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
+                console.log("ENVIANDO DATOS AL BACKEND:", JSON.stringify(requestData, null, 2));
                     body: JSON.stringify(requestData)
                 });
             } else {
@@ -501,10 +503,12 @@ n    // Preservar parámetros URL durante navegación
                 result = await API.users.authFetch('/api/financing/requests/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                console.log("ENVIANDO DATOS AL BACKEND:", JSON.stringify(requestData, null, 2));
                     body: JSON.stringify(requestData)
                 });
             }
 
+            console.log("RESPUESTA DEL BACKEND:", result);
             if (result.success) {
                 const requestId = result.data.id;
                 
