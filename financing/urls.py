@@ -1,6 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
+from .views import debug_financing_request
 
 router = DefaultRouter()
 router.register(r'plans', views.FinancingPlanViewSet, basename='financing-plan')
@@ -8,6 +9,7 @@ router.register(r'requests', views.FinancingRequestViewSet, basename='financing-
 router.register(r'payments', views.PaymentViewSet, basename='payment')
 
 urlpatterns = [
+    path("debug-request/", debug_financing_request, name="debug-financing-request"),
     path('', include(router.urls)),
     
     # Calculadora de financiamiento
