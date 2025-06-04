@@ -451,6 +451,8 @@ const FinancingRequest = {
                 if (fixResult.success) {
                     requestData = fixResult.data;
                     console.log("Datos normalizados por FinancingDataFixer");
+                    console.log("Datos ANTES del fix:", JSON.stringify(this.prepareRequestData(), null, 2));
+                    console.log("Datos DESPUÉS del fix:", JSON.stringify(requestData, null, 2));
                 } else {
                     console.warn("FinancingDataFixer encontró errores:", fixResult.errors);
                 }
@@ -511,7 +513,19 @@ const FinancingRequest = {
 
         return {
             product: product.id,
-            financing_plan: 1, // Plan por defecto, ajustar según necesidad
+n    // Función para mapear porcentaje inicial a plan correcto
+    getFinancingPlanByDownPayment(downPaymentPercentage) {
+        // Mapeo basado en planes activos del sistema
+        const planMap = {
+            35: 5, // Crédito Inmediato 35%
+            45: 6, // Crédito Inmediato 45%
+            55: 7, // Crédito Inmediato 55%
+            60: 8  // Crédito Inmediato 60%
+        };
+        return planMap[downPaymentPercentage] || 5; // Default a plan 5 si no encuentra
+    },
+
+            financing_plan: this.getFinancingPlanByDownPayment(normalized.down_payment_percentage),
             product_price: normalized.product_price,
             down_payment_percentage: normalized.down_payment_percentage,
             down_payment_amount: normalized.down_payment_amount,
