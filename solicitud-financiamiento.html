@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <title>Solicitud de Financiamiento | LlévateloExpress</title>
     <link rel="icon" type="image/png" href="static/img/favicon.png">
     <link rel="apple-touch-icon" href="static/img/favicon.png">
@@ -170,8 +171,11 @@
                     <!-- Mensajes de Estado -->
                     <div id="alertContainer"></div>
 
-                    <!-- Formulario -->
+                    <!-- Formulario con protección CSRF -->
                     <form id="financingRequestForm">
+                        <!-- Token CSRF para Django -->
+                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                        
                         <!-- Paso 1: Resumen del Cálculo -->
                         <div class="form-section active" id="section1">
                             <div class="card shadow-lg border-0">
@@ -202,7 +206,7 @@
                                         <a href="calculadora.html" class="btn btn-outline-secondary">
                                             <i class="fas fa-arrow-left"></i> Volver a Calculadora
                                         </a>
-                                        <button type="button" class="btn btn-primary" onclick="FinancingRequest.nextStep()">
+                                        <button type="button" class="btn btn-primary" onclick="FinancingRequestV2.nextStep()">
                                             Continuar <i class="fas fa-arrow-right"></i>
                                         </button>
                                     </div>
@@ -291,10 +295,10 @@
                                     </div>
 
                                     <div class="d-flex justify-content-between mt-4">
-                                        <button type="button" class="btn btn-outline-secondary" onclick="FinancingRequest.prevStep()">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="FinancingRequestV2.prevStep()">
                                             <i class="fas fa-arrow-left"></i> Anterior
                                         </button>
-                                        <button type="button" class="btn btn-primary" onclick="FinancingRequest.nextStep()">
+                                        <button type="button" class="btn btn-primary" onclick="FinancingRequestV2.nextStep()">
                                             Continuar <i class="fas fa-arrow-right"></i>
                                         </button>
                                     </div>
@@ -339,10 +343,10 @@
                                     </div>
 
                                     <div class="d-flex justify-content-between mt-4">
-                                        <button type="button" class="btn btn-outline-secondary" onclick="FinancingRequest.prevStep()">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="FinancingRequestV2.prevStep()">
                                             <i class="fas fa-arrow-left"></i> Anterior
                                         </button>
-                                        <button type="button" class="btn btn-primary" onclick="FinancingRequest.nextStep()">
+                                        <button type="button" class="btn btn-primary" onclick="FinancingRequestV2.nextStep()">
                                             Continuar <i class="fas fa-arrow-right"></i>
                                         </button>
                                     </div>
@@ -384,7 +388,7 @@
                                     </div>
 
                                     <div class="d-flex justify-content-between mt-4">
-                                        <button type="button" class="btn btn-outline-secondary" onclick="FinancingRequest.prevStep()">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="FinancingRequestV2.prevStep()">
                                             <i class="fas fa-arrow-left"></i> Anterior
                                         </button>
                                         <button type="submit" class="btn btn-success btn-lg" id="submitBtn">
@@ -440,9 +444,7 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module" src="js/auth.js"></script>
-    <script src="js/api.js"></script>
-    <script type="module" src="js/solicitud-financiamiento-v2-complete.js"></script>
-    <script src="js/frontend_fix.js"></script>
-    <script src="js/solicitud_fix.js"></script>
+    <script src="js/api-fixed.js"></script>
+    <script src="js/solicitud-financiamiento-v2-part2.js"></script>
 </body>
 </html> 
