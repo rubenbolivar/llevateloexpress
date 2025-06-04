@@ -255,6 +255,7 @@ const FinancingRequest = {
     // Renderizar paso actual
 n    // Preservar parámetros URL durante navegación
     preserveUrlParams() {
+        try {
         const currentUrl = new URL(window.location);
         const step = this.currentStep;
         
@@ -273,6 +274,10 @@ n    // Preservar parámetros URL durante navegación
 
 n    // Preservar parámetros URL durante navegación
         console.log("URL preservada:", params.toString());
+        } catch (error) {
+            console.error("Error en preserveUrlParams:", error);
+            // Fallback: no modificar URL si hay error
+        }
     },
 
     renderCurrentStep() {
