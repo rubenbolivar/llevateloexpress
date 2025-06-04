@@ -444,17 +444,6 @@ const FinancingRequest = {
         try {
             // Preparar datos de la solicitud
             const requestData = this.prepareRequestData();
-            
-            // PATCH SEGURO: Normalizar datos antes del envío
-            if (typeof window.FinancingDataFixer !== "undefined") {
-                const fixResult = window.FinancingDataFixer.processForSubmission(requestData);
-                if (fixResult.success) {
-                    requestData = fixResult.data;
-                    console.log("Datos normalizados por FinancingDataFixer");
-                } else {
-                    console.warn("FinancingDataFixer encontró errores:", fixResult.errors);
-                }
-            }
 
             let result;
             if (this.requestId) {
