@@ -27,6 +27,7 @@ const FinancingRequest = {
         
         // Renderizar paso inicial
         this.renderCurrentStep();
+            this.preserveUrlParams();
     },
 
     // Configurar event listeners
@@ -238,6 +239,7 @@ const FinancingRequest = {
             if (this.validateCurrentStep()) {
                 this.currentStep++;
                 this.renderCurrentStep();
+            this.preserveUrlParams();
             }
         }
     },
@@ -246,10 +248,33 @@ const FinancingRequest = {
         if (this.currentStep > 1) {
             this.currentStep--;
             this.renderCurrentStep();
+        this.preserveUrlParams();
         }
     },
 
     // Renderizar paso actual
+n    // Preservar parámetros URL durante navegación
+    preserveUrlParams() {
+        const currentUrl = new URL(window.location);
+        const step = this.currentStep;
+        
+        // Mantener todos los parámetros existentes
+        const params = new URLSearchParams(window.location.search);
+        
+        // Actualizar solo el paso actual si es necesario
+        if (params.has("step")) {
+            params.set("step", step);
+        }
+        
+        // Actualizar URL sin recargar página
+        const newUrl = ;
+        window.history.replaceState({}, "", newUrl);
+    },
+
+n    // Preservar parámetros URL durante navegación
+        console.log("URL preservada:", params.toString());
+    },
+
     renderCurrentStep() {
         // Actualizar indicador de pasos
         for (let i = 1; i <= this.totalSteps; i++) {
