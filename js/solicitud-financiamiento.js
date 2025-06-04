@@ -267,7 +267,7 @@ n    // Preservar parámetros URL durante navegación
         }
         
         // Actualizar URL sin recargar página
-        const newUrl = ;
+        const newUrl = window.location.pathname + "?" + params.toString();
         window.history.replaceState({}, "", newUrl);
     },
 
