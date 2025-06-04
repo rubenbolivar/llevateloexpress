@@ -15,23 +15,6 @@ function getCSRFToken() {
         }
     }
     return cookieValue;
-n// Función para obtener token CSRF del servidor
-async function fetchCSRFToken() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/users/csrf-token/`, {
-            method: "GET",
-            credentials: "include"
-        });
-        if (response.ok) {
-            console.log("Token CSRF obtenido correctamente");
-            return true;
-        }
-        return false;
-    } catch (error) {
-        console.error("Error al obtener token CSRF:", error);
-        return false;
-    }
-}
 }
 
 // Objeto principal de la API
@@ -41,15 +24,11 @@ const API = {
         // Iniciar sesión
         async login(email, password) {
             try {
-                console.log("Iniciando proceso de login...");
-                await fetchCSRFToken();
                 const response = await fetch(`${API_BASE_URL}/users/token/`, {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
                         'X-CSRFToken': getCSRFToken()
-                    },
-                    credentials: "include",
                     },
                     body: JSON.stringify({ username: email, password })
                 });
@@ -60,10 +39,6 @@ const API = {
                     // Guardar tokens
                     localStorage.setItem('access_token', data.access);
                     localStorage.setItem('refresh_token', data.refresh);
-                    // Guardar email del usuario para el dashboard
-                    localStorage.setItem('user_email', email);
-                    localStorage.setItem("userEmail", email);
-                    console.log("Login exitoso");
                     return { success: true };
                 } else {
                     return { error: true, data, status: response.status };
@@ -82,8 +57,6 @@ const API = {
                     headers: { 
                         'Content-Type': 'application/json',
                         'X-CSRFToken': getCSRFToken()
-                    },
-                    credentials: "include",
                     },
                     body: JSON.stringify(userData)
                 });
@@ -110,8 +83,6 @@ const API = {
         logout() {
             localStorage.removeItem('access_token');
             localStorage.removeItem('refresh_token');
-            localStorage.removeItem('user_email');
-            localStorage.removeItem('userEmail');
             // Redireccionar a la página principal
             window.location.href = 'index.html';
         },
@@ -385,9 +356,7 @@ function updateAuthUI() {
         if (isAuthenticated) {
             // Usuario autenticado: Mostrar "Mi Dashboard" y "Cerrar Sesión"
             authButtonsContainer.innerHTML = `
-                <a href="/dashboard.html" class="btn btn-outline-primary me-2">
-                    <i class="fas fa-user-circle"></i> Mi Dashboard
-                </a>
+                <a href="dashboard.html" class="btn btn-outline-primary me-2">Mi Dashboard</a>
                 <button id="logoutBtn" class="btn btn-primary">Cerrar Sesión</button>
             `;
             
@@ -406,11 +375,7 @@ function updateAuthUI() {
             `;
         }
     }
-}
-
-// Exportar el módulo API
+} 
 // Hacer API disponible globalmente
 window.API = API;
 console.log("API cargado correctamente");
-
-// export { API }; // Comentado para evitar errores 
