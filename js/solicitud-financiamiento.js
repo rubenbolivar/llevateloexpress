@@ -1,4 +1,5 @@
-import { API } from './api.js';
+// Usar API global disponible desde api-fixed.js
+const API = window.API;
 
 // Módulo de Solicitud de Financiamiento
 const FinancingRequest = {
