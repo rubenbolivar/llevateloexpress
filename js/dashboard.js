@@ -189,10 +189,20 @@ const Dashboard = {
         const draftRequests = requests.filter(r => r.status === 'draft').length;
         document.getElementById('pendingBalance').textContent = `${draftRequests} borradores`;
 
-        // Habilitar botón de pago si hay solicitudes activas
+        // Habilitar botón de pago si hay solicitudes activas o aprobadas
+        const payableRequests = requests.filter(r => 
+            ['approved', 'active'].includes(r.status)
+        ).length;
         const makePaymentBtn = document.getElementById('makePaymentBtn');
         if (makePaymentBtn) {
-            makePaymentBtn.disabled = activeRequests === 0;
+            makePaymentBtn.disabled = payableRequests === 0;
+            // Agregar event listener si no existe
+            if (!makePaymentBtn.hasAttribute('data-listener')) {
+                makePaymentBtn.addEventListener('click', () => {
+                    window.location.href = 'realizar-pago.html';
+                });
+                makePaymentBtn.setAttribute('data-listener', 'true');
+            }
         }
     },
 
@@ -287,6 +297,7 @@ const Dashboard = {
                     </button>
                 `);
                 break;
+            case 'approved':
             case 'active':
                 buttons.push(`
                     <button class="btn btn-sm btn-success" onclick="Dashboard.makePayment(${request.id})">

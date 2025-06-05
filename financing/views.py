@@ -4,17 +4,23 @@ from django.db import transaction
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from rest_framework import viewsets, status, generics, permissions
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from decimal import Decimal
 import math
+from rest_framework.parsers import MultiPartParser, FormParser
+from django.contrib.auth.decorators import login_required
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+import json
+import os
 
 from .models import (
     FinancingPlan, FinancingRequest, Payment, 
     PaymentSchedule, ApplicationStatusHistory,
     FinancingConfiguration, ProductCategory, SimulatorProduct, HelpText,
-    CalculatorMode
+    CalculatorMode, PaymentMethod, CompanyBankAccount, PaymentAttachment
 )
 from .serializers.financing_serializers import (
     FinancingPlanSerializer,
@@ -769,74 +775,377 @@ class CalculatorCalculateView(APIView):
             }
         })
 
-# DEBUGGING ENDPOINT - TEMPORAL
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from users.models import Customer
-from django.utils import timezone
-import json
+
+class PaymentMethodListView(APIView):
+    """Lista de métodos de pago disponibles"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        methods = PaymentMethod.objects.filter(is_active=True).order_by('order')
+        
+        data = []
+        for method in methods:
+            method_data = {
+                'id': method.id,
+                'name': method.name,
+                'payment_type': method.payment_type,
+                'description': method.description,
+                'instructions': method.instructions,
+                'requires_reference': method.requires_reference,
+                'requires_receipt': method.requires_receipt,
+                'min_amount': float(method.min_amount) if method.min_amount else None,
+                'max_amount': float(method.max_amount) if method.max_amount else None,
+                'processing_time_hours': method.processing_time_hours,
+                'accounts': []
+            }
+            
+            # Obtener cuentas asociadas al método
+            accounts = CompanyBankAccount.objects.filter(
+                payment_methods=method,
+                is_active=True
+            )
+            
+            for account in accounts:
+                account_data = {
+                    'id': account.id,
+                    'bank_name': account.bank_name,
+                    'account_type': account.get_account_type_display(),
+                    'account_number': account.account_number,
+                    'account_holder': account.account_holder,
+                    'currency': account.currency,
+                    'instructions': account.instructions,
+                    'is_default': account.is_default
+                }
+                method_data['accounts'].append(account_data)
+            
+            data.append(method_data)
+        
+        return Response({
+            'success': True,
+            'data': data
+        })
+
+
+class PaymentSubmissionView(APIView):
+    """Vista para enviar comprobantes de pago"""
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+    
+    def post(self, request):
+        try:
+            # Validar datos requeridos
+            required_fields = ['application_id', 'payment_method_id', 'amount', 'payment_date']
+            for field in required_fields:
+                if field not in request.data:
+                    return Response({
+                        'success': False,
+                        'error': f'El campo {field} es requerido'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Obtener la solicitud de financiamiento
+            try:
+                application = FinancingRequest.objects.get(
+                    id=request.data['application_id'],
+                    customer__user=request.user
+                )
+            except FinancingRequest.DoesNotExist:
+                return Response({
+                    'success': False,
+                    'error': 'Solicitud de financiamiento no encontrada'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Obtener método de pago
+            try:
+                payment_method = PaymentMethod.objects.get(
+                    id=request.data['payment_method_id'],
+                    is_active=True
+                )
+            except PaymentMethod.DoesNotExist:
+                return Response({
+                    'success': False,
+                    'error': 'Método de pago no válido'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Obtener cuenta de destino si se especifica
+            company_account = None
+            if 'company_account_id' in request.data:
+                try:
+                    company_account = CompanyBankAccount.objects.get(
+                        id=request.data['company_account_id'],
+                        is_active=True
+                    )
+                except CompanyBankAccount.DoesNotExist:
+                    return Response({
+                        'success': False,
+                        'error': 'Cuenta de destino no válida'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validar monto
+            try:
+                amount = float(request.data['amount'])
+                if amount <= 0:
+                    raise ValueError("El monto debe ser mayor que cero")
+            except (ValueError, TypeError):
+                return Response({
+                    'success': False,
+                    'error': 'Monto no válido'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validar archivo de comprobante si es requerido
+            receipt_file = request.FILES.get('receipt_file')
+            if payment_method.requires_receipt and not receipt_file:
+                return Response({
+                    'success': False,
+                    'error': 'Este método de pago requiere comprobante'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validar número de referencia si es requerido
+            reference_number = request.data.get('reference_number', '')
+            if payment_method.requires_reference and not reference_number:
+                return Response({
+                    'success': False,
+                    'error': 'Este método de pago requiere número de referencia'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Crear el pago
+            payment = Payment.objects.create(
+                application=application,
+                payment_method=payment_method,
+                company_account=company_account,
+                payment_type=request.data.get('payment_type', 'installment'),
+                amount=amount,
+                currency=request.data.get('currency', 'USD'),
+                payment_date=request.data['payment_date'],
+                reference_number=reference_number,
+                transaction_id=request.data.get('transaction_id', ''),
+                sender_bank=request.data.get('sender_bank', ''),
+                sender_account=request.data.get('sender_account', ''),
+                sender_name=request.data.get('sender_name', ''),
+                sender_identification=request.data.get('sender_identification', ''),
+                receipt_file=receipt_file,
+                customer_notes=request.data.get('customer_notes', ''),
+                submitted_by=request.user,
+                ip_address=self.get_client_ip(request),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            # Crear respuesta
+            payment_data = {
+                'id': payment.id,
+                'application_number': payment.application.application_number,
+                'payment_type': payment.get_payment_type_display(),
+                'payment_method': payment.payment_method.name,
+                'amount': float(payment.amount),
+                'currency': payment.currency,
+                'status': payment.get_status_display(),
+                'payment_date': payment.payment_date.isoformat(),
+                'reference_number': payment.reference_number,
+                'submitted_at': payment.submitted_at.isoformat(),
+                'has_receipt': bool(payment.receipt_file)
+            }
+            
+            return Response({
+                'success': True,
+                'message': 'Comprobante de pago enviado exitosamente. Será verificado en las próximas 24 horas.',
+                'data': payment_data
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Error interno del servidor: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def get_client_ip(self, request):
+        """Obtiene la IP del cliente"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
+
+
+class UserPaymentsView(APIView):
+    """Vista para obtener los pagos del usuario"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        try:
+            # Obtener parámetros de consulta
+            application_id = request.GET.get('application_id')
+            status_filter = request.GET.get('status')
+            
+            # Construir queryset
+            queryset = Payment.objects.filter(
+                application__customer__user=request.user
+            ).select_related(
+                'application', 'payment_method', 'company_account', 'verified_by'
+            ).order_by('-payment_date')
+            
+            # Aplicar filtros
+            if application_id:
+                queryset = queryset.filter(application_id=application_id)
+            
+            if status_filter:
+                queryset = queryset.filter(status=status_filter)
+            
+            # Serializar datos
+            payments_data = []
+            for payment in queryset:
+                payment_data = {
+                    'id': payment.id,
+                    'application_number': payment.application.application_number,
+                    'payment_type': payment.get_payment_type_display(),
+                    'payment_method': payment.payment_method.name,
+                    'amount': float(payment.amount),
+                    'currency': payment.currency,
+                    'status': payment.get_status_display(),
+                    'status_code': payment.status,
+                    'payment_date': payment.payment_date.isoformat(),
+                    'submitted_at': payment.submitted_at.isoformat(),
+                    'verified_at': payment.verified_at.isoformat() if payment.verified_at else None,
+                    'reference_number': payment.reference_number,
+                    'transaction_id': payment.transaction_id,
+                    'has_receipt': bool(payment.receipt_file),
+                    'receipt_url': payment.receipt_file.url if payment.receipt_file else None,
+                    'customer_notes': payment.customer_notes,
+                    'admin_notes': payment.admin_notes,
+                    'rejection_reason': payment.rejection_reason,
+                    'verification_timeline': str(payment.get_verification_timeline()) if payment.verified_at else None
+                }
+                
+                if payment.company_account:
+                    payment_data['company_account'] = {
+                        'bank_name': payment.company_account.bank_name,
+                        'account_number': payment.company_account.account_number,
+                        'currency': payment.company_account.currency
+                    }
+                
+                payments_data.append(payment_data)
+            
+            return Response({
+                'success': True,
+                'data': payments_data,
+                'total': len(payments_data)
+            })
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Error al obtener pagos: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class PaymentStatusView(APIView):
+    """Vista para obtener el estado de un pago específico"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request, payment_id):
+        try:
+            payment = Payment.objects.select_related(
+                'application', 'payment_method', 'company_account', 'verified_by'
+            ).get(
+                id=payment_id,
+                application__customer__user=request.user
+            )
+            
+            data = {
+                'id': payment.id,
+                'application_number': payment.application.application_number,
+                'payment_type': payment.get_payment_type_display(),
+                'payment_method': payment.payment_method.name,
+                'amount': float(payment.amount),
+                'currency': payment.currency,
+                'status': payment.get_status_display(),
+                'status_code': payment.status,
+                'payment_date': payment.payment_date.isoformat(),
+                'submitted_at': payment.submitted_at.isoformat(),
+                'verified_at': payment.verified_at.isoformat() if payment.verified_at else None,
+                'reference_number': payment.reference_number,
+                'transaction_id': payment.transaction_id,
+                'has_receipt': bool(payment.receipt_file),
+                'receipt_url': payment.receipt_file.url if payment.receipt_file else None,
+                'customer_notes': payment.customer_notes,
+                'admin_notes': payment.admin_notes,
+                'rejection_reason': payment.rejection_reason,
+                'processing_time_hours': payment.payment_method.processing_time_hours,
+                'verification_timeline': str(payment.get_verification_timeline())
+            }
+            
+            if payment.company_account:
+                data['company_account'] = {
+                    'bank_name': payment.company_account.bank_name,
+                    'account_number': payment.company_account.account_number,
+                    'account_holder': payment.company_account.account_holder,
+                    'currency': payment.company_account.currency
+                }
+            
+            return Response({
+                'success': True,
+                'data': data
+            })
+            
+        except Payment.DoesNotExist:
+            return Response({
+                'success': False,
+                'error': 'Pago no encontrado'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Error al obtener pago: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def debug_financing_request(request):
-    """
-    Endpoint temporal para debugging del problema de solicitudes.
-    CERO RIESGO - Solo recolecta información.
-    """
-    debug_info = {
-        'timestamp': str(timezone.now()),
-        'user_info': {
-            'user_id': request.user.id,
-            'username': request.user.username,
-            'is_authenticated': request.user.is_authenticated,
-            'has_customer_attr': hasattr(request.user, 'customer'),
-        },
-        'customer_info': {
-            'customer_count': Customer.objects.filter(user=request.user).count(),
-            'customer_exists': Customer.objects.filter(user=request.user).exists(),
-        },
-        'request_data': dict(request.data),
-        'request_method': request.method,
-        'content_type': request.content_type,
-    }
-    
-    # Intentar acceder a customer de diferentes maneras
+@permission_classes([permissions.IsAuthenticated])
+def upload_additional_attachment(request, payment_id):
+    """Vista para subir archivos adicionales a un pago"""
     try:
-        customer_direct = Customer.objects.get(user=request.user)
-        debug_info['customer_direct'] = {
+        # Obtener el pago
+        payment = Payment.objects.get(
+            id=payment_id,
+            application__customer__user=request.user
+        )
+        
+        # Validar archivo
+        if 'file' not in request.FILES:
+            return Response({
+                'success': False,
+                'error': 'No se proporcionó archivo'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        file = request.FILES['file']
+        description = request.data.get('description', '')
+        
+        # Crear adjunto
+        attachment = PaymentAttachment.objects.create(
+            payment=payment,
+            file=file,
+            description=description,
+            uploaded_by=request.user
+        )
+        
+        return Response({
             'success': True,
-            'customer_id': customer_direct.id,
-            'verified': customer_direct.verified,
-            'is_profile_complete': customer_direct.is_profile_complete,
-        }
-    except Customer.DoesNotExist:
-        debug_info['customer_direct'] = {
+            'message': 'Archivo adjunto subido exitosamente',
+            'data': {
+                'id': attachment.id,
+                'file_url': attachment.file.url,
+                'file_type': attachment.file_type,
+                'description': attachment.description,
+                'uploaded_at': attachment.uploaded_at.isoformat()
+            }
+        }, status=status.HTTP_201_CREATED)
+        
+    except Payment.DoesNotExist:
+        return Response({
             'success': False,
-            'error': 'Customer.DoesNotExist'
-        }
+            'error': 'Pago no encontrado'
+        }, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        debug_info['customer_direct'] = {
+        return Response({
             'success': False,
-            'error': str(e)
-        }
-    
-    # Intentar el método problemático
-    try:
-        customer_property = request.user.customer
-        debug_info['customer_property'] = {
-            'success': True,
-            'result': str(customer_property)
-        }
-    except Exception as e:
-        debug_info['customer_property'] = {
-            'success': False,
-            'error': str(e),
-            'error_type': type(e).__name__
-        }
-    
-    return Response({
-        'status': 'debug_success',
-        'message': 'Información de debugging recolectada',
-        'debug_data': debug_info
-    }) 
+            'error': f'Error al subir archivo: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

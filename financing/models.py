@@ -4,6 +4,8 @@ from products.models import Product
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 import uuid
+from django.core.exceptions import ValidationError
+import os
 
 # Create your models here.
 
@@ -264,37 +266,137 @@ class FinancingRequest(models.Model):
             )
 
 
-class Payment(models.Model):
-    """Pagos realizados"""
+class PaymentMethod(models.Model):
+    """Métodos de pago disponibles"""
     TYPES = [
-        ('down_payment', 'Inicial'),
-        ('installment', 'Cuota'),
-        ('late_fee', 'Mora'),
-        ('penalty', 'Penalización'),
-        ('adjustment', 'Ajuste')
-    ]
-    
-    METHODS = [
-        ('cash', 'Efectivo'),
-        ('transfer', 'Transferencia'),
+        ('bank_transfer', 'Transferencia Bancaria'),
         ('mobile_payment', 'Pago Móvil'),
         ('zelle', 'Zelle'),
-        ('deposit', 'Depósito Bancario'),
+        ('binance', 'Binance Pay'),
+        ('cash', 'Efectivo'),
+        ('check', 'Cheque'),
         ('other', 'Otro')
     ]
     
-    STATUSES = [
-        ('pending', 'Pendiente'),
-        ('verified', 'Verificado'),
-        ('rejected', 'Rechazado')
+    name = models.CharField(max_length=100, verbose_name="Nombre del método")
+    payment_type = models.CharField(max_length=20, choices=TYPES, verbose_name="Tipo de pago")
+    description = models.TextField(blank=True, verbose_name="Descripción")
+    instructions = models.TextField(blank=True, verbose_name="Instrucciones para el usuario")
+    requires_reference = models.BooleanField(default=True, verbose_name="Requiere número de referencia")
+    requires_receipt = models.BooleanField(default=True, verbose_name="Requiere comprobante")
+    is_active = models.BooleanField(default=True, verbose_name="Activo")
+    order = models.IntegerField(default=0, verbose_name="Orden de visualización")
+    
+    # Configuración específica
+    min_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Monto mínimo")
+    max_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Monto máximo")
+    processing_time_hours = models.IntegerField(default=24, verbose_name="Tiempo de procesamiento (horas)")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Método de Pago"
+        verbose_name_plural = "Métodos de Pago"
+        ordering = ['order', 'name']
+    
+    def __str__(self):
+        return self.name
+
+
+class CompanyBankAccount(models.Model):
+    """Cuentas bancarias de la empresa para recibir pagos"""
+    ACCOUNT_TYPES = [
+        ('checking', 'Cuenta Corriente'),
+        ('savings', 'Cuenta de Ahorros'),
+        ('business', 'Cuenta Empresarial')
     ]
     
-    # Relaciones
+    CURRENCIES = [
+        ('VES', 'Bolívares (VES)'),
+        ('USD', 'Dólares (USD)'),
+        ('EUR', 'Euros (EUR)')
+    ]
+    
+    bank_name = models.CharField(max_length=100, verbose_name="Nombre del banco")
+    account_type = models.CharField(max_length=20, choices=ACCOUNT_TYPES, verbose_name="Tipo de cuenta")
+    account_number = models.CharField(max_length=50, verbose_name="Número de cuenta")
+    account_holder = models.CharField(max_length=200, verbose_name="Titular de la cuenta")
+    routing_number = models.CharField(max_length=50, blank=True, verbose_name="Número de ruta/ABA")
+    
+    # Información adicional
+    currency = models.CharField(max_length=3, choices=CURRENCIES, default='USD', verbose_name="Moneda")
+    identification_number = models.CharField(max_length=50, blank=True, verbose_name="RIF/Cédula titular")
+    email = models.EmailField(blank=True, verbose_name="Email de notificaciones")
+    phone = models.CharField(max_length=20, blank=True, verbose_name="Teléfono")
+    
+    # Configuración
+    is_active = models.BooleanField(default=True, verbose_name="Activa")
+    is_default = models.BooleanField(default=False, verbose_name="Cuenta principal")
+    payment_methods = models.ManyToManyField(PaymentMethod, blank=True, verbose_name="Métodos de pago asociados")
+    
+    # Instrucciones específicas
+    instructions = models.TextField(blank=True, verbose_name="Instrucciones especiales")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Cuenta Bancaria de la Empresa"
+        verbose_name_plural = "Cuentas Bancarias de la Empresa"
+        ordering = ['-is_default', 'bank_name']
+    
+    def __str__(self):
+        return f"{self.bank_name} - {self.account_number} ({self.currency})"
+    
+    def save(self, *args, **kwargs):
+        # Solo una cuenta puede ser principal por moneda
+        if self.is_default:
+            CompanyBankAccount.objects.filter(
+                currency=self.currency, 
+                is_default=True
+            ).exclude(pk=self.pk).update(is_default=False)
+        super().save(*args, **kwargs)
+
+
+class Payment(models.Model):
+    """Pagos realizados - MODELO EXPANDIDO PARA COMPROBANTES"""
+    TYPES = [
+        ('initial', 'Pago Inicial'),
+        ('installment', 'Cuota Mensual'),
+        ('late_fee', 'Mora'),
+        ('penalty', 'Penalización'),
+        ('partial', 'Pago Parcial'),
+        ('adjustment', 'Ajuste'),
+        ('refund', 'Reembolso')
+    ]
+    
+    STATUSES = [
+        ('pending', 'Pendiente de Verificación'),
+        ('verified', 'Verificado y Aprobado'),
+        ('rejected', 'Rechazado'),
+        ('processing', 'En Proceso de Verificación'),
+        ('requires_review', 'Requiere Revisión Manual')
+    ]
+    
+    # Relaciones principales
     application = models.ForeignKey(
         FinancingRequest, 
         on_delete=models.CASCADE, 
         related_name='payments',
-        verbose_name="Solicitud"
+        verbose_name="Solicitud de Financiamiento"
+    )
+    payment_method = models.ForeignKey(
+        PaymentMethod,
+        on_delete=models.PROTECT,
+        verbose_name="Método de Pago"
+    )
+    company_account = models.ForeignKey(
+        CompanyBankAccount,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        verbose_name="Cuenta de Destino"
     )
     payment_schedule = models.ForeignKey(
         'PaymentSchedule',
@@ -302,52 +404,71 @@ class Payment(models.Model):
         null=True,
         blank=True,
         related_name='payments',
-        verbose_name="Cuota programada"
+        verbose_name="Cuota Programada"
     )
     
-    # Detalles del pago
-    payment_type = models.CharField(
-        max_length=20, 
-        choices=TYPES,
-        verbose_name="Tipo de pago"
-    )
-    payment_method = models.CharField(
-        max_length=20, 
-        choices=METHODS,
-        verbose_name="Método de pago"
-    )
-    status = models.CharField(
-        max_length=20,
-        choices=STATUSES,
-        default='pending',
-        verbose_name="Estado"
-    )
+    # Información básica del pago
+    payment_type = models.CharField(max_length=20, choices=TYPES, verbose_name="Tipo de Pago")
+    status = models.CharField(max_length=20, choices=STATUSES, default='pending', verbose_name="Estado")
+    amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Monto Pagado")
+    currency = models.CharField(max_length=3, default='USD', verbose_name="Moneda")
     
-    amount = models.DecimalField(
-        max_digits=10, 
-        decimal_places=2,
-        verbose_name="Monto"
-    )
-    payment_date = models.DateTimeField(verbose_name="Fecha de pago")
+    # Fechas
+    payment_date = models.DateTimeField(verbose_name="Fecha del Pago")
+    submitted_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Registro")
+    verified_at = models.DateTimeField(null=True, blank=True, verbose_name="Fecha de Verificación")
+    
+    # Detalles del comprobante
     reference_number = models.CharField(
         max_length=100, 
         blank=True,
-        verbose_name="Número de referencia"
+        verbose_name="Número de Referencia",
+        help_text="Número de referencia del banco o sistema de pago"
     )
-    
-    # Comprobante
-    receipt = models.FileField(
-        upload_to='payments/receipts/%Y/%m/', 
-        null=True, 
+    transaction_id = models.CharField(
+        max_length=100,
         blank=True,
-        verbose_name="Comprobante"
+        verbose_name="ID de Transacción",
+        help_text="ID único de la transacción (para Zelle, Binance, etc.)"
     )
-    notes = models.TextField(blank=True, verbose_name="Notas")
     
-    # Registro
-    recorded_by = models.ForeignKey(
-        User, 
+    # Información bancaria específica
+    sender_bank = models.CharField(max_length=100, blank=True, verbose_name="Banco Emisor")
+    sender_account = models.CharField(max_length=50, blank=True, verbose_name="Cuenta Emisora")
+    sender_name = models.CharField(max_length=200, blank=True, verbose_name="Nombre del Emisor")
+    sender_identification = models.CharField(max_length=50, blank=True, verbose_name="Cédula/RIF Emisor")
+    
+    # Comprobante (archivo)
+    receipt_file = models.FileField(
+        upload_to='payments/receipts/%Y/%m/%d/',
+        null=True,
+        blank=True,
+        verbose_name="Comprobante de Pago",
+        help_text="Captura de pantalla o PDF del comprobante"
+    )
+    
+    # Notas y observaciones
+    customer_notes = models.TextField(
+        blank=True,
+        verbose_name="Notas del Cliente",
+        help_text="Comentarios adicionales del cliente sobre el pago"
+    )
+    admin_notes = models.TextField(
+        blank=True,
+        verbose_name="Notas del Administrador",
+        help_text="Comentarios internos sobre la verificación"
+    )
+    rejection_reason = models.TextField(
+        blank=True,
+        verbose_name="Motivo de Rechazo",
+        help_text="Razón específica si el pago fue rechazado"
+    )
+    
+    # Control administrativo
+    submitted_by = models.ForeignKey(
+        User,
         on_delete=models.PROTECT,
+        related_name='submitted_payments',
         verbose_name="Registrado por"
     )
     verified_by = models.ForeignKey(
@@ -359,16 +480,138 @@ class Payment(models.Model):
         verbose_name="Verificado por"
     )
     
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de registro")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Última actualización")
+    # Metadatos
+    ip_address = models.GenericIPAddressField(null=True, blank=True, verbose_name="Dirección IP")
+    user_agent = models.TextField(blank=True, verbose_name="User Agent")
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Creación")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Última Actualización")
     
     class Meta:
         verbose_name = "Pago"
         verbose_name_plural = "Pagos"
         ordering = ['-payment_date']
+        permissions = [
+            ("can_verify_payment", "Puede verificar pagos"),
+            ("can_reject_payment", "Puede rechazar pagos"),
+            ("can_view_all_payments", "Puede ver todos los pagos"),
+        ]
     
     def __str__(self):
-        return f"{self.get_payment_type_display()} - {self.amount} - {self.payment_date.strftime('%d/%m/%Y')}"
+        return f"{self.get_payment_type_display()} - ${self.amount} - {self.get_status_display()}"
+    
+    def clean(self):
+        """Validaciones personalizadas"""
+        if self.amount <= 0:
+            raise ValidationError("El monto debe ser mayor que cero")
+        
+        if self.payment_method.requires_reference and not self.reference_number:
+            raise ValidationError("Este método de pago requiere número de referencia")
+        
+        if self.payment_method.requires_receipt and not self.receipt_file:
+            raise ValidationError("Este método de pago requiere comprobante")
+        
+        # Validar montos mínimos/máximos
+        if self.payment_method.min_amount and self.amount < self.payment_method.min_amount:
+            raise ValidationError(f"El monto mínimo para este método es ${self.payment_method.min_amount}")
+        
+        if self.payment_method.max_amount and self.amount > self.payment_method.max_amount:
+            raise ValidationError(f"El monto máximo para este método es ${self.payment_method.max_amount}")
+    
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+    
+    def get_receipt_filename(self):
+        """Obtiene el nombre del archivo de comprobante"""
+        if self.receipt_file:
+            return os.path.basename(self.receipt_file.name)
+        return None
+    
+    def mark_as_verified(self, verified_by_user, admin_notes=""):
+        """Marca el pago como verificado"""
+        self.status = 'verified'
+        self.verified_by = verified_by_user
+        self.verified_at = timezone.now()
+        if admin_notes:
+            self.admin_notes = admin_notes
+        self.save()
+        
+        # Actualizar el cronograma de pagos si aplica
+        if self.payment_schedule:
+            self.payment_schedule.mark_as_paid(self.amount, self.payment_date.date())
+    
+    def mark_as_rejected(self, rejected_by_user, rejection_reason):
+        """Marca el pago como rechazado"""
+        self.status = 'rejected'
+        self.verified_by = rejected_by_user
+        self.verified_at = timezone.now()
+        self.rejection_reason = rejection_reason
+        self.save()
+    
+    def get_verification_timeline(self):
+        """Calcula el tiempo transcurrido para verificación"""
+        if self.verified_at:
+            return self.verified_at - self.submitted_at
+        return timezone.now() - self.submitted_at
+
+
+class PaymentAttachment(models.Model):
+    """Archivos adjuntos adicionales para pagos"""
+    payment = models.ForeignKey(
+        Payment,
+        on_delete=models.CASCADE,
+        related_name='attachments',
+        verbose_name="Pago"
+    )
+    file = models.FileField(
+        upload_to='payments/attachments/%Y/%m/%d/',
+        verbose_name="Archivo Adjunto"
+    )
+    file_type = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name="Tipo de Archivo",
+        help_text="Detectado automáticamente"
+    )
+    description = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name="Descripción del Archivo"
+    )
+    uploaded_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        verbose_name="Subido por"
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Subida")
+    
+    class Meta:
+        verbose_name = "Archivo Adjunto de Pago"
+        verbose_name_plural = "Archivos Adjuntos de Pagos"
+        ordering = ['-uploaded_at']
+    
+    def __str__(self):
+        return f"Adjunto de {self.payment} - {self.description}"
+    
+    def save(self, *args, **kwargs):
+        if self.file:
+            # Detectar tipo de archivo
+            file_extension = os.path.splitext(self.file.name)[1].lower()
+            type_mapping = {
+                '.pdf': 'PDF Document',
+                '.jpg': 'JPEG Image',
+                '.jpeg': 'JPEG Image',
+                '.png': 'PNG Image',
+                '.gif': 'GIF Image',
+                '.doc': 'Word Document',
+                '.docx': 'Word Document',
+                '.xls': 'Excel Spreadsheet',
+                '.xlsx': 'Excel Spreadsheet'
+            }
+            self.file_type = type_mapping.get(file_extension, 'Unknown')
+        
+        super().save(*args, **kwargs)
 
 
 class PaymentSchedule(models.Model):
@@ -426,6 +669,13 @@ class PaymentSchedule(models.Model):
             # Calcular mora (ejemplo: 1% del monto por cada 7 días de atraso)
             self.late_fee = (self.amount * 0.01) * (self.days_late // 7)
         return self.late_fee
+    
+    def mark_as_paid(self, paid_amount, paid_date):
+        """Marca la cuota como pagada"""
+        self.is_paid = True
+        self.paid_amount = paid_amount
+        self.paid_date = paid_date
+        self.save()
 
 
 class ApplicationStatusHistory(models.Model):
@@ -697,3 +947,41 @@ class CalculatorMode(models.Model):
         if self.available_terms:
             return [int(x.strip()) for x in self.available_terms.split(',')]
         return []
+
+# SIGNALS PARA GENERACIÓN AUTOMÁTICA DE CRONOGRAMAS
+from django.db.models.signals import post_save, pre_save
+from django.dispatch import receiver
+
+@receiver(pre_save, sender=FinancingRequest)
+def track_status_change(sender, instance, **kwargs):
+    """Detecta cambios de estado en solicitudes de financiamiento"""
+    if instance.pk:
+        try:
+            old_instance = FinancingRequest.objects.get(pk=instance.pk)
+            instance._old_status = old_instance.status
+        except FinancingRequest.DoesNotExist:
+            instance._old_status = None
+    else:
+        instance._old_status = None
+
+@receiver(post_save, sender=FinancingRequest)
+def auto_generate_payment_schedule(sender, instance, created, **kwargs):
+    """Genera automáticamente el cronograma de pagos cuando se aprueba una solicitud"""
+    if not created:  # Solo para actualizaciones, no para nuevas solicitudes
+        old_status = getattr(instance, '_old_status', None)
+        current_status = instance.status
+        
+        # Si cambió de cualquier estado a 'approved', generar cronograma
+        if old_status != 'approved' and current_status == 'approved':
+            print(f"🔄 Generando cronograma automático para solicitud {instance.application_number}")
+            instance.calculate_payment_schedule()
+            print(f"✅ Cronograma generado exitosamente para {instance.application_number}")
+            
+            # Registrar en el historial
+            ApplicationStatusHistory.objects.create(
+                application=instance,
+                from_status=old_status or 'unknown',
+                to_status=current_status,
+                changed_by=instance.reviewed_by,
+                notes="Cronograma de pagos generado automáticamente"
+            )

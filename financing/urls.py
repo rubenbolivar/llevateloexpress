@@ -1,7 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
-from .views import debug_financing_request
 
 router = DefaultRouter()
 router.register(r'plans', views.FinancingPlanViewSet, basename='financing-plan')
@@ -9,7 +8,6 @@ router.register(r'requests', views.FinancingRequestViewSet, basename='financing-
 router.register(r'payments', views.PaymentViewSet, basename='payment')
 
 urlpatterns = [
-    path("debug-request/", debug_financing_request, name="debug-financing-request"),
     path('', include(router.urls)),
     
     # Calculadora de financiamiento
@@ -26,4 +24,16 @@ urlpatterns = [
     # Calculadora integrada (nueva)
     path('calculator/config/', views.CalculatorConfigurationView.as_view(), name='calculator-config'),
     path('calculator/calculate/', views.CalculatorCalculateView.as_view(), name='calculator-calculate'),
-] 
+    
+    # Sistema de pagos manuales con comprobantes
+    path('payment-methods/', views.PaymentMethodListView.as_view(), name='payment-methods'),
+    path('submit-payment/', views.PaymentSubmissionView.as_view(), name='submit-payment'),
+    path('my-payments/', views.UserPaymentsView.as_view(), name='user-payments'),
+    
+    # Sistema de pagos manuales con comprobantes
+    path('payment-methods/', views.PaymentMethodListView.as_view(), name='payment-methods'),
+    path('submit-payment/', views.PaymentSubmissionView.as_view(), name='submit-payment'),
+    path('my-payments/', views.UserPaymentsView.as_view(), name='user-payments'),
+    path('payment-status/<int:payment_id>/', views.PaymentStatusView.as_view(), name='payment-status'),
+    path('upload-attachment/<int:payment_id>/', views.upload_additional_attachment, name='upload-attachment'),
+]

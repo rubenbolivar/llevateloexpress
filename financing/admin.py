@@ -3,13 +3,17 @@ from django.utils.html import format_html
 from django.urls import reverse
 from django.utils import timezone
 from django.db.models import Sum, Count
+from django.utils.safestring import mark_safe
+from django.db.models import Q
+from django.contrib.admin import SimpleListFilter
 from .models import (
     FinancingPlan, FinancingRequest, Payment, 
     PaymentSchedule, ApplicationStatusHistory,
     FinancingConfiguration, DownPaymentOption,
     FinancingTerm, PaymentFrequency, ProductCategory, SimulatorProduct, HelpText,
-    CalculatorMode
+    CalculatorMode, PaymentMethod, CompanyBankAccount, PaymentAttachment
 )
+import datetime
 
 # Inline para el historial de estados
 class ApplicationStatusHistoryInline(admin.TabularInline):
@@ -34,6 +38,53 @@ class PaymentInline(admin.TabularInline):
     extra = 0
     fields = ('payment_type', 'payment_method', 'amount', 'payment_date', 'status', 'reference_number')
     readonly_fields = ('created_at',)
+
+# Inline para archivos adjuntos de pagos
+class PaymentAttachmentInline(admin.TabularInline):
+    model = PaymentAttachment
+    extra = 0
+    readonly_fields = ('file_type', 'uploaded_by', 'uploaded_at')
+    fields = ('file', 'description', 'file_type', 'uploaded_by', 'uploaded_at')
+
+# Filtros personalizados
+class PaymentStatusFilter(SimpleListFilter):
+    title = 'Estado del Pago'
+    parameter_name = 'payment_status'
+    
+    def lookups(self, request, model_admin):
+        return (
+            ('pending', 'Pendientes de Verificación'),
+            ('verified', 'Verificados'),
+            ('rejected', 'Rechazados'),
+            ('processing', 'En Proceso'),
+        )
+    
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(status=self.value())
+        return queryset
+
+class PaymentDateFilter(SimpleListFilter):
+    title = 'Fecha del Pago'
+    parameter_name = 'payment_date'
+    
+    def lookups(self, request, model_admin):
+        return (
+            ('today', 'Hoy'),
+            ('week', 'Esta Semana'),
+            ('month', 'Este Mes'),
+        )
+    
+    def queryset(self, request, queryset):
+        if self.value() == 'today':
+            return queryset.filter(payment_date__date=datetime.date.today())
+        elif self.value() == 'week':
+            start_week = datetime.date.today() - datetime.timedelta(days=7)
+            return queryset.filter(payment_date__date__gte=start_week)
+        elif self.value() == 'month':
+            start_month = datetime.date.today().replace(day=1)
+            return queryset.filter(payment_date__date__gte=start_month)
+        return queryset
 
 @admin.register(FinancingPlan)
 class FinancingPlanAdmin(admin.ModelAdmin):
@@ -212,130 +263,150 @@ class FinancingRequestAdmin(admin.ModelAdmin):
 
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
-    list_display = (
-        'id', 'application_number', 'payment_type', 'amount', 
-        'payment_date', 'payment_method', 'status_badge', 'recorded_by'
-    )
-    list_filter = ('payment_type', 'payment_method', 'status', 'payment_date')
-    search_fields = (
-        'application__application_number', 
-        'reference_number',
-        'application__customer__user__first_name',
-        'application__customer__user__last_name'
-    )
-    readonly_fields = ('created_at', 'updated_at')
-    date_hierarchy = 'payment_date'
+    list_display = [
+        'get_application_number', 'get_customer_name', 'payment_type', 
+        'amount', 'currency', 'payment_method', 'status', 'payment_date',
+        'has_receipt', 'verification_actions'
+    ]
+    list_filter = [
+        PaymentStatusFilter, 'payment_type', 'currency', 
+        PaymentDateFilter, 'payment_method__payment_type'
+    ]
+    search_fields = [
+        'application__application_number', 'application__customer__user__first_name',
+        'application__customer__user__last_name', 'reference_number',
+        'transaction_id', 'sender_name'
+    ]
+    readonly_fields = [
+        'submitted_at', 'verified_at', 'submitted_by', 'get_receipt_preview',
+        'get_verification_timeline'
+    ]
     
     fieldsets = (
-        ('Información del Pago', {
-            'fields': (
-                'application', 'payment_schedule', 'payment_type',
-                'amount', 'payment_date'
-            )
+        ('Información Básica', {
+            'fields': ('application', 'payment_type', 'payment_method', 'company_account')
         }),
-        ('Método de Pago', {
-            'fields': (
-                'payment_method', 'reference_number', 'status'
-            )
+        ('Detalles del Pago', {
+            'fields': ('amount', 'currency', 'payment_date', 'status')
         }),
-        ('Documentación', {
-            'fields': ('receipt', 'notes')
+        ('Comprobante', {
+            'fields': ('reference_number', 'transaction_id', 'receipt_file', 'get_receipt_preview')
         }),
-        ('Registro', {
-            'fields': (
-                'recorded_by', 'verified_by', 'created_at', 'updated_at'
-            )
+        ('Información del Emisor', {
+            'fields': ('sender_bank', 'sender_account', 'sender_name', 'sender_identification'),
+            'classes': ('collapse',)
+        }),
+        ('Notas', {
+            'fields': ('customer_notes', 'admin_notes', 'rejection_reason')
+        }),
+        ('Control Administrativo', {
+            'fields': ('submitted_by', 'verified_by', 'submitted_at', 'verified_at', 'get_verification_timeline'),
+            'classes': ('collapse',)
         }),
     )
     
-    actions = ['verify_payments', 'reject_payments']
+    # inlines = [PaymentAttachmentInline]  # Comentado temporalmente hasta crear la migración
     
-    def application_number(self, obj):
+    actions = ['mark_as_verified', 'mark_as_rejected', 'mark_as_processing']
+    
+    def get_application_number(self, obj):
         return obj.application.application_number
-    application_number.short_description = 'Número de Solicitud'
+    get_application_number.short_description = 'No. Solicitud'
     
-    def status_badge(self, obj):
-        colors = {
-            'pending': 'yellow',
-            'verified': 'green',
-            'rejected': 'red'
-        }
-        color = colors.get(obj.status, 'gray')
-        return format_html(
-            '<span style="background-color: {}; color: white; padding: 3px 10px; border-radius: 3px;">{}</span>',
-            color,
-            obj.get_status_display()
-        )
-    status_badge.short_description = 'Estado'
+    def get_customer_name(self, obj):
+        return obj.application.customer.user.get_full_name()
+    get_customer_name.short_description = 'Cliente'
     
-    def verify_payments(self, request, queryset):
-        """Verificar pagos pendientes"""
-        count = queryset.filter(status='pending').update(
-            status='verified',
-            verified_by=request.user
-        )
+    def has_receipt(self, obj):
+        if obj.receipt_file:
+            return format_html('<span style="color: green;">✓ Sí</span>')
+        return format_html('<span style="color: red;">✗ No</span>')
+    has_receipt.short_description = 'Comprobante'
+    
+    def get_receipt_preview(self, obj):
+        if obj.receipt_file:
+            return format_html(
+                '<img src="{}" style="max-width: 300px; max-height: 200px;" /><br>'
+                '<a href="{}" target="_blank">Ver archivo completo</a>',
+                obj.receipt_file.url, obj.receipt_file.url
+            )
+        return "No hay comprobante"
+    get_receipt_preview.short_description = 'Vista Previa'
+    
+    def verification_actions(self, obj):
+        if obj.status == 'pending':
+            verify_url = reverse('admin:verify_payment', args=[obj.pk])
+            reject_url = reverse('admin:reject_payment', args=[obj.pk])
+            return format_html(
+                '<a class="button" href="{}" style="background: green; color: white; padding: 5px;">Verificar</a> '
+                '<a class="button" href="{}" style="background: red; color: white; padding: 5px;">Rechazar</a>',
+                verify_url, reject_url
+            )
+        return obj.get_status_display()
+    verification_actions.short_description = 'Acciones'
+    
+    def get_verification_timeline(self, obj):
+        timeline = obj.get_verification_timeline()
+        if timeline:
+            total_seconds = int(timeline.total_seconds())
+            hours = total_seconds // 3600
+            minutes = (total_seconds % 3600) // 60
+            return f"{hours}h {minutes}m"
+        return "N/A"
+    get_verification_timeline.short_description = 'Tiempo de Verificación'
+    
+    # Acciones personalizadas
+    def mark_as_verified(self, request, queryset):
+        updated = 0
+        for payment in queryset:
+            if payment.status == 'pending':
+                payment.mark_as_verified(request.user, "Verificado masivamente desde admin")
+                updated += 1
         
-        # Actualizar cuotas pagadas
-        for payment in queryset.filter(status='verified', payment_schedule__isnull=False):
-            schedule = payment.payment_schedule
-            schedule.is_paid = True
-            schedule.paid_date = payment.payment_date.date()
-            schedule.paid_amount = payment.amount
-            schedule.save()
-            
-        self.message_user(request, f'{count} pagos verificados exitosamente.')
-    verify_payments.short_description = "Verificar pagos seleccionados"
+        self.message_user(request, f'{updated} pagos marcados como verificados.')
+    mark_as_verified.short_description = "Marcar como verificados"
     
-    def reject_payments(self, request, queryset):
-        """Rechazar pagos"""
-        count = queryset.filter(status='pending').update(
-            status='rejected',
-            verified_by=request.user
+    def mark_as_rejected(self, request, queryset):
+        updated = 0
+        for payment in queryset:
+            if payment.status == 'pending':
+                payment.mark_as_rejected(request.user, "Rechazado masivamente desde admin")
+                updated += 1
+        
+        self.message_user(request, f'{updated} pagos marcados como rechazados.')
+    mark_as_rejected.short_description = "Marcar como rechazados"
+    
+    def mark_as_processing(self, request, queryset):
+        updated = queryset.filter(status='pending').update(status='processing')
+        self.message_user(request, f'{updated} pagos marcados como en proceso.')
+    mark_as_processing.short_description = "Marcar como en proceso"
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related(
+            'application__customer__user', 'payment_method', 'company_account'
         )
-        self.message_user(request, f'{count} pagos rechazados.')
-    reject_payments.short_description = "Rechazar pagos seleccionados"
+
+@admin.register(PaymentAttachment)
+class PaymentAttachmentAdmin(admin.ModelAdmin):
+    list_display = ['payment', 'description', 'file_type', 'uploaded_by', 'uploaded_at']
+    list_filter = ['file_type', 'uploaded_at']
+    search_fields = ['payment__application__application_number', 'description']
+    readonly_fields = ['file_type', 'uploaded_by', 'uploaded_at']
 
 @admin.register(PaymentSchedule)
 class PaymentScheduleAdmin(admin.ModelAdmin):
-    list_display = (
-        'application_number', 'payment_number', 'due_date', 
-        'amount', 'is_paid_badge', 'days_late', 'late_fee'
-    )
-    list_filter = ('is_paid', 'due_date')
-    search_fields = (
-        'application__application_number',
-        'application__customer__user__first_name',
-        'application__customer__user__last_name'
-    )
-    date_hierarchy = 'due_date'
+    list_display = [
+        'get_application_number', 'payment_number', 'due_date', 
+        'amount', 'is_paid', 'paid_amount', 'days_late', 'late_fee'
+    ]
+    list_filter = ['is_paid', 'due_date']
+    search_fields = ['application__application_number']
+    readonly_fields = ['days_late', 'late_fee']
     
-    def application_number(self, obj):
+    def get_application_number(self, obj):
         return obj.application.application_number
-    application_number.short_description = 'Número de Solicitud'
-    
-    def is_paid_badge(self, obj):
-        if obj.is_paid:
-            return format_html(
-                '<span style="background-color: green; color: white; padding: 3px 10px; border-radius: 3px;">Pagado</span>'
-            )
-        elif obj.days_late > 0:
-            return format_html(
-                '<span style="background-color: red; color: white; padding: 3px 10px; border-radius: 3px;">Vencido</span>'
-            )
-        else:
-            return format_html(
-                '<span style="background-color: yellow; color: black; padding: 3px 10px; border-radius: 3px;">Pendiente</span>'
-            )
-    is_paid_badge.short_description = 'Estado'
-    
-    def get_queryset(self, request):
-        """Actualizar automáticamente los días de atraso"""
-        qs = super().get_queryset(request)
-        # Actualizar días de atraso para cuotas no pagadas
-        for schedule in qs.filter(is_paid=False):
-            schedule.calculate_late_fee()
-            schedule.save()
-        return qs
+    get_application_number.short_description = 'No. Solicitud'
 
 # Configuración del simulador
 class DownPaymentOptionInline(admin.TabularInline):
@@ -459,3 +530,57 @@ class CalculatorModeAdmin(admin.ModelAdmin):
         )
         
         return form
+
+@admin.register(PaymentMethod)
+class PaymentMethodAdmin(admin.ModelAdmin):
+    list_display = [
+        'name', 'payment_type', 'is_active', 'requires_reference', 
+        'requires_receipt', 'min_amount', 'max_amount', 'order'
+    ]
+    list_filter = ['payment_type', 'is_active', 'requires_reference', 'requires_receipt']
+    search_fields = ['name', 'description']
+    ordering = ['order', 'name']
+    
+    fieldsets = (
+        ('Información Básica', {
+            'fields': ('name', 'payment_type', 'description', 'instructions')
+        }),
+        ('Configuración', {
+            'fields': ('requires_reference', 'requires_receipt', 'is_active', 'order')
+        }),
+        ('Límites', {
+            'fields': ('min_amount', 'max_amount', 'processing_time_hours')
+        }),
+    )
+
+@admin.register(CompanyBankAccount)
+class CompanyBankAccountAdmin(admin.ModelAdmin):
+    list_display = [
+        'bank_name', 'account_number', 'currency', 'account_type',
+        'is_active', 'is_default', 'get_payment_methods_count'
+    ]
+    list_filter = ['currency', 'account_type', 'is_active', 'is_default']
+    search_fields = ['bank_name', 'account_number', 'account_holder']
+    filter_horizontal = ['payment_methods']
+    
+    fieldsets = (
+        ('Información Bancaria', {
+            'fields': ('bank_name', 'account_type', 'account_number', 
+                      'account_holder', 'routing_number')
+        }),
+        ('Detalles', {
+            'fields': ('currency', 'identification_number', 'email', 'phone')
+        }),
+        ('Configuración', {
+            'fields': ('is_active', 'is_default', 'payment_methods', 'instructions')
+        }),
+    )
+    
+    def get_payment_methods_count(self, obj):
+        return obj.payment_methods.count()
+    get_payment_methods_count.short_description = 'Métodos Asociados'
+
+# Personalización del admin site
+admin.site.site_header = "LlévateloExpress - Administración"
+admin.site.site_title = "LlévateloExpress Admin"
+admin.site.index_title = "Panel de Administración"
