@@ -1,7 +1,6 @@
 /**
- * SOLICITUD DE FINANCIAMIENTO V2 - ADAPTADO PARA VPS - VERSIÓN CORREGIDA
- * Versión adaptada para trabajar con la infraestructura existente del VPS
- * Corrige errores de logging y transferencia de datos
+ * SOLICITUD DE FINANCIAMIENTO V2 - VERSIÓN FINAL CORREGIDA
+ * Corrige: parseo URL, navegación, renderizado de datos, métodos globales
  */
 
 class FinancingRequestV2 {
@@ -16,12 +15,12 @@ class FinancingRequestV2 {
         };
         
         this.config = {
-            // URLs exactas del VPS (confirmadas por pruebas)
+            // URLs exactas del VPS
             apiBase: '/api/financing',
             endpoints: {
                 plans: '/api/financing/plans/',
                 requests: '/api/financing/requests/',
-                calculate: '/api/financing/calculate/',  // Usar el endpoint que SÍ existe
+                calculate: '/api/financing/calculate/',
             },
             maxFileSize: 5 * 1024 * 1024,
             allowedFileTypes: ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'],
@@ -41,7 +40,6 @@ class FinancingRequestV2 {
      * Obtener token CSRF del formulario existente
      */
     getCsrfToken() {
-        // El VPS ya tiene CSRF configurado, usar el token del formulario
         const metaTag = document.querySelector('meta[name="csrf-token"]');
         if (metaTag) {
             this.csrfToken = metaTag.getAttribute('content');
@@ -58,7 +56,7 @@ class FinancingRequestV2 {
     }
     
     /**
-     * Obtener cookie (para CSRF o autenticación)
+     * Obtener cookie
      */
     getCookie(name) {
         let cookieValue = null;
@@ -80,14 +78,12 @@ class FinancingRequestV2 {
      */
     async apiRequest(url, options = {}) {
         try {
-            // Configurar headers para el VPS existente
             const headers = {
                 'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
                 ...options.headers
             };
             
-            // Agregar CSRF token si está disponible
             const csrfToken = this.getCsrfToken() || this.getCookie('csrftoken');
             if (csrfToken) {
                 headers['X-CSRFToken'] = csrfToken;
@@ -103,11 +99,9 @@ class FinancingRequestV2 {
             
             const response = await fetch(url, requestOptions);
             
-            // Manejar respuestas específicas del VPS
             if (response.status === 401) {
                 this.log('warning', 'Usuario no autenticado');
                 this.showError('Debe iniciar sesión para continuar');
-                // No redirigir automáticamente, el usuario ya está en el flujo
                 return { success: false, status: 401, message: 'No autenticado' };
             }
             
@@ -116,7 +110,6 @@ class FinancingRequestV2 {
                 return { success: false, status: 403, message: 'Sin permisos' };
             }
             
-            // Parsear respuesta
             let data = null;
             const contentType = response.headers.get('content-type');
             if (contentType && contentType.includes('application/json')) {
@@ -147,7 +140,7 @@ class FinancingRequestV2 {
      * Inicializar aplicación
      */
     init() {
-        this.log('info', 'Inicializando FinancingRequestV2 adaptado para VPS - Versión Corregida');
+        this.log('info', 'Inicializando FinancingRequestV2 - Versión Final Corregida');
         
         // Cachear elementos del DOM
         this.cacheElements();
@@ -155,11 +148,27 @@ class FinancingRequestV2 {
         // Configurar eventos
         this.setupEventListeners();
         
-        // Cargar datos de cálculo (mejorado)
+        // Cargar datos de cálculo (CORREGIDO)
         this.loadCalculationData();
         
-        // Verificar planes disponibles (sin requerir autenticación)
+        // Verificar planes disponibles
         this.loadFinancingPlans();
+        
+        // Exponer métodos globalmente (NUEVO)
+        this.exposeGlobalMethods();
+    }
+    
+    /**
+     * NUEVO: Exponer métodos globalmente para que funcionen los onclick
+     */
+    exposeGlobalMethods() {
+        window.FinancingRequestV2 = this;
+        // También crear funciones globales directas
+        window.nextStep = () => this.nextStep();
+        window.prevStep = () => this.prevStep();
+        window.submitRequest = () => this.submitRequest();
+        
+        this.log('info', 'Métodos expuestos globalmente');
     }
     
     /**
@@ -216,7 +225,6 @@ class FinancingRequestV2 {
      * Configurar event listeners
      */
     setupEventListeners() {
-        // Formulario principal
         if (this.elements.form) {
             this.elements.form.addEventListener('submit', (e) => {
                 e.preventDefault();
@@ -224,7 +232,6 @@ class FinancingRequestV2 {
             });
         }
         
-        // Subida de archivos
         if (this.elements.uploadZone) {
             this.elements.uploadZone.addEventListener('click', () => {
                 this.elements.documentInput?.click();
@@ -252,7 +259,6 @@ class FinancingRequestV2 {
             });
         }
         
-        // Validación en tiempo real
         Object.values(this.elements.fields).forEach(field => {
             if (field) {
                 field.addEventListener('blur', () => this.validateField(field));
@@ -262,32 +268,34 @@ class FinancingRequestV2 {
     }
     
     /**
-     * Cargar planes de financiamiento (funciona sin autenticación)
+     * Cargar planes de financiamiento (CORREGIDO)
      */
     async loadFinancingPlans() {
         try {
             const result = await this.apiRequest(this.config.endpoints.plans);
             
-            if (result.success && result.data) {
+            if (result.success && result.data && Array.isArray(result.data)) {
                 this.state.financingPlans = result.data;
                 this.log('info', `Planes de financiamiento cargados: ${result.data.length}`);
                 return result.data;
             } else {
                 this.log('warning', 'No se pudieron cargar los planes de financiamiento');
+                this.state.financingPlans = [];
                 return [];
             }
         } catch (error) {
             this.log('error', 'Error cargando planes', error);
+            this.state.financingPlans = [];
             return [];
         }
     }
     
     /**
-     * Cargar datos de cálculo - VERSIÓN MEJORADA
+     * CORREGIDO: Cargar datos de cálculo con parseo mejorado de URL
      */
     loadCalculationData() {
         try {
-            // Método 1: Desde localStorage (datos guardados desde la calculadora)
+            // Método 1: Desde localStorage
             const savedData = localStorage.getItem('calculationData');
             if (savedData) {
                 this.state.calculationData = JSON.parse(savedData);
@@ -296,13 +304,50 @@ class FinancingRequestV2 {
                 return;
             }
             
-            // Método 2: Desde parámetros URL (cuando se hace clic en "Solicitar Este Plan")
+            // Método 2: CORREGIDO - Desde parámetros URL
             const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('calculation')) {
+                this.log('info', 'Detectado parámetro calculation en URL');
+                
+                try {
+                    // Decodificar el parámetro calculation
+                    const calculationParam = urlParams.get('calculation');
+                    const calculationData = JSON.parse(decodeURIComponent(calculationParam));
+                    
+                    this.log('info', 'Datos de calculation parseados', calculationData);
+                    
+                    // Mapear datos de la calculadora al formato V2
+                    this.state.calculationData = {
+                        product: {
+                            id: calculationData.product?.id || '1',
+                            name: calculationData.product?.name || 'Producto Seleccionado'
+                        },
+                        calculation: {
+                            // Usar vehicle_value como product_price
+                            product_price: calculationData.calculation?.vehicle_value || calculationData.calculation?.product_price || 0,
+                            down_payment_percentage: calculationData.calculation?.down_payment_percentage || 35,
+                            down_payment_amount: calculationData.calculation?.down_payment_amount || 0,
+                            financed_amount: calculationData.calculation?.financed_amount || 0,
+                            payment_frequency: calculationData.calculation?.payment_frequency_display || 'quincenal',
+                            number_of_payments: calculationData.calculation?.number_of_payments || calculationData.calculation?.term_months || 24,
+                            payment_amount: calculationData.calculation?.payment_amount || calculationData.calculation?.monthly_payment || 0
+                        }
+                    };
+                    
+                    this.log('info', 'Datos de cálculo mapeados correctamente', this.state.calculationData);
+                    this.renderCalculationSummary();
+                    return;
+                    
+                } catch (parseError) {
+                    this.log('error', 'Error parseando datos de calculation', parseError);
+                }
+            }
+            
+            // Método 3: Desde mode=credito (fallback)
             if (urlParams.has('mode') && urlParams.get('mode') === 'credito') {
                 this.log('info', 'Detectados parámetros de crédito inmediato en URL');
                 
-                // Extraer datos de la URL
-                const calculationData = {
+                this.state.calculationData = {
                     product: {
                         id: urlParams.get('product') || '1',
                         name: urlParams.get('name') || 'Producto Seleccionado'
@@ -317,18 +362,17 @@ class FinancingRequestV2 {
                 };
                 
                 // Calcular valores derivados
-                const price = calculationData.calculation.product_price;
-                const downPercent = calculationData.calculation.down_payment_percentage;
-                calculationData.calculation.down_payment_amount = price * (downPercent / 100);
-                calculationData.calculation.financed_amount = price - calculationData.calculation.down_payment_amount;
+                const price = this.state.calculationData.calculation.product_price;
+                const downPercent = this.state.calculationData.calculation.down_payment_percentage;
+                this.state.calculationData.calculation.down_payment_amount = price * (downPercent / 100);
+                this.state.calculationData.calculation.financed_amount = price - this.state.calculationData.calculation.down_payment_amount;
                 
-                this.state.calculationData = calculationData;
-                this.log('info', 'Datos de cálculo reconstruidos desde URL', calculationData);
+                this.log('info', 'Datos de cálculo reconstruidos desde URL', this.state.calculationData);
                 this.renderCalculationSummary();
                 return;
             }
             
-            // Método 3: Buscar en el sessionStorage (backup)
+            // Método 4: sessionStorage (backup)
             const sessionData = sessionStorage.getItem('financingData');
             if (sessionData) {
                 this.state.calculationData = JSON.parse(sessionData);
@@ -337,7 +381,7 @@ class FinancingRequestV2 {
                 return;
             }
             
-            // Método 4: Valores por defecto si no hay datos
+            // Método 5: Valores por defecto
             this.log('warning', 'No se encontraron datos de cálculo - usando valores por defecto');
             this.state.calculationData = {
                 product: { id: '1', name: 'Producto' },
@@ -355,13 +399,12 @@ class FinancingRequestV2 {
             
         } catch (error) {
             this.log('error', 'Error cargando datos de cálculo: ' + error.message);
-            // Continuar con valores por defecto en caso de error
             this.state.calculationData = null;
         }
     }
     
     /**
-     * Renderizar resumen de cálculo (adaptado para datos disponibles)
+     * CORREGIDO: Renderizar resumen de cálculo
      */
     renderCalculationSummary() {
         if (!this.state.calculationData || !this.elements.calculationSummary) {
@@ -372,12 +415,19 @@ class FinancingRequestV2 {
         const calc = this.state.calculationData.calculation || this.state.calculationData;
         const product = this.state.calculationData.product || {};
         
-        // Usar datos disponibles o valores por defecto
+        // Usar datos disponibles
         const productPrice = parseFloat(calc.product_price || 0);
         const downPaymentPercentage = parseInt(calc.down_payment_percentage || 35);
-        const downPaymentAmount = calc.down_payment_amount || (productPrice * (downPaymentPercentage / 100));
-        const financedAmount = calc.financed_amount || (productPrice - downPaymentAmount);
-        const paymentAmount = calc.payment_amount || 0;
+        const downPaymentAmount = parseFloat(calc.down_payment_amount || (productPrice * (downPaymentPercentage / 100)));
+        const financedAmount = parseFloat(calc.financed_amount || (productPrice - downPaymentAmount));
+        const paymentAmount = parseFloat(calc.payment_amount || 0); // CORREGIDO: No usar || 0 que oculta valores válidos
+        
+        this.log('info', 'Renderizando valores:', {
+            productPrice,
+            downPaymentAmount,
+            financedAmount,
+            paymentAmount
+        });
         
         this.elements.calculationSummary.innerHTML = `
             <div class="row text-center">
@@ -414,9 +464,10 @@ class FinancingRequestV2 {
     }
     
     /**
-     * Navegación entre pasos
+     * Navegación entre pasos (CORREGIDO)
      */
     nextStep() {
+        this.log('info', 'nextStep llamado');
         if (this.validateCurrentStep()) {
             if (this.state.currentStep < 4) {
                 this.goToStep(this.state.currentStep + 1);
@@ -425,6 +476,7 @@ class FinancingRequestV2 {
     }
     
     prevStep() {
+        this.log('info', 'prevStep llamado');
         if (this.state.currentStep > 1) {
             this.goToStep(this.state.currentStep - 1);
         }
@@ -565,7 +617,7 @@ class FinancingRequestV2 {
         }
     }
     
-    // Métodos de utilidad (implementación básica)
+    // Métodos de utilidad
     updateFormData() {
         this.state.formData = {};
         Object.entries(this.elements.fields).forEach(([name, element]) => {
@@ -789,7 +841,6 @@ class FinancingRequestV2 {
         
         this.elements.alertContainer.innerHTML = alertHtml;
         
-        // Auto-hide después de 5 segundos para mensajes de éxito
         if (type === 'success') {
             setTimeout(() => {
                 const alert = this.elements.alertContainer.querySelector('.alert');
@@ -802,13 +853,11 @@ class FinancingRequestV2 {
     
     /**
      * FUNCIÓN DE LOGGING CORREGIDA
-     * Soluciona el error de console[level] is not a function
      */
     log(level, message, data = null) {
         const timestamp = new Date().toISOString();
-        const logMessage = `[${timestamp}] [FinancingRequestV2-VPS] [${level.toUpperCase()}] ${message}`;
+        const logMessage = `[${timestamp}] [FinancingRequestV2-Final] [${level.toUpperCase()}] ${message}`;
         
-        // Mapear niveles a funciones válidas de console
         const logFunctions = {
             'debug': console.debug || console.log,
             'info': console.info || console.log,
@@ -830,4 +879,4 @@ class FinancingRequestV2 {
 window.FinancingRequestV2 = new FinancingRequestV2();
 
 // Log de inicialización
-console.info('🔧 FinancingRequestV2 adaptado para VPS - Versión Corregida inicializado correctamente'); 
+console.info('🎯 FinancingRequestV2 - Versión Final Corregida inicializada correctamente'); 
