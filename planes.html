@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planes de Financiamiento | LlévateloExpress</title>
+    <link rel="icon" type="image/png" href="static/img/favicon.png">
+    <link rel="apple-touch-icon" href="static/img/favicon.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="sticky-top">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm">
+            <div class="container">
+                <a class="navbar-brand" href="index.html">
+                    <img src="img/banners/logo.png" alt="LlévateloExpress" height="40" class="d-inline-block align-middle">
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link" href="index.html">Inicio</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="catalogo.html">Catálogo</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="planes.html">Planes de Financiamiento</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="nosotros.html">Nosotros</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="contacto.html">Contáctanos</a>
+                        </li>
+                    </ul>
+                    <div class="d-flex">
+                        <a href="registro.html" class="btn btn-outline-primary me-2">Registrarse</a>
+                        <a href="#" class="btn btn-primary">Iniciar Sesión</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Page Banner -->
+    <section class="page-banner bg-primary text-white py-5">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8 mx-auto text-center">
+                    <h1 class="display-4 fw-bold mb-3">Planes de Financiamiento</h1>
+                    <p class="lead mb-0">Conoce nuestras opciones de financiamiento flexibles y elige la que mejor se adapte a tus necesidades.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Planes Tabs -->
+    <section class="financing-plans py-5">
+        <div class="container">
+            <ul class="nav nav-pills nav-justified mb-5" id="financingTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="programada-tab" data-bs-toggle="pill" data-bs-target="#programada" type="button" role="tab" aria-selected="true">
+                        <i class="fas fa-calendar-check me-2"></i>Compra Programada
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="credito-tab" data-bs-toggle="pill" data-bs-target="#credito" type="button" role="tab" aria-selected="false">
+                        <i class="fas fa-rocket me-2"></i>Crédito Inmediato
+                    </button>
+                </li>
+            </ul>
+            <div class="tab-content" id="financingTabsContent">
+                <!-- Compra Programada -->
+                <div class="tab-pane fade show active" id="programada" role="tabpanel" aria-labelledby="programada-tab">
+                    <div class="row">
+                        <div class="col-lg-6 mb-4 mb-lg-0">
+                            <div class="plan-intro">
+                                <h2 class="mb-4">Compra Programada con Adjudicación al 45%</h2>
+                                <p class="lead mb-4">Sistema de adquisición basado en pagos programados donde obtienes tu vehículo al completar el 45% del valor total, sin sorteos.</p>
+                                <div class="mb-4">
+                                    <h5 class="text-primary mb-3">¿Cómo funciona?</h5>
+                                    <ol class="how-it-works">
+                                        <li class="mb-3">
+                                            <strong>Inscripción inicial:</strong> Pagas una cuota inicial del 5% del valor del vehículo.
+                                        </li>
+                                        <li class="mb-3">
+                                            <strong>Aporte inicial:</strong> Realizas un aporte entre el 10% y 15% del valor total.
+                                        </li>
+                                        <li class="mb-3">
+                                            <strong>Cuotas mensuales:</strong> Continúas con pagos mensuales hasta completar el 45% del valor.
+                                        </li>
+                                        <li class="mb-3">
+                                            <strong>Adjudicación:</strong> Recibes tu vehículo al alcanzar el 45% del pago total.
+                                        </li>
+                                        <li>
+                                            <strong>Financiamiento restante:</strong> El 55% restante se financia hasta en 36 meses.
+                                        </li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card border-0 shadow-lg rounded-lg p-4">
+                                <div class="card-body">
+                                    <h3 class="card-title text-center mb-4">Beneficios de la Compra Programada</h3>
+                                    <div class="benefit-item d-flex align-items-start mb-4">
+                                        <div class="benefit-icon me-3 text-primary">
+                                            <i class="fas fa-calendar-day fa-2x"></i>
+                                        </div>
+                                        <div>
+                                            <h5>Certeza en fecha de adjudicación</h5>
+                                            <p class="mb-0">Conoces exactamente cuándo recibirás tu vehículo al completar el 45% del valor, sin depender de sorteos o variables externas.</p>
+                                        </div>
+                                    </div>
+                                    <div class="benefit-item d-flex align-items-start mb-4">
+                                        <div class="benefit-icon me-3 text-primary">
+                                            <i class="fas fa-hand-holding-usd fa-2x"></i>
+                                        </div>
+                                        <div>
+                                            <h5>Control mediante pagos puntuales</h5>
+                                            <p class="mb-0">Tus pagos puntuales te permiten acumular puntos que pueden acelerar la fecha de entrega de tu vehículo.</p>
+                                        </div>
+                                    </div>
+                                    <div class="benefit-item d-flex align-items-start mb-4">
+                                        <div class="benefit-icon me-3 text-primary">
+                                            <i class="fas fa-percentage fa-2x"></i>
+                                        </div>
+                                        <div>
+                                            <h5>Adquisición pagando menos de la mitad</h5>
+                                            <p class="mb-0">Obtienes tu vehículo al completar solo el 45% del valor total, permitiéndote disfrutarlo mientras continúas pagando.</p>
+                                        </div>
+                                    </div>
+                                    <div class="benefit-item d-flex align-items-start">
+                                        <div class="benefit-icon me-3 text-primary">
+                                            <i class="fas fa-shield-alt fa-2x"></i>
+                                        </div>
+                                        <div>
+                                            <h5>Mayor seguridad financiera</h5>
+                                            <p class="mb-0">El plan protege tu inversión con un sistema de pagos escalonado que se ajusta a tu capacidad financiera.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sistema de Puntos -->
+                    <div class="points-system my-5 py-4 px-4 bg-light rounded">
+                        <h3 class="mb-4 text-center">Sistema de Puntos por Puntualidad</h3>
+                        <p class="text-center mb-4">Nuestro exclusivo sistema de bonificación premia tu puntualidad y te ayuda a obtener tu vehículo más rápido.</p>
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-body text-center p-4">
+                                        <i class="fas fa-clock text-success mb-3" style="font-size: 2.5rem;"></i>
+                                        <h5>Pago Anticipado</h5>
+                                        <p class="mb-0">Al pagar antes de la fecha límite, obtienes 2 puntos por cada cuota.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-body text-center p-4">
+                                        <i class="fas fa-calendar-check text-primary mb-3" style="font-size: 2.5rem;"></i>
+                                        <h5>Pago en Fecha</h5>
+                                        <p class="mb-0">Al pagar en la fecha exacta, obtienes 1 punto por cada cuota.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-body text-center p-4">
+                                        <i class="fas fa-award text-warning mb-3" style="font-size: 2.5rem;"></i>
+                                        <h5>Beneficios Adicionales</h5>
+                                        <p class="mb-0">Al acumular 20 puntos, puedes adelantar tu adjudicación en un mes.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Call to Action -->
+                    <div class="text-center mt-5">
+                        <a href="calculadora.html?plan=programada" class="btn btn-primary btn-lg px-5">Simular Plan de Compra Programada</a>
+                    </div>
+                </div>
+
+                <!-- Crédito Inmediato -->
+                <div class="tab-pane fade" id="credito" role="tabpanel" aria-labelledby="credito-tab">
+                    <div class="row">
+                        <div class="col-lg-6 mb-4 mb-lg-0">
+                            <div class="plan-intro">
+                                <h2 class="mb-4">Crédito de Adjudicación Inmediata</h2>
+                                <p class="lead mb-4">Entrega inmediata del vehículo con un aporte inicial significativo y financiamiento del saldo restante.</p>
+                                <div class="mb-4">
+                                    <h5 class="text-primary mb-3">¿Cómo funciona?</h5>
+                                    <ol class="how-it-works">
+                                        <li class="mb-3">
+                                            <strong>Selección del vehículo:</strong> Eliges el vehículo que deseas adquirir de nuestro catálogo.
+                                        </li>
+                                        <li class="mb-3">
+                                            <strong>Aporte inicial:</strong> Realizas un pago inicial según el plan seleccionado (40%, 50% o 60%).
+                                        </li>
+                                        <li class="mb-3">
+                                            <strong>Aprobación del crédito:</strong> Evaluamos tu solicitud en 24-48 horas.
+                                        </li>
+                                        <li class="mb-3">
+                                            <strong>Entrega del vehículo:</strong> Recibes tu vehículo inmediatamente después de la aprobación.
+                                        </li>
+                                        <li>
+                                            <strong>Pagos mensuales:</strong> Realizas pagos mensuales hasta cubrir el saldo financiado.
+                                        </li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card border-0 shadow-lg rounded-lg">
+                                <div class="card-header bg-primary text-white py-3">
+                                    <h3 class="card-title text-center mb-0">Opciones de Planes</h3>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th class="py-3">Plan</th>
+                                                    <th class="py-3">Aporte Inicial</th>
+                                                    <th class="py-3">Plazo Máximo</th>
+                                                    <th class="py-3">Tasa de Interés</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td class="py-3">
+                                                        <strong class="text-primary">Plan Básico</strong>
+                                                    </td>
+                                                    <td class="py-3">40%</td>
+                                                    <td class="py-3">24 meses</td>
+                                                    <td class="py-3">12% anual</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="py-3">
+                                                        <strong class="text-primary">Plan Intermedio</strong>
+                                                    </td>
+                                                    <td class="py-3">50%</td>
+                                                    <td class="py-3">18 meses</td>
+                                                    <td class="py-3">10% anual</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="py-3">
+                                                        <strong class="text-primary">Plan Premium</strong>
+                                                    </td>
+                                                    <td class="py-3">60%</td>
+                                                    <td class="py-3">12 meses</td>
+                                                    <td class="py-3">8% anual</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Beneficios -->
+                            <div class="credit-benefits mt-4">
+                                <h5 class="mb-3">Beneficios del Crédito Inmediato</h5>
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item px-0 d-flex align-items-center">
+                                        <i class="fas fa-check-circle text-success me-3"></i>
+                                        <span>Disponibilidad inmediata del vehículo</span>
+                                    </li>
+                                    <li class="list-group-item px-0 d-flex align-items-center">
+                                        <i class="fas fa-check-circle text-success me-3"></i>
+                                        <span>Proceso rápido de aprobación (24-48 horas)</span>
+                                    </li>
+                                    <li class="list-group-item px-0 d-flex align-items-center">
+                                        <i class="fas fa-check-circle text-success me-3"></i>
+                                        <span>Tasas de interés competitivas</span>
+                                    </li>
+                                    <li class="list-group-item px-0 d-flex align-items-center">
+                                        <i class="fas fa-check-circle text-success me-3"></i>
+                                        <span>Protección mediante seguros (opcional)</span>
+                                    </li>
+                                    <li class="list-group-item px-0 d-flex align-items-center">
+                                        <i class="fas fa-check-circle text-success me-3"></i>
+                                        <span>Posibilidad de cancelación anticipada sin penalidades</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Requisitos -->
+                    <div class="requirements my-5 py-4 px-4 bg-light rounded">
+                        <h3 class="mb-4 text-center">Requisitos para Aplicar</h3>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-body p-4">
+                                        <h5 class="card-title mb-3">Documentos Personales</h5>
+                                        <ul class="list-unstyled mb-0">
+                                            <li class="mb-2 d-flex align-items-center">
+                                                <i class="fas fa-id-card text-primary me-3"></i>
+                                                <span>Cédula de identidad vigente</span>
+                                            </li>
+                                            <li class="mb-2 d-flex align-items-center">
+                                                <i class="fas fa-file-invoice text-primary me-3"></i>
+                                                <span>RIF vigente</span>
+                                            </li>
+                                            <li class="mb-2 d-flex align-items-center">
+                                                <i class="fas fa-file-signature text-primary me-3"></i>
+                                                <span>Constancia de trabajo (si aplica)</span>
+                                            </li>
+                                            <li class="d-flex align-items-center">
+                                                <i class="fas fa-file-alt text-primary me-3"></i>
+                                                <span>Referencias bancarias</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-body p-4">
+                                        <h5 class="card-title mb-3">Requisitos Financieros</h5>
+                                        <ul class="list-unstyled mb-0">
+                                            <li class="mb-2 d-flex align-items-center">
+                                                <i class="fas fa-money-bill-wave text-primary me-3"></i>
+                                                <span>Capacidad de pago demostrable</span>
+                                            </li>
+                                            <li class="mb-2 d-flex align-items-center">
+                                                <i class="fas fa-chart-line text-primary me-3"></i>
+                                                <span>Ingresos mínimos mensuales de $800</span>
+                                            </li>
+                                            <li class="mb-2 d-flex align-items-center">
+                                                <i class="fas fa-university text-primary me-3"></i>
+                                                <span>Cuenta bancaria activa</span>
+                                            </li>
+                                            <li class="d-flex align-items-center">
+                                                <i class="fas fa-history text-primary me-3"></i>
+                                                <span>Buen historial crediticio (si aplica)</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Call to Action -->
+                    <div class="text-center mt-5">
+                        <a href="calculadora.html?plan=credito" class="btn btn-primary btn-lg px-5">Simular Plan de Crédito Inmediato</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Compare Plans -->
+    <section class="compare-plans py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5">Comparativa de Planes</h2>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-primary">
+                        <tr>
+                            <th class="text-center" style="width: 25%;">Características</th>
+                            <th class="text-center" style="width: 37.5%;">Compra Programada</th>
+                            <th class="text-center" style="width: 37.5%;">Crédito Inmediato</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row">Entrega del vehículo</th>
+                            <td>Al completar el 45% del valor total</td>
+                            <td>Inmediata (tras aprobación)</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Aporte inicial</th>
+                            <td>5% inscripción + 10-15% aporte inicial</td>
+                            <td>40% a 60% según plan elegido</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Tiempo de aprobación</th>
+                            <td>5-10 días hábiles</td>
+                            <td>24-48 horas</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Plazo de financiamiento</th>
+                            <td>Hasta 36 meses para el saldo restante</td>
+                            <td>12 a 24 meses según plan elegido</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Ideal para</th>
+                            <td>Personas con capacidad de ahorro mensual que pueden esperar a la adjudicación</td>
+                            <td>Personas que necesitan el vehículo de inmediato y tienen capital disponible</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Ventaja principal</th>
+                            <td>Adjudicación con menos del 50% del valor</td>
+                            <td>Disponibilidad inmediata del vehículo</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="faq py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">Preguntas Frecuentes</h2>
+            <div class="accordion" id="financingFaq">
+                <div class="accordion-item mb-3 border">
+                    <h2 class="accordion-header" id="faqHeading1">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse1" aria-expanded="true" aria-controls="faqCollapse1">
+                            ¿Puedo elegir cualquier vehículo del catálogo para financiar?
+                        </button>
+                    </h2>
+                    <div id="faqCollapse1" class="accordion-collapse collapse show" aria-labelledby="faqHeading1" data-bs-parent="#financingFaq">
+                        <div class="accordion-body">
+                            Sí, todos los vehículos, motocicletas y maquinaria agrícola disponibles en nuestro catálogo pueden ser financiados mediante cualquiera de nuestros planes. Sin embargo, algunos modelos específicos o de alta gama pueden requerir condiciones especiales que serán informadas al momento de la solicitud.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item mb-3 border">
+                    <h2 class="accordion-header" id="faqHeading2">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse2" aria-expanded="false" aria-controls="faqCollapse2">
+                            ¿Qué sucede si me atraso en los pagos?
+                        </button>
+                    </h2>
+                    <div id="faqCollapse2" class="accordion-collapse collapse" aria-labelledby="faqHeading2" data-bs-parent="#financingFaq">
+                        <div class="accordion-body">
+                            En caso de retraso en los pagos, se aplicará un interés de mora del 1% mensual sobre el monto vencido. Para el plan de Compra Programada, los retrasos afectarán la acumulación de puntos y podrían retrasar la fecha de adjudicación. En ambos planes, retrasos significativos podrían afectar la aprobación del financiamiento. Recomendamos comunicarse con nuestro departamento de atención al cliente ante cualquier dificultad.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item mb-3 border">
+                    <h2 class="accordion-header" id="faqHeading3">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse3" aria-expanded="false" aria-controls="faqCollapse3">
+                            ¿Puedo cancelar anticipadamente mi plan de financiamiento?
+                        </button>
+                    </h2>
+                    <div id="faqCollapse3" class="accordion-collapse collapse" aria-labelledby="faqHeading3" data-bs-parent="#financingFaq">
+                        <div class="accordion-body">
+                            Sí, en ambos planes puedes realizar la cancelación anticipada del saldo pendiente sin penalidades. Para el plan de Compra Programada, acelerar los pagos puede adelantar la fecha de adjudicación. Para el Crédito de Adjudicación Inmediata, la cancelación anticipada te permitirá ahorrar en intereses. En ambos casos, necesitarás comunicarte con nuestro departamento financiero para coordinar la liquidación total.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item mb-3 border">
+                    <h2 class="accordion-header" id="faqHeading4">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse4" aria-expanded="false" aria-controls="faqCollapse4">
+                            ¿Qué documentos necesito para solicitar un financiamiento?
+                        </button>
+                    </h2>
+                    <div id="faqCollapse4" class="accordion-collapse collapse" aria-labelledby="faqHeading4" data-bs-parent="#financingFaq">
+                        <div class="accordion-body">
+                            Los documentos básicos requeridos son: cédula de identidad vigente, RIF actualizado, comprobantes de ingresos (recibos de pago, declaración de ISLR o constancia de trabajo), referencias bancarias y estados de cuenta de los últimos 3 meses. Dependiendo del monto a financiar y el plan elegido, podrían solicitarse documentos adicionales durante el proceso de evaluación.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item border">
+                    <h2 class="accordion-header" id="faqHeading5">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse5" aria-expanded="false" aria-controls="faqCollapse5">
+                            ¿Ofrecen garantía para los vehículos financiados?
+                        </button>
+                    </h2>
+                    <div id="faqCollapse5" class="accordion-collapse collapse" aria-labelledby="faqHeading5" data-bs-parent="#financingFaq">
+                        <div class="accordion-body">
+                            Todos los vehículos, motocicletas y maquinaria adquiridos a través de LlévateloExpress cuentan con la garantía oficial del fabricante. Adicionalmente, ofrecemos planes de mantenimiento preventivo y extensiones de garantía que pueden incluirse en el financiamiento. Durante el período de financiamiento, el vehículo queda como garantía prendaria hasta completar el pago total.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="cta py-5 text-white text-center" style="background-color: #0d6efd;">
+        <div class="container">
+            <h2 class="display-6 mb-3">¿Listo para financiar tu próximo vehículo?</h2>
+            <p class="lead mb-4">Calcula tu plan de financiamiento ideal y comienza el proceso hoy mismo.</p>
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <a href="calculadora.html" class="btn btn-light btn-lg">Calcular mi financiamiento</a>
+                <a href="catalogo.html" class="btn btn-outline-light btn-lg">Ver catálogo</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer bg-dark text-white py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5 class="mb-3">LlévateloExpress</h5>
+                    <p class="mb-3">Tu aliado financiero para la adquisición de vehículos, motocicletas y maquinaria agrícola en Venezuela.</p>
+                    <div class="social-links">
+                        <a href="#" class="text-white me-3"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-white me-3"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-white me-3"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+                <div class="col-md-2 mb-4 mb-md-0">
+                    <h5 class="mb-3">Enlaces</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="index.html" class="text-white text-decoration-none">Inicio</a></li>
+                        <li class="mb-2"><a href="catalogo.html" class="text-white text-decoration-none">Catálogo</a></li>
+                        <li class="mb-2"><a href="planes.html" class="text-white text-decoration-none">Planes</a></li>
+                        <li class="mb-2"><a href="nosotros.html" class="text-white text-decoration-none">Nosotros</a></li>
+                        <li><a href="contacto.html" class="text-white text-decoration-none">Contáctanos</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <h5 class="mb-3">Contacto</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-map-marker-alt me-2"></i> Caracas, Venezuela</li>
+                        <li class="mb-2"><i class="fas fa-phone me-2"></i> (0212) 555-1234</li>
+                        <li><i class="fas fa-envelope me-2"></i> info@llevateloexpress.com</li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5 class="mb-3">Horario de Atención</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">Lunes a Viernes: 8:00 AM - 5:00 PM</li>
+                        <li>Sábados: 9:00 AM - 1:00 PM</li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+                    <p class="mb-0">&copy; 2023 LlévateloExpress. Todos los derechos reservados.</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <a href="#" class="text-white text-decoration-none me-3">Términos y Condiciones</a>
+                    <a href="#" class="text-white text-decoration-none">Política de Privacidad</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html> 

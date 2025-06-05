@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Validación WhatsApp</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .test-case { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        input { width: 300px; padding: 10px; font-size: 16px; margin: 10px 0; }
+        button { padding: 10px 20px; font-size: 16px; }
+        .log { background: #f8f9fa; padding: 10px; margin: 10px 0; border-radius: 3px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Diagnóstico de Validación WhatsApp</h1>
+    
+    <div class="test-case">
+        <h3>Prueba en Tiempo Real</h3>
+        <label for="phoneTest">Número de WhatsApp:</label><br>
+        <input type="tel" id="phoneTest" placeholder="Ej: +52 1553974676, +58 4141234567">
+        <button onclick="testValidation()">Probar Validación</button>
+        <div id="result" class="log"></div>
+    </div>
+
+    <div class="test-case">
+        <h3>Pruebas Automáticas</h3>
+        <button onclick="runAllTests()">Ejecutar Todas las Pruebas</button>
+        <div id="autoTests" class="log"></div>
+    </div>
+
+    <script>
+        // Misma expresión regular del código original
+        const phonePattern = /^\+[1-9]\d{0,3}\s?\d{7,12}$/;
+
+        function testValidation() {
+            const input = document.getElementById('phoneTest');
+            const result = document.getElementById('result');
+            const value = input.value.trim();
+            
+            const isValid = phonePattern.test(value);
+            const validityState = input.validity;
+            
+            result.innerHTML = `
+                <strong>Número probado:</strong> "${value}"<br>
+                <strong>Expresión regular:</strong> ${phonePattern}<br>
+                <strong>Resultado regex:</strong> ${isValid ? '✅ VÁLIDO' : '❌ INVÁLIDO'}<br>
+                <strong>Validez HTML5:</strong> ${validityState.valid ? '✅ VÁLIDO' : '❌ INVÁLIDO'}<br>
+                <strong>Mensaje de validez:</strong> "${input.validationMessage}"<br>
+                <strong>Estado personalizado:</strong> "${input.customValidity || 'Ninguno'}"
+            `;
+            
+            result.className = isValid ? 'log success' : 'log error';
+            
+            // Aplicar la misma lógica del código original
+            if (phonePattern.test(value) || value === '') {
+                input.setCustomValidity('');
+            } else {
+                input.setCustomValidity('Formato inválido. Ejemplo: +52 5539794679, +58 4141234567');
+            }
+        }
+
+        function runAllTests() {
+            const testCases = [
+                '+521553974676',    // México (el que falla)
+                '+52 1553974676',   // México con espacio
+                '+584141234567',    // Venezuela
+                '+58 4141234567',   // Venezuela con espacio
+                '+1234567890',      // USA
+                '+34612345678',     // España
+                '+5491234567',      // Argentina
+                '1553974676',       // Sin +
+                '+52155397467',     // México sin último dígito
+                '+5215539746761',   // México con dígito extra
+                '',                 // Vacío
+                '+58',              // Solo código país
+                '+521',             // Código país incompleto
+            ];
+
+            let output = '<h4>Resultados de todas las pruebas:</h4>';
+            
+            testCases.forEach(number => {
+                const isValid = phonePattern.test(number);
+                const status = isValid ? '✅' : '❌';
+                const analysis = analyzeNumber(number);
+                
+                output += `
+                    <div style="margin: 5px 0; padding: 5px; background: ${isValid ? '#d4edda' : '#f8d7da'};">
+                        ${status} <strong>"${number}"</strong> - ${analysis}
+                    </div>
+                `;
+            });
+            
+            document.getElementById('autoTests').innerHTML = output;
+        }
+
+        function analyzeNumber(number) {
+            if (!number) return 'Vacío';
+            
+            if (!number.startsWith('+')) return 'No empieza con +';
+            
+            const withoutPlus = number.slice(1);
+            const match = withoutPlus.match(/^([1-9])(\d{0,3})\s?(\d{7,12})$/);
+            
+            if (!match) {
+                if (!/^[1-9]/.test(withoutPlus)) return 'No empieza con dígito 1-9';
+                if (withoutPlus.length < 8) return 'Muy corto';
+                if (withoutPlus.length > 16) return 'Muy largo';
+                return 'Formato incorrecto';
+            }
+            
+            const [, firstDigit, countryRest, mainNumber] = match;
+            const countryCode = firstDigit + countryRest;
+            
+            return `Código país: ${countryCode} (${countryCode.length} dígitos), Número: ${mainNumber} (${mainNumber.length} dígitos)`;
+        }
+
+        // Prueba automática al cargar
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Diagnóstico de validación WhatsApp cargado');
+            
+            // Configurar evento de input en tiempo real
+            const phoneInput = document.getElementById('phoneTest');
+            phoneInput.addEventListener('input', function() {
+                testValidation();
+            });
+        });
+    </script>
+</body>
+</html> 

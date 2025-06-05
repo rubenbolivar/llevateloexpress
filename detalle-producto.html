@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle de Producto | LlévateloExpress</title>
+    <link rel="icon" type="image/png" href="static/img/favicon.png">
+    <link rel="apple-touch-icon" href="static/img/favicon.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .feature-item {
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .feature-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .feature-icon {
+            font-size: 2rem;
+            color: #0d6efd;
+            margin-bottom: 15px;
+        }
+        
+        .gallery-img {
+            cursor: pointer;
+            transition: opacity 0.3s;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        
+        .gallery-img:hover {
+            opacity: 0.8;
+        }
+        
+        .main-product-img {
+            height: 400px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+        
+        .spec-section {
+            margin-bottom: 30px;
+        }
+        
+        .spec-section h3 {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #0d6efd;
+        }
+        
+        .spec-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="sticky-top">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm">
+            <div class="container">
+                <a class="navbar-brand" href="index.html">
+                    <img src="img/banners/logo.png" alt="LlévateloExpress" height="40" class="d-inline-block align-middle">
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link" href="index.html">Inicio</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="catalogo.html">Catálogo</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="planes.html">Planes de Financiamiento</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="nosotros.html">Nosotros</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="contacto.html">Contáctanos</a>
+                        </li>
+                    </ul>
+                    <div class="d-flex">
+                        <a href="registro.html" class="btn btn-outline-primary me-2">Registrarse</a>
+                        <a href="#" class="btn btn-primary">Iniciar Sesión</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Breadcrumb -->
+    <div class="bg-light py-3">
+        <div class="container">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="index.html">Inicio</a></li>
+                    <li class="breadcrumb-item"><a href="catalogo.html">Catálogo</a></li>
+                    <li class="breadcrumb-item"><a href="catalogo.html?categoria=motocicletas">Motocicletas</a></li>
+                    <li class="breadcrumb-item active" aria-current="page" id="product-name-breadcrumb">Detalles del Producto</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Product Detail -->
+    <section class="product-detail py-5">
+        <div class="container" id="product-detail-container">
+            <!-- El contenido se cargará dinámicamente con JavaScript -->
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="mt-3">Cargando detalles del producto...</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Related Products -->
+    <section class="related-products py-5 bg-light">
+        <div class="container">
+            <h2 class="mb-4">Productos Relacionados</h2>
+            <div class="row" id="related-products-container">
+                <!-- Los productos relacionados se cargarán dinámicamente -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="cta py-5 text-white text-center" style="background-color: #0d6efd;">
+        <div class="container">
+            <h2 class="display-6 mb-3">¿Listo para financiar tu próxima motocicleta?</h2>
+            <p class="lead mb-4">Calcula tu plan de financiamiento ideal y comienza el proceso hoy mismo.</p>
+            <div id="cta-buttons">
+                <a href="calculadora.html" class="btn btn-light btn-lg me-2" id="calculate-financing-btn">Calcular mi financiamiento</a>
+                <a href="#" class="btn btn-outline-light btn-lg" id="visit-showroom-btn">Visitar concesionario</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer bg-dark text-white py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5 class="mb-3">LlévateloExpress</h5>
+                    <p class="mb-3">Tu aliado financiero para la adquisición de vehículos, motocicletas y maquinaria agrícola en Venezuela.</p>
+                    <div class="social-links">
+                        <a href="#" class="text-white me-3"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-white me-3"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-white me-3"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+                <div class="col-md-2 mb-4 mb-md-0">
+                    <h5 class="mb-3">Enlaces</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="index.html" class="text-white text-decoration-none">Inicio</a></li>
+                        <li class="mb-2"><a href="catalogo.html" class="text-white text-decoration-none">Catálogo</a></li>
+                        <li class="mb-2"><a href="planes.html" class="text-white text-decoration-none">Planes</a></li>
+                        <li class="mb-2"><a href="nosotros.html" class="text-white text-decoration-none">Nosotros</a></li>
+                        <li><a href="contacto.html" class="text-white text-decoration-none">Contáctanos</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <h5 class="mb-3">Contacto</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-map-marker-alt me-2"></i> Caracas, Venezuela</li>
+                        <li class="mb-2"><i class="fas fa-phone me-2"></i> (0212) 555-1234</li>
+                        <li><i class="fas fa-envelope me-2"></i> info@llevateloexpress.com</li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5 class="mb-3">Horario de Atención</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">Lunes a Viernes: 8:00 AM - 5:00 PM</li>
+                        <li>Sábados: 9:00 AM - 1:00 PM</li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+                    <p class="mb-0">&copy; 2023 LlévateloExpress. Todos los derechos reservados.</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <a href="#" class="text-white text-decoration-none me-3">Términos y Condiciones</a>
+                    <a href="#" class="text-white text-decoration-none">Política de Privacidad</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Template for product detail (will be used by JavaScript) -->
+    <template id="product-template">
+        <div class="row">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <div class="main-image-container mb-3">
+                    <img src="" alt="" class="img-fluid main-product-img" id="main-product-image">
+                </div>
+                <div class="row product-gallery">
+                    <!-- Gallery images will be populated here -->
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <span class="badge bg-primary product-category mb-2"></span>
+                <h1 class="product-title display-5 fw-bold mb-2"></h1>
+                <p class="product-description lead mb-4"></p>
+                
+                <div class="pricing mb-4">
+                    <h3 class="text-primary product-price fw-bold mb-2"></h3>
+                    <p class="text-muted">Precio de lista</p>
+                </div>
+                
+                <div class="financing-options mb-4">
+                    <h5 class="mb-3">Opciones de Financiamiento</h5>
+                    <div class="d-grid gap-2">
+                        <a href="calculadora.html" class="btn btn-primary product-finance-btn">
+                            <i class="fas fa-calculator me-2"></i>Calcular Financiamiento
+                        </a>
+                        <a href="planes.html" class="btn btn-outline-primary">
+                            <i class="fas fa-info-circle me-2"></i>Ver Planes Disponibles
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="product-meta mt-4 pt-3 border-top">
+                    <div class="row">
+                        <div class="col-6 mb-2">
+                            <strong>Marca:</strong> <span class="product-brand"></span>
+                        </div>
+                        <div class="col-6 mb-2">
+                            <strong>Modelo:</strong> <span class="product-model"></span>
+                        </div>
+                        <div class="col-6 mb-2">
+                            <strong>Año:</strong> <span class="product-year">2023</span>
+                        </div>
+                        <div class="col-6">
+                            <strong>Stock:</strong> <span class="product-stock"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-5">
+            <div class="col-12">
+                <h2 class="mb-4">Características Principales</h2>
+                <div class="row features-container">
+                    <!-- Features will be populated here -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-5">
+            <div class="col-12">
+                <h2 class="mb-4">Ficha Técnica Completa</h2>
+                
+                <div class="spec-section">
+                    <h3>Información General</h3>
+                    <div class="row specs-general">
+                        <!-- General specs will be populated here -->
+                    </div>
+                </div>
+                
+                <div class="spec-section">
+                    <h3>Motor y Transmisión</h3>
+                    <div class="row specs-engine">
+                        <!-- Engine specs will be populated here -->
+                    </div>
+                </div>
+                
+                <div class="spec-section">
+                    <h3>Confort y Tecnología</h3>
+                    <div class="row specs-comfort">
+                        <!-- Comfort specs will be populated here -->
+                    </div>
+                </div>
+                
+                <div class="spec-section">
+                    <h3>Seguridad</h3>
+                    <div class="row specs-safety">
+                        <!-- Safety specs will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/models.js"></script>
+    <script src="js/products.js"></script>
+    <script>
+        let currentProductId = null;
+        
+        // Esperar a que los productos se carguen desde la API
+        document.addEventListener('productsLoaded', function(event) {
+            console.log('Productos cargados desde API para detalle:', event.detail.products.length);
+            loadProductDetail();
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Obtener ID del producto de la URL
+            const urlParams = new URLSearchParams(window.location.search);
+            currentProductId = parseInt(urlParams.get('id'));
+            
+            if (!currentProductId) {
+                showErrorMessage('No se especificó un producto. <a href="catalogo.html">Volver al catálogo</a>');
+                return;
+            }
+            
+            // Si los productos ya están cargados, cargar inmediatamente
+            if (window.ProductsAPI && window.ProductsAPI.isDataLoaded()) {
+                loadProductDetail();
+            }
+            // Si no, el evento 'productsLoaded' manejará la carga
+        });
+        
+        async function loadProductDetail() {
+            if (!currentProductId) return;
+            
+            try {
+                console.log('🔍 [LOAD] Cargando producto ID:', currentProductId);
+                
+                // SIEMPRE cargar desde el endpoint de detalle para obtener especificaciones completas
+                console.log('🔍 [LOAD] Usando endpoint de detalle individual...');
+                let product = null;
+                
+                if (window.ProductsAPI) {
+                    product = await window.ProductsAPI.loadProductDetail(currentProductId);
+                    console.log('✅ [LOAD] Producto cargado desde endpoint de detalle:', product?.name);
+                } else {
+                    console.log('❌ [LOAD] ProductsAPI no disponible, cargando directamente...');
+                    // Cargar directamente si ProductsAPI no está disponible
+                    const response = await fetch(`/api/products/products/${currentProductId}/`);
+                    if (response.ok) {
+                        const apiProduct = await response.json();
+                        console.log('🔄 [LOAD] Transformando producto cargado directamente...');
+                        
+                        // Usar la función de transformación manualmente
+                        let specs = {};
+                        
+                        // Procesar especificaciones técnicas
+                        if (apiProduct.specs_general) {
+                            specs.general = typeof apiProduct.specs_general === 'string' ? 
+                                JSON.parse(apiProduct.specs_general) : apiProduct.specs_general;
+                        }
+                        if (apiProduct.specs_engine) {
+                            specs.engine = typeof apiProduct.specs_engine === 'string' ? 
+                                JSON.parse(apiProduct.specs_engine) : apiProduct.specs_engine;
+                        }
+                        if (apiProduct.specs_comfort) {
+                            specs.comfort = typeof apiProduct.specs_comfort === 'string' ? 
+                                JSON.parse(apiProduct.specs_comfort) : apiProduct.specs_comfort;
+                        }
+                        if (apiProduct.specs_safety) {
+                            specs.safety = typeof apiProduct.specs_safety === 'string' ? 
+                                JSON.parse(apiProduct.specs_safety) : apiProduct.specs_safety;
+                        }
+                        
+                        // Procesar características
+                        let features = [];
+                        if (apiProduct.features) {
+                            features = typeof apiProduct.features === 'string' ? 
+                                JSON.parse(apiProduct.features) : apiProduct.features;
+                        }
+                        
+                        // Crear producto transformado
+                        product = {
+                            id: apiProduct.id,
+                            name: apiProduct.name,
+                            category: apiProduct.category_name || apiProduct.category || 'motocicletas',
+                            brand: apiProduct.brand,
+                            price: parseFloat(apiProduct.price) || 0,
+                            image: apiProduct.image,
+                            description: apiProduct.description || '',
+                            features: features,
+                            specs: specs,
+                            stock: parseInt(apiProduct.stock) || 0,
+                            featured: apiProduct.featured || false
+                        };
+                        
+                        console.log('✅ [LOAD] Producto transformado manualmente:', product.name);
+                        console.log('✅ [LOAD] Specs disponibles:', {
+                            general: product.specs.general?.length || 0,
+                            engine: product.specs.engine?.length || 0,
+                            comfort: product.specs.comfort?.length || 0,
+                            safety: product.specs.safety?.length || 0
+                        });
+                    }
+                }
+                
+                if (!product) {
+                    showErrorMessage('El producto no fue encontrado. <a href="catalogo.html">Volver al catálogo</a>');
+                    return;
+                }
+                
+                console.log('🎯 [LOAD] Producto final para renderizado:', {
+                    name: product.name,
+                    specs_available: !!product.specs,
+                    specs_general: product.specs?.general?.length || 0,
+                    features: product.features?.length || 0
+                });
+                
+                // Mostrar detalle del producto
+                renderProductDetail(product);
+                
+                // Mostrar productos relacionados
+                loadRelatedProducts(product);
+                
+                // Configurar botones CTA
+                const calculateBtn = document.getElementById('calculate-financing-btn');
+                if (calculateBtn) {
+                    calculateBtn.href = `calculadora.html?modelo=${product.id}`;
+                }
+                
+            } catch (error) {
+                console.error('Error cargando detalle del producto:', error);
+                showErrorMessage('Error cargando el producto. <a href="catalogo.html">Volver al catálogo</a>');
+            }
+        }
+        
+        function showErrorMessage(message) {
+            const container = document.getElementById('product-detail-container');
+            container.innerHTML = `
+                <div class="alert alert-warning text-center" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    ${message}
+                </div>
+            `;
+        }
+        
+        function renderProductDetail(product) {
+            // DEBUG: Verificar datos recibidos
+            console.log('🔍 [DETALLE] Renderizando producto:', product.name);
+            console.log('🔍 [DETALLE] product.specs existe:', !!product.specs);
+            console.log('🔍 [DETALLE] product.specs tipo:', typeof product.specs);
+            console.log('🔍 [DETALLE] product.specs.general:', product.specs?.general?.length || 'No disponible');
+            console.log('🔍 [DETALLE] product.features:', product.features?.length || 'No disponible');
+            console.log('🔍 [DETALLE] Producto completo:', product);
+            
+            // Obtener el template
+            const template = document.getElementById('product-template');
+            const container = document.getElementById('product-detail-container');
+            
+            // Limpiar el contenedor
+            container.innerHTML = '';
+            
+            // Clonar el template
+            const content = template.content.cloneNode(true);
+            
+            // Completar los datos básicos
+            content.querySelector('.product-category').textContent = getCategoryName(product.category);
+            content.querySelector('.product-title').textContent = product.name;
+            content.querySelector('.product-description').textContent = product.description;
+            content.querySelector('.product-price').textContent = `$${product.price.toLocaleString()}`;
+            content.querySelector('.product-brand').textContent = product.brand;
+            content.querySelector('.product-model').textContent = product.name;
+            content.querySelector('.product-stock').textContent = product.stock ? `${product.stock} disponibles` : 'Consultar disponibilidad';
+            content.querySelector('.product-finance-btn').href = `calculadora.html?modelo=${product.id}`;
+            
+            // Actualizar breadcrumb
+            const breadcrumb = document.getElementById('product-name-breadcrumb');
+            if (breadcrumb) {
+                breadcrumb.textContent = product.name;
+            }
+            
+            // Actualizar título de la página
+            document.title = `${product.name} | LlévateloExpress`;
+            
+            // Imagen principal con manejo de errores mejorado
+            const mainImage = content.querySelector('#main-product-image');
+            mainImage.src = product.image;
+            mainImage.alt = product.name;
+            mainImage.onerror = function() {
+                this.src = 'img/products/default.jpg';
+                this.onerror = null;
+            };
+            
+            // Galería de imágenes (usar la imagen principal como base)
+            const galleryContainer = content.querySelector('.product-gallery');
+            const baseImage = product.image;
+            const imageSources = [baseImage]; // Solo la imagen principal por ahora
+            
+            imageSources.forEach((src, index) => {
+                const col = document.createElement('div');
+                col.className = 'col-3';
+                col.innerHTML = `
+                    <img src="${src}" alt="${product.name} - Vista ${index + 1}" 
+                         class="img-fluid gallery-img mb-2" 
+                         onclick="document.getElementById('main-product-image').src = this.src"
+                         onerror="this.src='img/products/default.jpg'; this.onerror=null;">
+                `;
+                galleryContainer.appendChild(col);
+            });
+            
+            // Características
+            const featuresContainer = content.querySelector('.features-container');
+            const featureIcons = ['tachometer-alt', 'bolt', 'cogs', 'sync', 'gas-pump', 'road', 'weight', 'sliders-h'];
+            
+            console.log('🔍 [DETALLE] Procesando características, cantidad:', product.features?.length);
+            
+            if (product.features && Array.isArray(product.features)) {
+                product.features.forEach((feature, index) => {
+                    const col = document.createElement('div');
+                    col.className = 'col-md-3 col-sm-6 mb-4';
+                    col.innerHTML = `
+                        <div class="feature-item text-center">
+                            <i class="fas fa-${featureIcons[index % featureIcons.length]} feature-icon"></i>
+                            <p class="mb-0">${feature}</p>
+                        </div>
+                    `;
+                    featuresContainer.appendChild(col);
+                });
+                console.log('✅ [DETALLE] Características renderizadas:', product.features.length);
+            } else {
+                // Fallback si no hay características
+                featuresContainer.innerHTML = `
+                    <div class="col-12 text-center">
+                        <p class="text-muted">Características técnicas disponibles próximamente</p>
+                    </div>
+                `;
+                console.log('⚠️ [DETALLE] No hay características disponibles');
+            }
+            
+            // Especificaciones técnicas
+            console.log('🔍 [DETALLE] Verificando especificaciones técnicas...');
+            console.log('🔍 [DETALLE] product.specs existe:', !!product.specs);
+            console.log('🔍 [DETALLE] product.specs es objeto:', typeof product.specs === 'object');
+            
+            if (product.specs && typeof product.specs === 'object') {
+                console.log('✅ [DETALLE] Condición cumplida, renderizando specs');
+                console.log('🔍 [DETALLE] specs.general:', product.specs.general?.length || 0);
+                console.log('🔍 [DETALLE] specs.engine:', product.specs.engine?.length || 0);
+                console.log('🔍 [DETALLE] specs.comfort:', product.specs.comfort?.length || 0);
+                console.log('🔍 [DETALLE] specs.safety:', product.specs.safety?.length || 0);
+                
+                // DEBUG: Verificar que los contenedores del template existen
+                const generalContainer = content.querySelector('.specs-general');
+                const engineContainer = content.querySelector('.specs-engine');
+                const comfortContainer = content.querySelector('.specs-comfort');
+                const safetyContainer = content.querySelector('.specs-safety');
+                
+                console.log('🔍 [DETALLE] Contenedores del template:');
+                console.log('  - specs-general:', !!generalContainer, generalContainer?.tagName);
+                console.log('  - specs-engine:', !!engineContainer, engineContainer?.tagName);
+                console.log('  - specs-comfort:', !!comfortContainer, comfortContainer?.tagName);
+                console.log('  - specs-safety:', !!safetyContainer, safetyContainer?.tagName);
+                
+                // Verificar datos antes de pasar a renderSpecsSection
+                console.log('🔍 [DETALLE] Datos a renderizar:');
+                console.log('  - general data:', product.specs.general);
+                console.log('  - engine data:', product.specs.engine);
+                console.log('  - comfort data:', product.specs.comfort);
+                console.log('  - safety data:', product.specs.safety);
+                
+                renderSpecsSection(generalContainer, product.specs.general || []);
+                renderSpecsSection(engineContainer, product.specs.engine || []);
+                renderSpecsSection(comfortContainer, product.specs.comfort || []);
+                renderSpecsSection(safetyContainer, product.specs.safety || []);
+                console.log('✅ [DETALLE] Especificaciones renderizadas');
+            } else {
+                console.log('❌ [DETALLE] Condición no cumplida, usando fallback');
+                // Fallback a datos básicos si no hay specs detalladas
+                const generalSpecs = [
+                    { label: 'Marca', value: product.brand },
+                    { label: 'Modelo', value: product.name },
+                    { label: 'Categoría', value: getCategoryName(product.category) },
+                    { label: 'Precio', value: `$${product.price.toLocaleString()}` },
+                    { label: 'Stock', value: product.stock ? `${product.stock} disponibles` : 'Consultar' }
+                ];
+                
+                renderSpecsSection(content.querySelector('.specs-general'), generalSpecs);
+                
+                // Mensaje para otras secciones
+                const noDataMessage = [{ label: 'Información', value: 'Especificaciones detalladas disponibles próximamente' }];
+                renderSpecsSection(content.querySelector('.specs-engine'), noDataMessage);
+                renderSpecsSection(content.querySelector('.specs-comfort'), noDataMessage);
+                renderSpecsSection(content.querySelector('.specs-safety'), noDataMessage);
+            }
+            
+            // Añadir el contenido al contenedor
+            container.appendChild(content);
+            console.log('✅ [DETALLE] Renderizado completo');
+        }
+        
+        function renderSpecsSection(container, specs) {
+            console.log('🔍 [RENDER_SPECS] Renderizando sección:', container?.className, 'con', specs?.length || 0, 'specs');
+            console.log('🔍 [RENDER_SPECS] Container existe:', !!container);
+            console.log('🔍 [RENDER_SPECS] Specs es array:', Array.isArray(specs));
+            console.log('🔍 [RENDER_SPECS] Specs datos:', specs);
+            
+            if (!container || !Array.isArray(specs)) {
+                console.log('❌ [RENDER_SPECS] Condiciones no cumplidas - container:', !!container, 'array:', Array.isArray(specs));
+                return;
+            }
+            
+            console.log('✅ [RENDER_SPECS] Iniciando renderizado de', specs.length, 'especificaciones');
+            
+            specs.forEach((spec, index) => {
+                const col = document.createElement('div');
+                col.className = 'col-md-6 col-lg-3';
+                col.innerHTML = `
+                    <div class="spec-item">
+                        <strong>${spec.label}:</strong> ${spec.value}
+                    </div>
+                `;
+                container.appendChild(col);
+                console.log(`✅ [RENDER_SPECS] Spec ${index + 1}:`, spec.label, ':', spec.value);
+            });
+            
+            console.log('✅ [RENDER_SPECS] Renderizado completo:', specs.length, 'especificaciones agregadas al container');
+        }
+        
+        function loadRelatedProducts(currentProduct) {
+            const container = document.getElementById('related-products-container');
+            
+            // Obtener productos relacionados (misma categoría, diferente ID)
+            const relatedProducts = window.products ? 
+                window.products
+                    .filter(p => p.category === currentProduct.category && p.id !== currentProduct.id)
+                    .slice(0, 3) : 
+                [];
+                
+            if (relatedProducts.length === 0) {
+                container.innerHTML = '<div class="col-12"><p class="text-center text-muted">No se encontraron productos relacionados.</p></div>';
+                return;
+            }
+            
+            container.innerHTML = ''; // Limpiar contenedor
+            
+            relatedProducts.forEach(product => {
+                const col = document.createElement('div');
+                col.className = 'col-md-4 mb-4';
+                col.innerHTML = `
+                    <div class="card h-100 border-0 shadow-sm">
+                        <img src="${product.image}" alt="${product.name}" 
+                             class="card-img-top" 
+                             style="height: 200px; object-fit: cover;"
+                             onerror="this.src='img/products/default.jpg'; this.onerror=null;">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">${product.name}</h5>
+                            <p class="card-text text-muted small">${getCategoryName(product.category)}</p>
+                            <p class="card-text text-primary fw-bold mt-2">$${product.price.toLocaleString()}</p>
+                            <div class="mt-auto d-flex">
+                                <a href="detalle-producto.html?id=${product.id}" class="btn btn-outline-primary w-100">Ver detalles</a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(col);
+            });
+        }
+        
+        // Función auxiliar para nombres de categorías
+        function getCategoryName(category) {
+            const categoryMap = {
+                'motocicletas': 'Motocicletas',
+                'vehiculos': 'Vehículos',
+                'maquinaria': 'Maquinaria Agrícola',
+                'camiones': 'Camiones',
+                'equipos': 'Maquinaria y Equipos'
+            };
+            return categoryMap[category] || category;
+        }
+    </script>
+</body>
+</html> 

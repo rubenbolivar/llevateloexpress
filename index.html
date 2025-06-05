@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LlévateloExpress | Financiamiento de Vehículos, Motocicletas y Maquinaria</title>
+    <link rel="icon" type="image/png" href="static/img/favicon.png">
+    <link rel="apple-touch-icon" href="static/img/favicon.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/products-smooth.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="sticky-top">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm">
+            <div class="container">
+                <a class="navbar-brand" href="index.html">
+                    <img src="img/banners/logo.png" alt="LlévateloExpress" height="40" class="d-inline-block align-middle">
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="index.html">Inicio</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="catalogo.html">Catálogo</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="planes.html">Planes de Financiamiento</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="nosotros.html">Nosotros</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="contacto.html">Contáctanos</a>
+                        </li>
+                    </ul>
+                    <div class="d-flex" id="auth-buttons">
+                        <!-- Los botones serán reemplazados dinámicamente por auth.js -->
+                        <a href="registro.html" class="btn btn-outline-primary me-2">Registrarse</a>
+                        <a href="login.html" class="btn btn-primary">Iniciar Sesión</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Banner -->
+    <section class="hero-banner py-5">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 mb-4 mb-lg-0">
+                    <h1 class="display-4 fw-bold mb-3">Tu vehículo más cerca de lo que imaginas</h1>
+                    <p class="lead mb-4">Elige entre nuestros planes de financiamiento flexibles y obtén lo que deseas con una cuota a tu medida.</p>
+                    <div class="d-flex flex-wrap">
+                        <div class="finance-option p-3 me-4 mb-3 bg-light rounded shadow-sm text-center">
+                            <h3 class="h5">Compra Programada</h3>
+                            <p class="mb-0 small">Adjudicación al 45%</p>
+                            <a href="planes.html#programada" class="stretched-link"></a>
+                        </div>
+                        <div class="finance-option p-3 mb-3 bg-light rounded shadow-sm text-center">
+                            <h3 class="h5">Crédito</h3>
+                            <p class="mb-0 small">Adjudicación inmediata</p>
+                            <a href="planes.html#credito" class="stretched-link"></a>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <a href="planes.html" class="btn btn-primary btn-lg me-2">Ver planes</a>
+                        <a href="calculadora.html" class="btn btn-outline-primary btn-lg">Calcular financiamiento</a>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div id="financingCarousel" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner rounded shadow">
+                            <div class="carousel-item active">
+                                <img src="img/banners/gn125.png" class="d-block w-100" alt="Suzuki GN 125">
+                            </div>
+                            <div class="carousel-item">
+                                <img src="img/banners/haojue.png" class="d-block w-100" alt="Haojue">
+                            </div>
+                            <div class="carousel-item">
+                                <img src="img/banners/voge525.png" class="d-block w-100" alt="Voge 525">
+                            </div>
+                            <div class="carousel-item">
+                                <img src="img/banners/vogescooter.png" class="d-block w-100" alt="Voge Scooter">
+                            </div>
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#financingCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon"></span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#financingCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon"></span>
+                        </button>
+                        <!-- Indicadores -->
+                        <div class="carousel-indicators">
+                            <button type="button" data-bs-target="#financingCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+                            <button type="button" data-bs-target="#financingCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
+                            <button type="button" data-bs-target="#financingCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
+                            <button type="button" data-bs-target="#financingCarousel" data-bs-slide-to="3" aria-label="Slide 4"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categorías -->
+    <section class="categories py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5">Categorías de Productos</h2>
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <div class="category-card text-center bg-white rounded shadow-sm p-4 h-100">
+                        <i class="fas fa-motorcycle fa-3x mb-3 text-primary"></i>
+                        <h3 class="h4">Motocicletas</h3>
+                        <p>Desde modelos económicos hasta deportivos de alta gama.</p>
+                        <a href="catalogo.html?categoria=motocicletas" class="btn btn-outline-primary mt-auto">Ver Motocicletas</a>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="category-card text-center bg-white rounded shadow-sm p-4 h-100">
+                        <i class="fas fa-car fa-3x mb-3 text-primary"></i>
+                        <h3 class="h4">Vehículos</h3>
+                        <p>Autos, camionetas y vehículos comerciales de las mejores marcas.</p>
+                        <a href="catalogo.html?categoria=vehiculos" class="btn btn-outline-primary mt-auto">Ver Vehículos</a>
+                    </div>
+                </div>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="category-card text-center bg-white rounded shadow-sm p-4 h-100">
+                        <i class="fas fa-tractor fa-3x mb-3 text-primary"></i>
+                        <h3 class="h4">Maquinaria Agrícola</h3>
+                        <p>Tractores y equipos para optimizar tu producción agrícola.</p>
+                        <a href="catalogo.html?categoria=maquinaria" class="btn btn-outline-primary mt-auto">Ver Maquinaria Agrícola</a>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="category-card text-center bg-white rounded shadow-sm p-4 h-100">
+                        <i class="fas fa-truck fa-3x mb-3 text-primary"></i>
+                        <h3 class="h4">Camiones</h3>
+                        <p>Camiones de carga, transporte y distribución de distintas capacidades.</p>
+                        <a href="catalogo.html?categoria=camiones" class="btn btn-outline-primary mt-auto">Ver Camiones</a>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="category-card text-center bg-white rounded shadow-sm p-4 h-100">
+                        <i class="fas fa-industry fa-3x mb-3 text-primary"></i>
+                        <h3 class="h4">Maquinaria y Equipos</h3>
+                        <p>Equipamiento especializado para la industria y el comercio.</p>
+                        <a href="catalogo.html?categoria=equipos" class="btn btn-outline-primary mt-auto">Ver Equipos</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Marcas oficiales - Carrusel -->
+    <section class="brands-carousel py-5" style="background-color: #f8f9fa;">
+        <div class="container">
+            <h2 class="text-center mb-4">Marcas Oficiales</h2>
+            <p class="text-center mb-5">Trabajamos con las mejores marcas del mercado para ofrecerte calidad y confianza</p>
+            
+            <div class="row justify-content-center align-items-center py-4">
+                <div class="col-6 col-sm-4 col-md-3 text-center mb-4 mb-md-0">
+                    <img src="img/partners/suzuki.png" alt="Suzuki" class="img-fluid brand-logo" style="max-height: 80px;">
+                </div>
+                <div class="col-6 col-sm-4 col-md-3 text-center mb-4 mb-md-0">
+                    <img src="img/partners/voge.png" alt="Voge" class="img-fluid brand-logo" style="max-height: 80px;">
+                </div>
+                <div class="col-6 col-sm-4 col-md-3 text-center mb-4 mb-md-0">
+                    <img src="img/partners/haojue.png" alt="Haojue" class="img-fluid brand-logo" style="max-height: 80px;">
+                </div>
+                <div class="col-6 col-sm-4 col-md-3 text-center mb-4 mb-md-0">
+                    <img src="img/partners/lifan.png" alt="Lifan" class="img-fluid brand-logo" style="max-height: 80px;">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Catálogo de Productos Destacados -->
+    <section class="featured-products py-5">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Productos Destacados</h2>
+                <div class="d-flex">
+                    <div class="dropdown me-2">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="categoryFilter" data-bs-toggle="dropdown">
+                            Categoría
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">Todos</a></li>
+                            <li><a class="dropdown-item" href="#">Motocicletas</a></li>
+                            <li><a class="dropdown-item" href="#">Vehículos</a></li>
+                            <li><a class="dropdown-item" href="#">Maquinaria Agrícola</a></li>
+                            <li><a class="dropdown-item" href="#">Camiones</a></li>
+                            <li><a class="dropdown-item" href="#">Maquinaria y Equipos</a></li>
+                        </ul>
+                    </div>
+                    <div class="dropdown me-2">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="brandFilter" data-bs-toggle="dropdown">
+                            Marca
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">Todas</a></li>
+                            <li><a class="dropdown-item" href="#">Honda</a></li>
+                            <li><a class="dropdown-item" href="#">Toyota</a></li>
+                            <li><a class="dropdown-item" href="#">Massey Ferguson</a></li>
+                        </ul>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="priceFilter" data-bs-toggle="dropdown">
+                            Precio
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">Menor precio</a></li>
+                            <li><a class="dropdown-item" href="#">Mayor precio</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row g-4" id="featured-products-container">
+                <!-- Products will be loaded dynamically with JavaScript -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="cta py-5 text-white text-center" style="background-color: #FF6600;">
+        <div class="container">
+            <h2 class="display-6 mb-3">¿Listo para financiar tu próximo vehículo?</h2>
+            <p class="lead mb-4">Calcula tu plan de financiamiento ideal y comienza el proceso hoy mismo.</p>
+            <a href="calculadora.html" class="btn btn-light btn-lg">Calcular mi financiamiento</a>
+        </div>
+    </section>
+
+    <!-- Sección de Aliados -->
+    <section class="partners-section py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5">Nuestros Aliados</h2>
+            <div class="row justify-content-center align-items-center">
+                <div class="col-md-4 col-6 text-center mb-4 mb-md-0">
+                    <img src="img/banners/soloson.png" alt="Logo Soloson" class="img-fluid partner-logo" style="max-height: 80px;">
+                </div>
+                <div class="col-md-4 col-6 text-center">
+                    <img src="img/banners/r4.png" alt="Logo Banco R4" class="img-fluid partner-logo" style="max-height: 80px;">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer bg-dark text-white py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5 class="mb-3">LlévateloExpress</h5>
+                    <p class="mb-3">Tu aliado financiero para la adquisición de vehículos, motocicletas y maquinaria agrícola en Venezuela.</p>
+                    <div class="social-links">
+                        <a href="#" class="text-white me-3"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-white me-3"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-white me-3"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+                <div class="col-md-2 mb-4 mb-md-0">
+                    <h5 class="mb-3">Enlaces</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="index.html" class="text-white text-decoration-none">Inicio</a></li>
+                        <li class="mb-2"><a href="catalogo.html" class="text-white text-decoration-none">Catálogo</a></li>
+                        <li class="mb-2"><a href="planes.html" class="text-white text-decoration-none">Planes</a></li>
+                        <li class="mb-2"><a href="nosotros.html">Nosotros</a></li>
+                        <li><a href="contacto.html" class="text-white text-decoration-none">Contáctanos</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <h5 class="mb-3">Contacto</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-map-marker-alt me-2"></i> Caracas, Venezuela</li>
+                        <li class="mb-2"><i class="fas fa-phone me-2"></i> (0212) 555-1234</li>
+                        <li><i class="fas fa-envelope me-2"></i> info@llevateloexpress.com</li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5 class="mb-3">Horario de Atención</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">Lunes a Viernes: 8:00 AM - 5:00 PM</li>
+                        <li>Sábados: 9:00 AM - 1:00 PM</li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+                    <p class="mb-0">&copy; 2023-2024 LlévateloExpress. Todos los derechos reservados.</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <a href="terminos-condiciones.html" class="text-white text-decoration-none me-3">Términos y Condiciones</a>
+                    <a href="politicas-privacidad.html" class="text-white text-decoration-none">Política de Privacidad</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/api-fixed.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/products.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html> 

@@ -1,0 +1,419 @@
+console.log("Iniciando carga de API...");
+// API Client para LlévateloExpress
+const API_BASE_URL = '/api';
+
+// Función para obtener el token CSRF de una cookie
+function getCSRFToken() {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, 'csrftoken='.length) === 'csrftoken') {
+                cookieValue = decodeURIComponent(cookie.substring('csrftoken='.length));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+n// Función para obtener token CSRF del servidor
+async function fetchCSRFToken() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/users/csrf-token/`, {
+            method: "GET",
+            credentials: "include"
+        });
+        if (response.ok) {
+            console.log("Token CSRF obtenido correctamente");
+            return true;
+        }
+        return false;
+    } catch (error) {
+        console.error("Error al obtener token CSRF:", error);
+        return false;
+    }
+}
+}
+
+// Objeto principal de la API
+const API = {
+    // Métodos de autenticación y usuarios
+    users: {
+        // Iniciar sesión
+        async login(email, password) {
+            try {
+                console.log("Iniciando proceso de login...");
+                await fetchCSRFToken();
+                const response = await fetch(`${API_BASE_URL}/users/token/`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    credentials: "include",
+                    },
+                    body: JSON.stringify({ username: email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Guardar tokens
+                    localStorage.setItem('access_token', data.access);
+                    localStorage.setItem('refresh_token', data.refresh);
+                    // Guardar email del usuario para el dashboard
+                    localStorage.setItem('user_email', email);
+                    localStorage.setItem("userEmail", email);
+                    console.log("Login exitoso");
+                    return { success: true };
+                } else {
+                    return { error: true, data, status: response.status };
+                }
+            } catch (error) {
+                console.error('Error de API:', error);
+                return { error: true, message: 'Error de conexión' };
+            }
+        },
+        
+        // Registrar nuevo usuario
+        async register(userData) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/register/`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    credentials: "include",
+                    },
+                    body: JSON.stringify(userData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    return { success: true, data };
+                } else {
+                    return { error: true, data, status: response.status };
+                }
+            } catch (error) {
+                console.error('Error de API:', error);
+                return { error: true, message: 'Error de conexión' };
+            }
+        },
+        
+        // Verificar si el usuario está autenticado
+        isAuthenticated() {
+            return !!localStorage.getItem('access_token');
+        },
+        
+        // Cerrar sesión
+        logout() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('user_email');
+            localStorage.removeItem('userEmail');
+            // Redireccionar a la página principal
+            window.location.href = 'index.html';
+        },
+        
+        // Obtener perfil de usuario
+        async getProfile() {
+            return await this.authFetch(`${API_BASE_URL}/users/profile/`);
+        },
+        
+        // Obtener token actualizado si el actual expiró
+        async refreshToken() {
+            const refreshToken = localStorage.getItem('refresh_token');
+            if (!refreshToken) return false;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/token/refresh/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refresh: refreshToken })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    localStorage.setItem('access_token', data.access);
+                    return true;
+                } else {
+                    this.logout();
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error al refrescar token:', error);
+                this.logout();
+                return false;
+            }
+        },
+        
+        // Método para realizar peticiones autenticadas
+        async authFetch(url, options = {}) {
+            const token = localStorage.getItem('access_token');
+            if (!token) return { error: true, message: 'No autenticado' };
+            
+            const authOptions = {
+                ...options,
+                headers: {
+                    ...options.headers,
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            };
+            
+            try {
+                let response = await fetch(url, authOptions);
+                
+                // Si el token expiró, intentar refrescarlo
+                if (response.status === 401) {
+                    const refreshSuccess = await this.refreshToken();
+                    
+                    if (refreshSuccess) {
+                        // Reintentar con el nuevo token
+                        authOptions.headers.Authorization = `Bearer ${localStorage.getItem('access_token')}`;
+                        response = await fetch(url, authOptions);
+                    } else {
+                        return { error: true, message: 'Sesión expirada' };
+                    }
+                }
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    return { success: true, data };
+                } else {
+                    return { error: true, data, status: response.status };
+                }
+            } catch (error) {
+                console.error('Error en petición autenticada:', error);
+                return { error: true, message: 'Error de conexión' };
+            }
+        }
+    },
+    
+    // Productos
+    products: {
+        // Obtener lista de categorías
+        async getCategories() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/products/categories/`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    return { success: true, data };
+                } else {
+                    return { error: true, data, status: response.status };
+                }
+            } catch (error) {
+                console.error('Error al obtener categorías:', error);
+                return { error: true, message: 'Error de conexión' };
+            }
+        },
+        
+        // Obtener lista de productos (con paginación y filtros)
+        async getProducts(page = 1, filters = {}) {
+            try {
+                // Construir URL con parámetros
+                let url = `${API_BASE_URL}/products/products/?page=${page}`;
+                
+                // Añadir filtros a la URL si existen
+                Object.keys(filters).forEach(key => {
+                    if (filters[key]) {
+                        url += `&${key}=${encodeURIComponent(filters[key])}`;
+                    }
+                });
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    return { success: true, data };
+                } else {
+                    return { error: true, data, status: response.status };
+                }
+            } catch (error) {
+                console.error('Error al obtener productos:', error);
+                return { error: true, message: 'Error de conexión' };
+            }
+        },
+        
+        // Obtener detalle de un producto
+        async getProductDetail(productId) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/products/products/${productId}/`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    return { success: true, data };
+                } else {
+                    return { error: true, data, status: response.status };
+                }
+            } catch (error) {
+                console.error('Error al obtener detalle del producto:', error);
+                return { error: true, message: 'Error de conexión' };
+            }
+        },
+        
+        // Obtener productos destacados
+        async getFeaturedProducts() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/products/featured-products/`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    return { success: true, data };
+                } else {
+                    return { error: true, data, status: response.status };
+                }
+            } catch (error) {
+                console.error('Error al obtener productos destacados:', error);
+                return { error: true, message: 'Error de conexión' };
+            }
+        }
+    },
+    
+    // Financiamiento
+    financing: {
+        // Obtener planes de financiamiento
+        async getPlans() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/financing/plans/`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    return { success: true, data };
+                } else {
+                    return { error: true, data, status: response.status };
+                }
+            } catch (error) {
+                console.error('Error al obtener planes:', error);
+                return { error: true, message: 'Error de conexión' };
+            }
+        },
+        
+        // Simular financiamiento
+        async simulateFinancing(simulationData) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/financing/simulate/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(simulationData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    return { success: true, data };
+                } else {
+                    return { error: true, data, status: response.status };
+                }
+            } catch (error) {
+                console.error('Error al simular financiamiento:', error);
+                return { error: true, message: 'Error de conexión' };
+            }
+        },
+        
+        // Guardar simulación (requiere autenticación)
+        async saveSimulation(simulationData) {
+            return await API.users.authFetch(`${API_BASE_URL}/financing/save-simulation/`, {
+                method: 'POST',
+                body: JSON.stringify(simulationData)
+            });
+        }
+    },
+    
+    // Solicitudes
+    applications: {
+        // Obtener lista de solicitudes del usuario (requiere autenticación)
+        async getApplications() {
+            return await API.users.authFetch(`${API_BASE_URL}/users/applications/`);
+        },
+        
+        // Crear nueva solicitud (requiere autenticación)
+        async createApplication(applicationData) {
+            return await API.users.authFetch(`${API_BASE_URL}/users/applications/create/`, {
+                method: 'POST',
+                body: JSON.stringify(applicationData)
+            });
+        },
+        
+        // Obtener detalle de una solicitud (requiere autenticación)
+        async getApplicationDetail(applicationId) {
+            return await API.users.authFetch(`${API_BASE_URL}/users/applications/${applicationId}/`);
+        }
+    }
+};
+
+// Comprobación de sesión al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    // Obtener el token CSRF al cargar la página
+    obtenerCSRFToken();
+    
+    // Actualizar UI según estado de autenticación
+    updateAuthUI();
+    
+    // Si hay una sesión pero la página es login o registro, redirigir a inicio
+    if (API.users.isAuthenticated()) {
+        const currentPage = window.location.pathname.split('/').pop();
+        if (currentPage === 'login.html' || currentPage === 'registro.html') {
+            window.location.href = 'index.html';
+        }
+    }
+});
+
+// Función para obtener el token CSRF del servidor
+async function obtenerCSRFToken() {
+    try {
+        await fetch(`${API_BASE_URL}/users/csrf-token/`, {
+            method: 'GET',
+            credentials: 'include'  // Importante para incluir cookies
+        });
+        console.log('Token CSRF obtenido y establecido en la cookie');
+    } catch (error) {
+        console.error('Error al obtener token CSRF:', error);
+    }
+}
+
+// Función para actualizar la UI según el estado de autenticación
+function updateAuthUI() {
+    const isAuthenticated = API.users.isAuthenticated();
+    const authButtonsContainer = document.querySelector('header .d-flex');
+    
+    if (authButtonsContainer) {
+        if (isAuthenticated) {
+            // Usuario autenticado: Mostrar "Mi Dashboard" y "Cerrar Sesión"
+            authButtonsContainer.innerHTML = `
+                <a href="/dashboard.html" class="btn btn-outline-primary me-2">
+                    <i class="fas fa-user-circle"></i> Mi Dashboard
+                </a>
+                <button id="logoutBtn" class="btn btn-primary">Cerrar Sesión</button>
+            `;
+            
+            // Añadir evento de logout
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function() {
+                    API.users.logout();
+                });
+            }
+        } else {
+            // Usuario no autenticado: Mostrar "Registrarse" e "Iniciar Sesión"
+            authButtonsContainer.innerHTML = `
+                <a href="registro.html" class="btn btn-outline-primary me-2">Registrarse</a>
+                <a href="login.html" class="btn btn-primary">Iniciar Sesión</a>
+            `;
+        }
+    }
+}
+
+// Exportar el módulo API
+// Hacer API disponible globalmente
+window.API = API;
+console.log("API cargado correctamente");
+// Disparar evento personalizado cuando API esté listo
+window.dispatchEvent(new CustomEvent("apiReady"));
+
+// export { API }; // Comentado para evitar errores 
