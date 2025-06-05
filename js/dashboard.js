@@ -1,5 +1,3 @@
-import { Auth } from './auth.js';
-
 // Dashboard Module
 const Dashboard = {
     currentRequestId: null,
@@ -8,7 +6,7 @@ const Dashboard = {
     // Inicialización
     async init() {
         // Verificar autenticación
-        if (!Auth.isAuthenticated()) {
+        if (!API.users.isAuthenticated()) {
             window.location.href = '/login.html?redirect=dashboard';
             return;
         }
@@ -20,7 +18,7 @@ const Dashboard = {
         await this.loadDashboardData();
         
         // Actualizar UI de autenticación
-        Auth.updateAuthUI();
+        updateAuthUI();
         
         // Configurar mensaje de bienvenida
         this.setWelcomeMessage();
@@ -33,7 +31,7 @@ const Dashboard = {
         if (logoutBtn) {
             logoutBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                Auth.logoutUser();
+                API.users.logout();
             });
         }
 
@@ -93,24 +91,50 @@ const Dashboard = {
     // Cargar datos del dashboard
     async loadDashboardData() {
         try {
+            console.log('🔍 Iniciando carga de datos del dashboard...');
             // Mostrar loading
             this.showLoading();
 
             // Cargar solicitudes del usuario
-            const requestsResult = await Auth.fetch('/api/financing/my-requests/');
+            console.log('📡 Llamando a /api/financing/my-requests/...');
+            const requestsResult = await API.users.authFetch('/api/financing/my-requests/');
+            console.log('📊 Resultado de solicitudes:', requestsResult);
+            
             if (requestsResult.success) {
-                this.renderRequests(requestsResult.data);
-                this.updateStats(requestsResult.data);
+                // Manejar respuesta paginada: los datos están en .results
+                const requestsData = requestsResult.data.results || requestsResult.data;
+                console.log('✅ Datos de solicitudes obtenidos:', requestsData.length, 'solicitudes');
+                console.log('📋 Estructura de datos:', {
+                    'Es array': Array.isArray(requestsData),
+                    'Cantidad': requestsData.length,
+                    'Primer elemento': requestsData[0]?.application_number
+                });
+                this.renderRequests(requestsData);
+                this.updateStats(requestsData);
+            } else {
+                console.error('❌ Error en respuesta de solicitudes:', requestsResult);
+                this.showError(`Error al cargar solicitudes: ${requestsResult.message || 'Error desconocido'}`);
             }
 
             // Cargar calendario de pagos
-            const scheduleResult = await Auth.fetch('/api/financing/payment-schedule/');
+            console.log('📡 Llamando a /api/financing/payment-schedule/...');
+            const scheduleResult = await API.users.authFetch('/api/financing/payment-schedule/');
+            console.log('📅 Resultado de calendario:', scheduleResult);
+            
             if (scheduleResult.success) {
-                this.renderPaymentSchedule(scheduleResult.data);
+                // Manejar respuesta paginada: los datos están en .results
+                const scheduleData = scheduleResult.data.results || scheduleResult.data;
+                console.log('📅 Datos de calendario procesados:', {
+                    'Es array': Array.isArray(scheduleData),
+                    'Cantidad': scheduleData.length || 0
+                });
+                this.renderPaymentSchedule(scheduleData);
+            } else {
+                console.warn('⚠️ Error en calendario de pagos:', scheduleResult);
             }
 
         } catch (error) {
-            console.error('Error cargando dashboard:', error);
+            console.error('💥 Error crítico cargando dashboard:', error);
             this.showError('Error al cargar los datos del dashboard');
         } finally {
             this.hideLoading();
@@ -138,9 +162,9 @@ const Dashboard = {
             
             return `
                 <tr>
-                    <td>${request.id}</td>
-                    <td>${request.product?.name || 'N/A'}</td>
-                    <td>$${this.formatNumber(request.total_amount)}</td>
+                    <td>${request.application_number || request.id}</td>
+                    <td>${request.product_name || 'N/A'}</td>
+                    <td>$${this.formatNumber(request.product_price || 0)}</td>
                     <td>${statusBadge}</td>
                     <td>${this.formatDate(request.created_at)}</td>
                     <td>${actions}</td>
@@ -151,27 +175,24 @@ const Dashboard = {
 
     // Actualizar estadísticas
     updateStats(requests) {
-        // Solicitudes activas
+        // Solicitudes activas (enviadas, en revisión, aprobadas)
         const activeRequests = requests.filter(r => 
             ['submitted', 'under_review', 'approved', 'active'].includes(r.status)
         ).length;
         document.getElementById('activeRequests').textContent = activeRequests;
 
-        // Total pagado
-        const totalPaid = requests.reduce((sum, r) => 
-            sum + parseFloat(r.total_paid || 0), 0
-        );
-        document.getElementById('totalPaid').textContent = `$${this.formatNumber(totalPaid)}`;
+        // Para el total pagado y saldo pendiente, necesitamos más datos del backend
+        // Por ahora mostraremos estadísticas básicas
+        document.getElementById('totalPaid').textContent = '$0';
+        
+        // Mostrar número de solicitudes en borrador como "pendiente"
+        const draftRequests = requests.filter(r => r.status === 'draft').length;
+        document.getElementById('pendingBalance').textContent = `${draftRequests} borradores`;
 
-        // Saldo pendiente
-        const pendingBalance = requests
-            .filter(r => r.status === 'active')
-            .reduce((sum, r) => sum + (parseFloat(r.total_amount) - parseFloat(r.total_paid || 0)), 0);
-        document.getElementById('pendingBalance').textContent = `$${this.formatNumber(pendingBalance)}`;
-
-        // Habilitar botón de pago si hay saldo pendiente
-        if (pendingBalance > 0) {
-            document.getElementById('makePaymentBtn').disabled = false;
+        // Habilitar botón de pago si hay solicitudes activas
+        const makePaymentBtn = document.getElementById('makePaymentBtn');
+        if (makePaymentBtn) {
+            makePaymentBtn.disabled = activeRequests === 0;
         }
     },
 
@@ -281,7 +302,7 @@ const Dashboard = {
     // Ver detalles de solicitud
     async viewDetails(requestId) {
         try {
-            const result = await Auth.fetch(`/api/financing/requests/${requestId}/`);
+            const result = await API.users.authFetch(`/api/financing/requests/${requestId}/`);
             if (result.success) {
                 this.showDetailsModal(result.data);
             }
@@ -299,15 +320,15 @@ const Dashboard = {
             <div class="row">
                 <div class="col-md-6">
                     <h6>Información del Producto</h6>
-                    <p><strong>Producto:</strong> ${request.product?.name || 'N/A'}</p>
-                    <p><strong>Precio:</strong> $${this.formatNumber(request.product?.price || 0)}</p>
+                    <p><strong>N° Solicitud:</strong> ${request.application_number || request.id}</p>
+                    <p><strong>Producto:</strong> ${request.product_name || 'N/A'}</p>
+                    <p><strong>Precio:</strong> $${this.formatNumber(request.product_price || 0)}</p>
                 </div>
                 <div class="col-md-6">
                     <h6>Información del Financiamiento</h6>
-                    <p><strong>Plan:</strong> ${request.financing_plan?.name || 'N/A'}</p>
-                    <p><strong>Monto Total:</strong> $${this.formatNumber(request.total_amount)}</p>
-                    <p><strong>Cuotas:</strong> ${request.term_months} meses</p>
-                    <p><strong>Cuota Mensual:</strong> $${this.formatNumber(request.monthly_payment)}</p>
+                    <p><strong>Estado:</strong> ${request.status_display || request.status}</p>
+                    <p><strong>Frecuencia de Pago:</strong> ${request.payment_frequency || 'N/A'}</p>
+                    <p><strong>Monto de Cuota:</strong> $${this.formatNumber(request.payment_amount || 0)}</p>
                 </div>
             </div>
             <hr>
@@ -318,9 +339,10 @@ const Dashboard = {
                     <p><strong>Fecha de Solicitud:</strong> ${this.formatDate(request.created_at)}</p>
                 </div>
                 <div class="col-md-6">
-                    <h6>Pagos</h6>
-                    <p><strong>Total Pagado:</strong> $${this.formatNumber(request.total_paid || 0)}</p>
-                    <p><strong>Saldo Pendiente:</strong> $${this.formatNumber(request.total_amount - (request.total_paid || 0))}</p>
+                    <h6>Cliente</h6>
+                    <p><strong>Nombre:</strong> ${request.customer_name || 'N/A'}</p>
+                    <p><strong>Imagen del Producto:</strong></p>
+                    ${request.product_image ? `<img src="${request.product_image}" alt="${request.product_name}" style="max-width: 150px; height: auto;">` : 'Sin imagen'}
                 </div>
             </div>
         `;
@@ -409,7 +431,7 @@ const Dashboard = {
                 formData.append('documents', file);
             });
             
-            const result = await Auth.fetch(
+            const result = await API.users.authFetch(
                 `/api/financing/requests/${this.currentRequestId}/upload_documents/`,
                 {
                     method: 'POST',
