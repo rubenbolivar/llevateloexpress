@@ -1,6 +1,6 @@
 /**
- * SOLICITUD DE FINANCIAMIENTO V2 - VERSIÓN FINAL DEFINITIVA
- * Compatible con llamadas directas desde HTML y funciones globales
+ * SOLICITUD DE FINANCIAMIENTO V2 - VERSIÓN CON AUTENTICACIÓN INTEGRADA
+ * Compatible con llamadas directas desde HTML y sistema de autenticación existente
  */
 
 class FinancingRequestV2 {
@@ -74,7 +74,7 @@ class FinancingRequestV2 {
     }
     
     /**
-     * Fetch adaptado para el VPS existente
+     * Fetch básico para endpoints públicos (como planes)
      */
     async apiRequest(url, options = {}) {
         try {
@@ -137,10 +137,44 @@ class FinancingRequestV2 {
     }
     
     /**
+     * Fetch autenticado usando el sistema existente
+     */
+    async authenticatedRequest(url, options = {}) {
+        try {
+            // Verificar si API está disponible
+            if (typeof window.API === 'undefined' || !window.API.users) {
+                this.log('error', 'Sistema de autenticación no disponible');
+                return { success: false, status: 500, message: 'Error del sistema' };
+            }
+            
+            // Usar el sistema de autenticación existente
+            const result = await window.API.users.authFetch(url, options);
+            
+            this.log('debug', `Authenticated Request: ${options.method || 'GET'} ${url}`, result);
+            
+            return {
+                success: result.success || false,
+                status: result.status || (result.success ? 200 : 500),
+                data: result.data || result,
+                message: result.message || (result.success ? 'Éxito' : 'Error')
+            };
+            
+        } catch (error) {
+            this.log('error', 'Error en petición autenticada', error);
+            return {
+                success: false,
+                status: 0,
+                data: null,
+                message: error.message || 'Error de conexión'
+            };
+        }
+    }
+    
+    /**
      * Inicializar aplicación
      */
     init() {
-        this.log('info', 'Inicializando FinancingRequestV2 - Versión Final Definitiva');
+        this.log('info', 'Inicializando FinancingRequestV2 - Versión con Autenticación Integrada');
         
         // Cachear elementos del DOM
         this.cacheElements();
@@ -276,7 +310,7 @@ class FinancingRequestV2 {
     }
     
     /**
-     * Cargar planes de financiamiento (CORREGIDO)
+     * Cargar planes de financiamiento (sin autenticación)
      */
     async loadFinancingPlans() {
         try {
@@ -569,11 +603,11 @@ class FinancingRequestV2 {
     }
     
     /**
-     * Enviar solicitud usando las URLs del VPS
+     * CORREGIDO: Enviar solicitud usando autenticación integrada
      */
     async submitRequest() {
         try {
-            this.log('info', 'Iniciando envío de solicitud al VPS');
+            this.log('info', 'Iniciando envío de solicitud con autenticación integrada');
             
             if (!this.validateCurrentStep()) {
                 return;
@@ -583,14 +617,14 @@ class FinancingRequestV2 {
             
             const requestData = this.prepareRequestData();
             
-            // Usar endpoint exacto del VPS
-            const result = await this.apiRequest(this.config.endpoints.requests, {
+            // NUEVO: Usar sistema de autenticación integrado
+            const result = await this.authenticatedRequest(this.config.endpoints.requests, {
                 method: 'POST',
                 body: JSON.stringify(requestData)
             });
             
             if (result.success) {
-                const requestId = result.data.id;
+                const requestId = result.data.id || result.data?.data?.id;
                 this.state.requestId = requestId;
                 
                 this.showSuccess('¡Solicitud enviada exitosamente!');
@@ -614,6 +648,7 @@ class FinancingRequestV2 {
                     }, 2000);
                 } else {
                     this.showError(result.message || 'Error al enviar la solicitud');
+                    this.log('error', 'Error del servidor', result);
                 }
             }
             
@@ -864,7 +899,7 @@ class FinancingRequestV2 {
      */
     log(level, message, data = null) {
         const timestamp = new Date().toISOString();
-        const logMessage = `[${timestamp}] [FinancingRequestV2-Definitiva] [${level.toUpperCase()}] ${message}`;
+        const logMessage = `[${timestamp}] [FinancingRequestV2-AuthIntegrated] [${level.toUpperCase()}] ${message}`;
         
         const logFunctions = {
             'debug': console.debug || console.log,
@@ -887,4 +922,4 @@ class FinancingRequestV2 {
 window.FinancingRequestV2 = new FinancingRequestV2();
 
 // Log de inicialización
-console.info('🎯 FinancingRequestV2 - Versión Final Definitiva inicializada correctamente'); 
+console.info('🎯 FinancingRequestV2 - Versión con Autenticación Integrada inicializada correctamente'); 
