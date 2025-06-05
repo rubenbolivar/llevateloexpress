@@ -20,7 +20,7 @@ from .models import (
     FinancingPlan, FinancingRequest, Payment, 
     PaymentSchedule, ApplicationStatusHistory,
     FinancingConfiguration, ProductCategory, SimulatorProduct, HelpText,
-    CalculatorMode, PaymentMethod, CompanyBankAccount, PaymentAttachment
+    CalculatorMode, PaymentMethod, CompanyBankAccount  # PaymentAttachment comentado temporalmente
 )
 from .serializers.financing_serializers import (
     FinancingPlanSerializer,
@@ -1098,54 +1098,55 @@ class PaymentStatusView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
-def upload_additional_attachment(request, payment_id):
-    """Vista para subir archivos adicionales a un pago"""
-    try:
-        # Obtener el pago
-        payment = Payment.objects.get(
-            id=payment_id,
-            application__customer__user=request.user
-        )
-        
-        # Validar archivo
-        if 'file' not in request.FILES:
-            return Response({
-                'success': False,
-                'error': 'No se proporcionó archivo'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        file = request.FILES['file']
-        description = request.data.get('description', '')
-        
-        # Crear adjunto
-        attachment = PaymentAttachment.objects.create(
-            payment=payment,
-            file=file,
-            description=description,
-            uploaded_by=request.user
-        )
-        
-        return Response({
-            'success': True,
-            'message': 'Archivo adjunto subido exitosamente',
-            'data': {
-                'id': attachment.id,
-                'file_url': attachment.file.url,
-                'file_type': attachment.file_type,
-                'description': attachment.description,
-                'uploaded_at': attachment.uploaded_at.isoformat()
-            }
-        }, status=status.HTTP_201_CREATED)
-        
-    except Payment.DoesNotExist:
-        return Response({
-            'success': False,
-            'error': 'Pago no encontrado'
-        }, status=status.HTTP_404_NOT_FOUND)
-    except Exception as e:
-        return Response({
-            'success': False,
-            'error': f'Error al subir archivo: {str(e)}'
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+# Vista temporalmente comentada hasta crear migración para PaymentAttachment
+# @api_view(['POST'])
+# @permission_classes([permissions.IsAuthenticated])
+# def upload_additional_attachment(request, payment_id):
+#     """Vista para subir archivos adicionales a un pago"""
+#     try:
+#         # Obtener el pago
+#         payment = Payment.objects.get(
+#             id=payment_id,
+#             application__customer__user=request.user
+#         )
+#         
+#         # Validar archivo
+#         if 'file' not in request.FILES:
+#             return Response({
+#                 'success': False,
+#                 'error': 'No se proporcionó archivo'
+#             }, status=status.HTTP_400_BAD_REQUEST)
+#         
+#         file = request.FILES['file']
+#         description = request.data.get('description', '')
+#         
+#         # Crear adjunto
+#         attachment = PaymentAttachment.objects.create(
+#             payment=payment,
+#             file=file,
+#             description=description,
+#             uploaded_by=request.user
+#         )
+#         
+#         return Response({
+#             'success': True,
+#             'message': 'Archivo adjunto subido exitosamente',
+#             'data': {
+#                 'id': attachment.id,
+#                 'file_url': attachment.file.url,
+#                 'file_type': attachment.file_type,
+#                 'description': attachment.description,
+#                 'uploaded_at': attachment.uploaded_at.isoformat()
+#             }
+#         }, status=status.HTTP_201_CREATED)
+#         
+#     except Payment.DoesNotExist:
+#         return Response({
+#             'success': False,
+#             'error': 'Pago no encontrado'
+#         }, status=status.HTTP_404_NOT_FOUND)
+#     except Exception as e:
+#         return Response({
+#             'success': False,
+#             'error': f'Error al subir archivo: {str(e)}'
+#         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

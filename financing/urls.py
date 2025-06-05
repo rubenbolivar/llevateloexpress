@@ -29,11 +29,6 @@ urlpatterns = [
     path('payment-methods/', views.PaymentMethodListView.as_view(), name='payment-methods'),
     path('submit-payment/', views.PaymentSubmissionView.as_view(), name='submit-payment'),
     path('my-payments/', views.UserPaymentsView.as_view(), name='user-payments'),
-    
-    # Sistema de pagos manuales con comprobantes
-    path('payment-methods/', views.PaymentMethodListView.as_view(), name='payment-methods'),
-    path('submit-payment/', views.PaymentSubmissionView.as_view(), name='submit-payment'),
-    path('my-payments/', views.UserPaymentsView.as_view(), name='user-payments'),
     path('payment-status/<int:payment_id>/', views.PaymentStatusView.as_view(), name='payment-status'),
-    path('upload-attachment/<int:payment_id>/', views.upload_additional_attachment, name='upload-attachment'),
+    # path('upload-attachment/<int:payment_id>/', views.upload_additional_attachment, name='upload-attachment'),  # Comentado temporalmente
 ]

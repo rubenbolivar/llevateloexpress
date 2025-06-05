@@ -11,7 +11,7 @@ from .models import (
     PaymentSchedule, ApplicationStatusHistory,
     FinancingConfiguration, DownPaymentOption,
     FinancingTerm, PaymentFrequency, ProductCategory, SimulatorProduct, HelpText,
-    CalculatorMode, PaymentMethod, CompanyBankAccount, PaymentAttachment
+    CalculatorMode, PaymentMethod, CompanyBankAccount  # PaymentAttachment comentado temporalmente
 )
 import datetime
 
@@ -40,11 +40,12 @@ class PaymentInline(admin.TabularInline):
     readonly_fields = ('created_at',)
 
 # Inline para archivos adjuntos de pagos
-class PaymentAttachmentInline(admin.TabularInline):
-    model = PaymentAttachment
-    extra = 0
-    readonly_fields = ('file_type', 'uploaded_by', 'uploaded_at')
-    fields = ('file', 'description', 'file_type', 'uploaded_by', 'uploaded_at')
+# PaymentAttachmentInline comentado temporalmente hasta crear la migración correspondiente
+# class PaymentAttachmentInline(admin.TabularInline):
+#     model = PaymentAttachment
+#     extra = 0
+#     readonly_fields = ('file_type', 'uploaded_by', 'uploaded_at')
+#     fields = ('file', 'description', 'file_type', 'uploaded_by', 'uploaded_at')
 
 # Filtros personalizados
 class PaymentStatusFilter(SimpleListFilter):
@@ -335,15 +336,19 @@ class PaymentAdmin(admin.ModelAdmin):
     
     def verification_actions(self, obj):
         if obj.status == 'pending':
-            verify_url = reverse('admin:verify_payment', args=[obj.pk])
-            reject_url = reverse('admin:reject_payment', args=[obj.pk])
             return format_html(
-                '<a class="button" href="{}" style="background: green; color: white; padding: 5px;">Verificar</a> '
-                '<a class="button" href="{}" style="background: red; color: white; padding: 5px;">Rechazar</a>',
-                verify_url, reject_url
+                '<span style="background: orange; color: white; padding: 3px 8px; border-radius: 3px;">Pendiente de Verificación</span>'
+            )
+        elif obj.status == 'verified':
+            return format_html(
+                '<span style="background: green; color: white; padding: 3px 8px; border-radius: 3px;">✓ Verificado</span>'
+            )
+        elif obj.status == 'rejected':
+            return format_html(
+                '<span style="background: red; color: white; padding: 3px 8px; border-radius: 3px;">✗ Rechazado</span>'
             )
         return obj.get_status_display()
-    verification_actions.short_description = 'Acciones'
+    verification_actions.short_description = 'Estado de Verificación'
     
     def get_verification_timeline(self, obj):
         timeline = obj.get_verification_timeline()
@@ -387,12 +392,13 @@ class PaymentAdmin(admin.ModelAdmin):
             'application__customer__user', 'payment_method', 'company_account'
         )
 
-@admin.register(PaymentAttachment)
-class PaymentAttachmentAdmin(admin.ModelAdmin):
-    list_display = ['payment', 'description', 'file_type', 'uploaded_by', 'uploaded_at']
-    list_filter = ['file_type', 'uploaded_at']
-    search_fields = ['payment__application__application_number', 'description']
-    readonly_fields = ['file_type', 'uploaded_by', 'uploaded_at']
+# PaymentAttachment admin comentado temporalmente hasta crear la migración correspondiente
+# @admin.register(PaymentAttachment)
+# class PaymentAttachmentAdmin(admin.ModelAdmin):
+#     list_display = ['payment', 'description', 'file_type', 'uploaded_by', 'uploaded_at']
+#     list_filter = ['file_type', 'uploaded_at']
+#     search_fields = ['payment__application__application_number', 'description']
+#     readonly_fields = ['file_type', 'uploaded_by', 'uploaded_at']
 
 @admin.register(PaymentSchedule)
 class PaymentScheduleAdmin(admin.ModelAdmin):
