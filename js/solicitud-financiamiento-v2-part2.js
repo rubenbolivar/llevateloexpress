@@ -1,6 +1,6 @@
 /**
- * SOLICITUD DE FINANCIAMIENTO V2 - VERSIÓN FINAL CORREGIDA
- * Corrige: parseo URL, navegación, renderizado de datos, métodos globales
+ * SOLICITUD DE FINANCIAMIENTO V2 - VERSIÓN FINAL DEFINITIVA
+ * Compatible con llamadas directas desde HTML y funciones globales
  */
 
 class FinancingRequestV2 {
@@ -140,7 +140,7 @@ class FinancingRequestV2 {
      * Inicializar aplicación
      */
     init() {
-        this.log('info', 'Inicializando FinancingRequestV2 - Versión Final Corregida');
+        this.log('info', 'Inicializando FinancingRequestV2 - Versión Final Definitiva');
         
         // Cachear elementos del DOM
         this.cacheElements();
@@ -154,21 +154,29 @@ class FinancingRequestV2 {
         // Verificar planes disponibles
         this.loadFinancingPlans();
         
-        // Exponer métodos globalmente (NUEVO)
+        // Exponer métodos globalmente (MEJORADO)
         this.exposeGlobalMethods();
     }
     
     /**
-     * NUEVO: Exponer métodos globalmente para que funcionen los onclick
+     * MEJORADO: Exponer métodos globalmente con compatibilidad total
      */
     exposeGlobalMethods() {
+        // Exponer la instancia completa
         window.FinancingRequestV2 = this;
+        
         // También crear funciones globales directas
         window.nextStep = () => this.nextStep();
         window.prevStep = () => this.prevStep();
         window.submitRequest = () => this.submitRequest();
         
-        this.log('info', 'Métodos expuestos globalmente');
+        // NUEVO: Agregar compatibilidad directa con la instancia
+        // Esto hace que FinancingRequestV2.nextStep() funcione también
+        FinancingRequestV2.nextStep = () => this.nextStep();
+        FinancingRequestV2.prevStep = () => this.prevStep();
+        FinancingRequestV2.submitRequest = () => this.submitRequest();
+        
+        this.log('info', 'Métodos expuestos globalmente con compatibilidad total');
     }
     
     /**
@@ -420,7 +428,7 @@ class FinancingRequestV2 {
         const downPaymentPercentage = parseInt(calc.down_payment_percentage || 35);
         const downPaymentAmount = parseFloat(calc.down_payment_amount || (productPrice * (downPaymentPercentage / 100)));
         const financedAmount = parseFloat(calc.financed_amount || (productPrice - downPaymentAmount));
-        const paymentAmount = parseFloat(calc.payment_amount || 0); // CORREGIDO: No usar || 0 que oculta valores válidos
+        const paymentAmount = parseFloat(calc.payment_amount || 0);
         
         this.log('info', 'Renderizando valores:', {
             productPrice,
@@ -856,7 +864,7 @@ class FinancingRequestV2 {
      */
     log(level, message, data = null) {
         const timestamp = new Date().toISOString();
-        const logMessage = `[${timestamp}] [FinancingRequestV2-Final] [${level.toUpperCase()}] ${message}`;
+        const logMessage = `[${timestamp}] [FinancingRequestV2-Definitiva] [${level.toUpperCase()}] ${message}`;
         
         const logFunctions = {
             'debug': console.debug || console.log,
@@ -879,4 +887,4 @@ class FinancingRequestV2 {
 window.FinancingRequestV2 = new FinancingRequestV2();
 
 // Log de inicialización
-console.info('🎯 FinancingRequestV2 - Versión Final Corregida inicializada correctamente'); 
+console.info('🎯 FinancingRequestV2 - Versión Final Definitiva inicializada correctamente'); 
