@@ -562,7 +562,7 @@ class FinancingRequestV2 {
     }
     
     /**
-     * Preparar datos para el VPS (formato exacto)
+     * Preparar datos para el VPS (formato exacto del serializer)
      */
     prepareRequestData() {
         this.updateFormData();
@@ -570,35 +570,51 @@ class FinancingRequestV2 {
         const calc = this.state.calculationData?.calculation || {};
         const product = this.state.calculationData?.product || {};
         
-        // Preparar datos en el formato que espera el VPS
+        // Obtener valores numéricos
+        const productPrice = parseFloat(calc.product_price || 0);
+        const downPaymentPercentage = parseInt(calc.down_payment_percentage || 35);
+        const downPaymentAmount = parseFloat(calc.down_payment_amount || 0);
+        const financedAmount = parseFloat(calc.financed_amount || 0);
+        const numberOfPayments = parseInt(calc.number_of_payments || 24);
+        const paymentAmount = parseFloat(calc.payment_amount || 0);
+        
+        // Calcular campos obligatorios que faltan
+        const interestRate = 0.00; // Para crédito inmediato sin intereses
+        const totalAmount = downPaymentAmount + (paymentAmount * numberOfPayments);
+        const totalInterest = totalAmount - productPrice;
+        
+        // Preparar datos en el formato EXACTO que espera el serializer
         const data = {
-            // Datos del producto
+            // Campos obligatorios del serializer
             product: parseInt(product.id || 1),
-            financing_plan: this.getFinancingPlanByDownPayment(calc.down_payment_percentage || 35),
+            financing_plan: this.getFinancingPlanByDownPayment(downPaymentPercentage),
             
-            // Datos financieros (formato del VPS)
-            product_price: parseFloat(calc.product_price || 19399).toFixed(2),
-            down_payment_percentage: parseInt(calc.down_payment_percentage || 35),
-            down_payment_amount: parseFloat(calc.down_payment_amount || (calc.product_price * 0.35)).toFixed(2),
-            financed_amount: parseFloat(calc.financed_amount || (calc.product_price * 0.65)).toFixed(2),
-            payment_frequency: "biweekly", // Convertir quincenal a biweekly para el VPS
-            number_of_payments: parseInt(calc.number_of_payments || 24),
-            payment_amount: parseFloat(calc.payment_amount || 242.49).toFixed(2),
+            // Montos (como números, no strings)
+            product_price: parseFloat(productPrice.toFixed(2)),
+            down_payment_percentage: downPaymentPercentage,
+            down_payment_amount: parseFloat(downPaymentAmount.toFixed(2)),
+            financed_amount: parseFloat(financedAmount.toFixed(2)),
             
-            // Datos personales
-            employment_type: this.state.formData.employment_type || "empleado_privado",
-            monthly_income: parseFloat(this.state.formData.monthly_income || 800).toFixed(2),
-            company_name: this.state.formData.company_name || "",
-            job_position: this.state.formData.job_position || "",
-            work_phone: this.state.formData.work_phone || "",
-            years_employed: parseFloat(this.state.formData.years_employed || 0),
-            reference1_name: this.state.formData.reference1_name || "",
-            reference1_phone: this.state.formData.reference1_phone || "",
-            reference2_name: this.state.formData.reference2_name || "",
-            reference2_phone: this.state.formData.reference2_phone || ""
+            // Campos que faltaban (CRÍTICO)
+            interest_rate: parseFloat(interestRate.toFixed(2)),
+            total_interest: parseFloat(totalInterest.toFixed(2)),
+            total_amount: parseFloat(totalAmount.toFixed(2)),
+            
+            // Plan de pagos
+            payment_frequency: "biweekly", // Quincenal en formato del backend
+            number_of_payments: numberOfPayments,
+            payment_amount: parseFloat(paymentAmount.toFixed(2)),
+            
+            // Información del cliente (campos opcionales)
+            employment_type: this.state.formData.employment_type || "",
+            monthly_income: parseFloat(this.state.formData.monthly_income || 0)
+            
+            // NOTA: Quitamos todos los campos extra que no están en el serializer:
+            // company_name, job_position, work_phone, years_employed, 
+            // reference1_name, reference1_phone, reference2_name, reference2_phone
         };
         
-        this.log('debug', 'Datos preparados para VPS', data);
+        this.log('debug', 'Datos preparados para VPS (formato serializer)', data);
         return data;
     }
     
