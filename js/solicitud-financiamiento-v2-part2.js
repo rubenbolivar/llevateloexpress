@@ -1,6 +1,7 @@
 /**
- * SOLICITUD DE FINANCIAMIENTO V2 - ADAPTADO PARA VPS
+ * SOLICITUD DE FINANCIAMIENTO V2 - ADAPTADO PARA VPS - VERSIÓN CORREGIDA
  * Versión adaptada para trabajar con la infraestructura existente del VPS
+ * Corrige errores de logging y transferencia de datos
  */
 
 class FinancingRequestV2 {
@@ -146,7 +147,7 @@ class FinancingRequestV2 {
      * Inicializar aplicación
      */
     init() {
-        this.log('info', 'Inicializando FinancingRequestV2 adaptado para VPS');
+        this.log('info', 'Inicializando FinancingRequestV2 adaptado para VPS - Versión Corregida');
         
         // Cachear elementos del DOM
         this.cacheElements();
@@ -154,7 +155,7 @@ class FinancingRequestV2 {
         // Configurar eventos
         this.setupEventListeners();
         
-        // Cargar datos de cálculo
+        // Cargar datos de cálculo (mejorado)
         this.loadCalculationData();
         
         // Verificar planes disponibles (sin requerir autenticación)
@@ -282,10 +283,11 @@ class FinancingRequestV2 {
     }
     
     /**
-     * Cargar datos de cálculo desde localStorage
+     * Cargar datos de cálculo - VERSIÓN MEJORADA
      */
     loadCalculationData() {
         try {
+            // Método 1: Desde localStorage (datos guardados desde la calculadora)
             const savedData = localStorage.getItem('calculationData');
             if (savedData) {
                 this.state.calculationData = JSON.parse(savedData);
@@ -294,24 +296,67 @@ class FinancingRequestV2 {
                 return;
             }
             
-            // Intentar cargar desde URL params
+            // Método 2: Desde parámetros URL (cuando se hace clic en "Solicitar Este Plan")
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('product_id')) {
-                this.log('info', 'Detectados parámetros de cálculo en URL');
-                // Reconstruir datos básicos desde URL
-                this.state.calculationData = {
-                    product: { id: urlParams.get('product_id') },
+            if (urlParams.has('mode') && urlParams.get('mode') === 'credito') {
+                this.log('info', 'Detectados parámetros de crédito inmediato en URL');
+                
+                // Extraer datos de la URL
+                const calculationData = {
+                    product: {
+                        id: urlParams.get('product') || '1',
+                        name: urlParams.get('name') || 'Producto Seleccionado'
+                    },
                     calculation: {
-                        product_price: urlParams.get('price') || 0,
-                        down_payment_percentage: urlParams.get('down_payment') || 35
+                        product_price: parseFloat(urlParams.get('price') || '19399'),
+                        down_payment_percentage: parseInt(urlParams.get('down_payment') || '35'),
+                        payment_frequency: 'quincenal',
+                        number_of_payments: parseInt(urlParams.get('plazo') || '24'),
+                        payment_amount: parseFloat(urlParams.get('cuota') || '0')
                     }
                 };
+                
+                // Calcular valores derivados
+                const price = calculationData.calculation.product_price;
+                const downPercent = calculationData.calculation.down_payment_percentage;
+                calculationData.calculation.down_payment_amount = price * (downPercent / 100);
+                calculationData.calculation.financed_amount = price - calculationData.calculation.down_payment_amount;
+                
+                this.state.calculationData = calculationData;
+                this.log('info', 'Datos de cálculo reconstruidos desde URL', calculationData);
                 this.renderCalculationSummary();
-            } else {
-                this.log('warning', 'No se encontraron datos de cálculo - usuario puede continuar manualmente');
+                return;
             }
+            
+            // Método 3: Buscar en el sessionStorage (backup)
+            const sessionData = sessionStorage.getItem('financingData');
+            if (sessionData) {
+                this.state.calculationData = JSON.parse(sessionData);
+                this.log('info', 'Datos de cálculo cargados desde sessionStorage');
+                this.renderCalculationSummary();
+                return;
+            }
+            
+            // Método 4: Valores por defecto si no hay datos
+            this.log('warning', 'No se encontraron datos de cálculo - usando valores por defecto');
+            this.state.calculationData = {
+                product: { id: '1', name: 'Producto' },
+                calculation: {
+                    product_price: 19399,
+                    down_payment_percentage: 35,
+                    down_payment_amount: 6789.65,
+                    financed_amount: 12609.35,
+                    payment_frequency: 'quincenal',
+                    number_of_payments: 24,
+                    payment_amount: 242.49
+                }
+            };
+            this.renderCalculationSummary();
+            
         } catch (error) {
-            this.log('error', 'Error cargando datos de cálculo', error);
+            this.log('error', 'Error cargando datos de cálculo: ' + error.message);
+            // Continuar con valores por defecto en caso de error
+            this.state.calculationData = null;
         }
     }
     
@@ -319,7 +364,10 @@ class FinancingRequestV2 {
      * Renderizar resumen de cálculo (adaptado para datos disponibles)
      */
     renderCalculationSummary() {
-        if (!this.state.calculationData || !this.elements.calculationSummary) return;
+        if (!this.state.calculationData || !this.elements.calculationSummary) {
+            this.log('warning', 'No hay datos para renderizar o elemento no encontrado');
+            return;
+        }
         
         const calc = this.state.calculationData.calculation || this.state.calculationData;
         const product = this.state.calculationData.product || {};
@@ -327,8 +375,9 @@ class FinancingRequestV2 {
         // Usar datos disponibles o valores por defecto
         const productPrice = parseFloat(calc.product_price || 0);
         const downPaymentPercentage = parseInt(calc.down_payment_percentage || 35);
-        const downPaymentAmount = productPrice * (downPaymentPercentage / 100);
-        const financedAmount = productPrice - downPaymentAmount;
+        const downPaymentAmount = calc.down_payment_amount || (productPrice * (downPaymentPercentage / 100));
+        const financedAmount = calc.financed_amount || (productPrice - downPaymentAmount);
+        const paymentAmount = calc.payment_amount || 0;
         
         this.elements.calculationSummary.innerHTML = `
             <div class="row text-center">
@@ -345,8 +394,8 @@ class FinancingRequestV2 {
                     <small>Monto a Financiar</small>
                 </div>
                 <div class="col-md-3">
-                    <h3>Disponible</h3>
-                    <small>Plan de Financiamiento</small>
+                    <h3>$${this.formatNumber(paymentAmount)}</h3>
+                    <small>Cuota ${calc.payment_frequency || 'Quincenal'}</small>
                 </div>
             </div>
         `;
@@ -357,8 +406,11 @@ class FinancingRequestV2 {
                 <p><strong>Producto:</strong> ${product.name || 'Producto Seleccionado'}</p>
                 <p><strong>Precio:</strong> $${this.formatNumber(productPrice)}</p>
                 <p><strong>Plan:</strong> Crédito Inmediato ${downPaymentPercentage}%</p>
+                <p><strong>Plazo:</strong> ${calc.number_of_payments || 24} pagos</p>
             `;
         }
+        
+        this.log('info', 'Resumen de cálculo renderizado correctamente');
     }
     
     /**
@@ -428,16 +480,16 @@ class FinancingRequestV2 {
         const data = {
             // Datos del producto
             product: parseInt(product.id || 1),
-            financing_plan: this.getFinancingPlanByDownPayment(35), // Plan por defecto
+            financing_plan: this.getFinancingPlanByDownPayment(calc.down_payment_percentage || 35),
             
             // Datos financieros (formato del VPS)
-            product_price: parseFloat(calc.product_price || 4500).toFixed(2),
+            product_price: parseFloat(calc.product_price || 19399).toFixed(2),
             down_payment_percentage: parseInt(calc.down_payment_percentage || 35),
-            down_payment_amount: parseFloat(calc.down_payment_amount || 1575).toFixed(2),
-            financed_amount: parseFloat(calc.financed_amount || 2925).toFixed(2),
-            payment_frequency: "biweekly", // Usar formato que acepta el VPS
+            down_payment_amount: parseFloat(calc.down_payment_amount || (calc.product_price * 0.35)).toFixed(2),
+            financed_amount: parseFloat(calc.financed_amount || (calc.product_price * 0.65)).toFixed(2),
+            payment_frequency: "biweekly", // Convertir quincenal a biweekly para el VPS
             number_of_payments: parseInt(calc.number_of_payments || 24),
-            payment_amount: parseFloat(calc.payment_amount || 158.33).toFixed(2),
+            payment_amount: parseFloat(calc.payment_amount || 242.49).toFixed(2),
             
             // Datos personales
             employment_type: this.state.formData.employment_type || "empleado_privado",
@@ -506,7 +558,7 @@ class FinancingRequestV2 {
             }
             
         } catch (error) {
-            this.log('error', 'Error enviando solicitud', error);
+            this.log('error', 'Error enviando solicitud: ' + error.message);
             this.showError('Error de conexión. Por favor, intente nuevamente.');
         } finally {
             this.setLoading(false);
@@ -639,7 +691,7 @@ class FinancingRequestV2 {
                         <i class="fas fa-file"></i> ${file.name}
                         <small class="text-muted">(${this.formatFileSize(file.size)})</small>
                     </span>
-                    <button type="button" class="btn btn-sm btn-danger" onclick="FinancingRequestV2.removeFile(${index})">
+                    <button type="button" class="btn btn-sm btn-danger" onclick="window.FinancingRequestV2.removeFile(${index})">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -748,14 +800,28 @@ class FinancingRequestV2 {
         }
     }
     
+    /**
+     * FUNCIÓN DE LOGGING CORREGIDA
+     * Soluciona el error de console[level] is not a function
+     */
     log(level, message, data = null) {
         const timestamp = new Date().toISOString();
         const logMessage = `[${timestamp}] [FinancingRequestV2-VPS] [${level.toUpperCase()}] ${message}`;
         
+        // Mapear niveles a funciones válidas de console
+        const logFunctions = {
+            'debug': console.debug || console.log,
+            'info': console.info || console.log,
+            'warning': console.warn || console.log,
+            'error': console.error || console.log
+        };
+        
+        const logFunction = logFunctions[level] || console.log;
+        
         if (data) {
-            console[level](logMessage, data);
+            logFunction.call(console, logMessage, data);
         } else {
-            console[level](logMessage);
+            logFunction.call(console, logMessage);
         }
     }
 }
@@ -764,4 +830,4 @@ class FinancingRequestV2 {
 window.FinancingRequestV2 = new FinancingRequestV2();
 
 // Log de inicialización
-console.info('🔧 FinancingRequestV2 adaptado para VPS inicializado correctamente'); 
+console.info('🔧 FinancingRequestV2 adaptado para VPS - Versión Corregida inicializado correctamente'); 
