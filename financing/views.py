@@ -914,7 +914,7 @@ class PaymentSubmissionView(APIView):
                 company_account=company_account,
                 payment_type=request.data.get('payment_type', 'installment'),
                 amount=amount,
-                currency=request.data.get('currency', 'USD'),
+                currency=request.data.get("currency", "USD"),
                 payment_date=request.data['payment_date'],
                 reference_number=reference_number,
                 transaction_id=request.data.get('transaction_id', ''),

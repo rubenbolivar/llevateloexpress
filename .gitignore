@@ -67,3 +67,8 @@ yarn-error.log*
 # Archivos temporales de despliegue
 tmp_deploy/
 deploy.tar.gz 
+# Archivos grandes y backups
+*.tar.gz
+*.backup
+backups/
+sistema_*.tar.gz

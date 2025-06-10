@@ -386,18 +386,28 @@ class Payment(models.Model):
         related_name='payments',
         verbose_name="Solicitud de Financiamiento"
     )
-    payment_method = models.ForeignKey(
-        PaymentMethod,
-        on_delete=models.PROTECT,
+    # Método de pago (CharField para compatibilidad con BD existente)
+    PAYMENT_METHOD_CHOICES = [
+        ('bank_transfer', 'Transferencia Bancaria'),
+        ('mobile_payment', 'Pago Móvil'),
+        ('zelle', 'Zelle'),
+        ('binance', 'Binance Pay'),
+        ('cash', 'Efectivo'),
+        ('check', 'Cheque'),
+        ('other', 'Otro')
+    ]
+    payment_method = models.CharField(
+        max_length=20, 
+        choices=PAYMENT_METHOD_CHOICES,
         verbose_name="Método de Pago"
     )
-    company_account = models.ForeignKey(
-        CompanyBankAccount,
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-        verbose_name="Cuenta de Destino"
-    )
+    # company_account = models.ForeignKey(
+    #     CompanyBankAccount,
+    #     on_delete=models.PROTECT,
+    #     null=True,
+    #     blank=True,
+    #     verbose_name="Cuenta de Destino"
+    # )
     payment_schedule = models.ForeignKey(
         'PaymentSchedule',
         on_delete=models.SET_NULL,
@@ -505,18 +515,15 @@ class Payment(models.Model):
         if self.amount <= 0:
             raise ValidationError("El monto debe ser mayor que cero")
         
-        if self.payment_method.requires_reference and not self.reference_number:
+        # Validaciones básicas (simplificadas para compatibilidad con CharField)
+        if self.payment_method in ['bank_transfer', 'mobile_payment', 'zelle'] and not self.reference_number:
             raise ValidationError("Este método de pago requiere número de referencia")
         
-        if self.payment_method.requires_receipt and not self.receipt_file:
+        if self.payment_method != 'cash' and not self.receipt_file:
             raise ValidationError("Este método de pago requiere comprobante")
         
-        # Validar montos mínimos/máximos
-        if self.payment_method.min_amount and self.amount < self.payment_method.min_amount:
-            raise ValidationError(f"El monto mínimo para este método es ${self.payment_method.min_amount}")
-        
-        if self.payment_method.max_amount and self.amount > self.payment_method.max_amount:
-            raise ValidationError(f"El monto máximo para este método es ${self.payment_method.max_amount}")
+        # Nota: Validaciones de montos mínimos/máximos temporalmente deshabilitadas
+        # hasta implementar la migración completa a ForeignKey
     
     def save(self, *args, **kwargs):
         self.full_clean()

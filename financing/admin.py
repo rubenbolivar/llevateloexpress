@@ -271,7 +271,7 @@ class PaymentAdmin(admin.ModelAdmin):
     ]
     list_filter = [
         PaymentStatusFilter, 'payment_type', 'currency', 
-        PaymentDateFilter, 'payment_method__payment_type'
+        PaymentDateFilter, 'payment_method'
     ]
     search_fields = [
         'application__application_number', 'application__customer__user__first_name',
@@ -285,10 +285,10 @@ class PaymentAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Información Básica', {
-            'fields': ('application', 'payment_type', 'payment_method', 'company_account')
+            'fields': ('application', 'payment_type', 'company_account')
         }),
         ('Detalles del Pago', {
-            'fields': ('amount', 'currency', 'payment_date', 'status')
+            'fields': ('amount', 'payment_date', 'status')
         }),
         ('Comprobante', {
             'fields': ('reference_number', 'transaction_id', 'receipt_file', 'get_receipt_preview')
@@ -389,7 +389,7 @@ class PaymentAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.select_related(
-            'application__customer__user', 'payment_method', 'company_account'
+            'application__customer__user'
         )
 
 # PaymentAttachment admin comentado temporalmente hasta crear la migración correspondiente
