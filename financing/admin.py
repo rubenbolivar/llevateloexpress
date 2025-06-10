@@ -285,7 +285,7 @@ class PaymentAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Información Básica', {
-            'fields': ('application', 'payment_type', 'company_account')
+            'fields': ('application', 'payment_type')
         }),
         ('Detalles del Pago', {
             'fields': ('amount', 'payment_date', 'status')
