@@ -95,6 +95,49 @@
             padding: 1rem;
             margin-bottom: 1rem;
         }
+        .upload-zone-small {
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 1rem;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .upload-zone-small:hover {
+            border-color: #007bff;
+            background-color: #f8f9fa;
+        }
+        .upload-zone-small.drag-over {
+            border-color: #007bff;
+            background-color: #e7f3ff;
+        }
+        .document-upload-card {
+            transition: transform 0.2s;
+        }
+        .document-upload-card:hover {
+            transform: translateY(-2px);
+        }
+        .uploaded-file {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 0.5rem;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .uploaded-file .file-name {
+            flex: 1;
+            margin: 0 0.5rem;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -324,17 +367,107 @@
                                         <small class="text-muted">Formatos permitidos: PDF, JPG, PNG (máx. 5MB por archivo)</small>
                                     </div>
 
-                                    <!-- Zona de Subida -->
-                                    <div class="upload-zone" id="uploadZone">
-                                        <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
-                                        <h5>Arrastra tus documentos aquí</h5>
-                                        <p class="text-muted">o haz clic para seleccionar archivos</p>
-                                        <input type="file" id="documentInput" class="d-none" multiple 
-                                               accept=".pdf,.jpg,.jpeg,.png">
-                                    </div>
+                                    <!-- Zonas de Subida Específicas -->
+                                    <div class="row g-4">
+                                        <!-- Comprobante de Ingresos -->
+                                        <div class="col-md-4">
+                                            <div class="document-upload-card">
+                                                <div class="card h-100">
+                                                    <div class="card-header bg-info text-white text-center">
+                                                        <i class="fas fa-dollar-sign fa-2x mb-2"></i>
+                                                        <h6 class="mb-0">Comprobante de Ingresos</h6>
+                                                    </div>
+                                                    <div class="card-body text-center">
+                                                        <div class="upload-zone-small" data-document-type="income_proof">
+                                                            <i class="fas fa-upload fa-2x text-muted mb-2"></i>
+                                                            <p class="small text-muted mb-2">Arrastra o haz clic para subir</p>
+                                                            <input type="file" class="d-none document-input" 
+                                                                   accept=".pdf,.jpg,.jpeg,.png" data-type="income_proof">
+                                                            <button type="button" class="btn btn-outline-info btn-sm">
+                                                                <i class="fas fa-plus"></i> Seleccionar archivo
+                                                            </button>
+                                                        </div>
+                                                        <div class="uploaded-file" style="display: none;">
+                                                            <i class="fas fa-file-alt text-success"></i>
+                                                            <span class="file-name"></span>
+                                                            <button type="button" class="btn btn-sm btn-outline-danger ms-2 remove-file">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                        <small class="text-muted d-block mt-2">
+                                                            Nómina, constancia de trabajo, declaración de renta
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
 
-                                    <!-- Lista de Archivos -->
-                                    <div id="filesList"></div>
+                                        <!-- Documento de Identidad -->
+                                        <div class="col-md-4">
+                                            <div class="document-upload-card">
+                                                <div class="card h-100">
+                                                    <div class="card-header bg-warning text-white text-center">
+                                                        <i class="fas fa-id-card fa-2x mb-2"></i>
+                                                        <h6 class="mb-0">Documento de Identidad</h6>
+                                                    </div>
+                                                    <div class="card-body text-center">
+                                                        <div class="upload-zone-small" data-document-type="id_document">
+                                                            <i class="fas fa-upload fa-2x text-muted mb-2"></i>
+                                                            <p class="small text-muted mb-2">Arrastra o haz clic para subir</p>
+                                                            <input type="file" class="d-none document-input" 
+                                                                   accept=".pdf,.jpg,.jpeg,.png" data-type="id_document">
+                                                            <button type="button" class="btn btn-outline-warning btn-sm">
+                                                                <i class="fas fa-plus"></i> Seleccionar archivo
+                                                            </button>
+                                                        </div>
+                                                        <div class="uploaded-file" style="display: none;">
+                                                            <i class="fas fa-file-alt text-success"></i>
+                                                            <span class="file-name"></span>
+                                                            <button type="button" class="btn btn-sm btn-outline-danger ms-2 remove-file">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                        <small class="text-muted d-block mt-2">
+                                                            Cédula de identidad (ambas caras), pasaporte
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Comprobante de Domicilio -->
+                                        <div class="col-md-4">
+                                            <div class="document-upload-card">
+                                                <div class="card h-100">
+                                                    <div class="card-header bg-success text-white text-center">
+                                                        <i class="fas fa-home fa-2x mb-2"></i>
+                                                        <h6 class="mb-0">Comprobante de Domicilio</h6>
+                                                    </div>
+                                                    <div class="card-body text-center">
+                                                        <div class="upload-zone-small" data-document-type="address_proof">
+                                                            <i class="fas fa-upload fa-2x text-muted mb-2"></i>
+                                                            <p class="small text-muted mb-2">Arrastra o haz clic para subir</p>
+                                                            <input type="file" class="d-none document-input" 
+                                                                   accept=".pdf,.jpg,.jpeg,.png" data-type="address_proof">
+                                                            <button type="button" class="btn btn-outline-success btn-sm">
+                                                                <i class="fas fa-plus"></i> Seleccionar archivo
+                                                            </button>
+                                                        </div>
+                                                        <div class="uploaded-file" style="display: none;">
+                                                            <i class="fas fa-file-alt text-success"></i>
+                                                            <span class="file-name"></span>
+                                                            <button type="button" class="btn btn-sm btn-outline-danger ms-2 remove-file">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                        <small class="text-muted d-block mt-2">
+                                                            Recibo de luz, agua, teléfono, gas
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
 
                                     <div class="alert alert-info mt-3">
                                         <i class="fas fa-lightbulb"></i>
