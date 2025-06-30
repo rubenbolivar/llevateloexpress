@@ -287,7 +287,7 @@ function logoutUser() {
     console.log('Sesión cerrada correctamente');
     
     // Actualizar la UI inmediatamente antes de redireccionar
-    updateAuthUI();
+    updateAuthUI().catch(console.error);
     
     // Redireccionar a la página principal con un parámetro para mostrar mensaje
     window.location.href = 'index.html?logout=true';
@@ -422,7 +422,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Obtener token CSRF
     fetchCsrfToken().then(() => {
         // Actualizar UI según estado de autenticación
-        updateAuthUI();
+        updateAuthUI().catch(console.error);
         
         // Solo redirigir si el usuario ya ha iniciado sesión anteriormente
         // y está intentando acceder a páginas de login/registro
@@ -461,5 +461,5 @@ window.Auth = {
 // export const Auth = window.Auth; 
 // Actualizar UI automáticamente cuando se carga la página
 document.addEventListener("DOMContentLoaded", function() {
-    updateAuthUI();
+    updateAuthUI().catch(console.error);
 });
