@@ -26,6 +26,7 @@ urlpatterns = [
     path('api/products/', include('products.urls')),
     path('api/financing/', include('financing.urls')),
     path('api/users/', include('users.urls')),
+    path('api/payments/', include('payments.urls')),
     # Servir archivos HTML estáticos
     path('', TemplateView.as_view(template_name='index.html')),
     path('catalogo.html', TemplateView.as_view(template_name='catalogo.html')),

@@ -867,18 +867,18 @@ class PaymentSubmissionView(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             # Obtener cuenta de destino si se especifica
-            #             company_account = None
-            #             if 'company_account_id' in request.data:
-            #                 try:
-            #                     company_account = CompanyBankAccount.objects.get(
-            #                         id=request.data['company_account_id'],
-            #                         is_active=True
-            #                     )
-                #                 except CompanyBankAccount.DoesNotExist:
-                #                     return Response({
-                #                         'success': False,
-                #                         'error': 'Cuenta de destino no válida'
-                #                     }, status=status.HTTP_400_BAD_REQUEST)
+            company_account = None
+            if 'company_account_id' in request.data:
+                try:
+                    company_account = CompanyBankAccount.objects.get(
+                        id=request.data['company_account_id'],
+                        is_active=True
+                    )
+                except CompanyBankAccount.DoesNotExist:
+                    return Response({
+                        'success': False,
+                        'error': 'Cuenta de destino no válida'
+                    }, status=status.HTTP_400_BAD_REQUEST)
             
             # Validar monto
             try:
@@ -911,7 +911,7 @@ class PaymentSubmissionView(APIView):
             payment = Payment.objects.create(
                 application=application,
                 payment_method=payment_method,
-                # company_account=company_account,  # COMENTADO: Campo no existe en modelo
+                company_account=company_account,
                 payment_type=request.data.get('payment_type', 'installment'),
                 amount=amount,
                 currency=request.data.get("currency", "USD"),
@@ -980,7 +980,7 @@ class UserPaymentsView(APIView):
             queryset = Payment.objects.filter(
                 application__customer__user=request.user
             ).select_related(
-                'application', 'payment_method', 'verified_by'  # company_account removido
+                'application', 'payment_method', 'company_account', 'verified_by'
             ).order_by('-payment_date')
             
             # Aplicar filtros
@@ -1015,12 +1015,12 @@ class UserPaymentsView(APIView):
                     'verification_timeline': str(payment.get_verification_timeline()) if payment.verified_at else None
                 }
                 
-                #                 if payment.company_account:
-                #                     payment_data['company_account'] = {
-                #                         'bank_name': payment.company_account.bank_name,
-                #                         'account_number': payment.company_account.account_number,
-                #                         'currency': payment.company_account.currency
-                #                     }
+                if payment.company_account:
+                    payment_data['company_account'] = {
+                        'bank_name': payment.company_account.bank_name,
+                        'account_number': payment.company_account.account_number,
+                        'currency': payment.company_account.currency
+                    }
                 
                 payments_data.append(payment_data)
             
@@ -1044,7 +1044,7 @@ class PaymentStatusView(APIView):
     def get(self, request, payment_id):
         try:
             payment = Payment.objects.select_related(
-                'application', 'payment_method', 'verified_by'  # company_account removido
+                'application', 'payment_method', 'company_account', 'verified_by'
             ).get(
                 id=payment_id,
                 application__customer__user=request.user
@@ -1073,13 +1073,13 @@ class PaymentStatusView(APIView):
                 'verification_timeline': str(payment.get_verification_timeline())
             }
             
-            #             if payment.company_account:
-            #                 data['company_account'] = {
-            #                     'bank_name': payment.company_account.bank_name,
-            #                     'account_number': payment.company_account.account_number,
-            #                     'account_holder': payment.company_account.account_holder,
-            #                     'currency': payment.company_account.currency
-            #                 }
+            if payment.company_account:
+                data['company_account'] = {
+                    'bank_name': payment.company_account.bank_name,
+                    'account_number': payment.company_account.account_number,
+                    'account_holder': payment.company_account.account_holder,
+                    'currency': payment.company_account.currency
+                }
             
             return Response({
                 'success': True,

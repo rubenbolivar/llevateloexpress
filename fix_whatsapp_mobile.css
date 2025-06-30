@@ -1,0 +1,32 @@
+
+/* Corrección para móviles - Samsung Galaxy y otros */
+@media (max-width: 768px) {
+    .whatsapp-float {
+        width: 56px;
+        height: 56px;
+        bottom: 70px; /* Más arriba para evitar barras de navegación */
+        right: 12px;  /* Más hacia la izquierda */
+        position: fixed;
+    }
+    .whatsapp-icon {
+        width: 28px;
+        height: 28px;
+    }
+}
+
+/* Corrección específica para pantallas muy pequeñas */
+@media (max-width: 480px) {
+    .whatsapp-float {
+        bottom: 80px; /* Aún más arriba en pantallas pequeñas */
+        right: 10px;
+    }
+}
+
+/* Soporte para safe-area (iPhone con notch, pero funciona en Android también) */
+@media (max-width: 768px) {
+    .whatsapp-float {
+        bottom: calc(70px + env(safe-area-inset-bottom));
+        right: calc(12px + env(safe-area-inset-right));
+    }
+}
+
