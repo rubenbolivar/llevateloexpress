@@ -120,18 +120,23 @@ class FinancingRequestViewSet(viewsets.ModelViewSet):
             notes='Solicitud enviada para revisión'
         )
         
-        # Crear notificación
-        notification_service = NotificationService()
-        notification_service.send_notification(
-            user=request.user,
-            notification_type_code='financing_application',
-            context={
-                'application_number': application.application_number,
-                'product_name': application.product.name if application.product else 'N/A',
-                'amount': str(application.product_price) if application.product_price else 'N/A',
-                'plan': application.financing_plan.name if application.financing_plan else 'N/A'
-            }
-        )
+        # Crear notificación (no debe fallar el submit si falla el email)
+        try:
+            notification_service = NotificationService()
+            notification_service.send_notification(
+                user=request.user,
+                notification_type_code='financing_application',
+                context={
+                    'application_number': application.application_number,
+                    'product_name': application.product.name if application.product else 'N/A',
+                    'amount': str(application.product_price) if application.product_price else 'N/A',
+                    'plan': application.financing_plan.name if application.financing_plan else 'N/A'
+                }
+            )
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f'Notification failed but submit continues: {e}')
         
         serializer = FinancingRequestDetailSerializer(
             application,
@@ -175,18 +180,24 @@ class FinancingRequestViewSet(viewsets.ModelViewSet):
                 notes='Solicitud enviada automáticamente al subir documentos'
             )
             
-            # Enviar notificación
-            notification_service = NotificationService()
-            notification_service.send_notification(
-                user=request.user,
-                notification_type_code='financing_application',
-                context={
-                    'application_number': application.application_number,
-                    'product_name': application.product.name if application.product else 'N/A',
-                    'amount': str(application.product_price) if application.product_price else 'N/A',
-                    'plan': application.financing_plan.name if application.financing_plan else 'N/A'
-                }
-            )
+            # Enviar notificación (no debe fallar el upload si falla el email)
+            try:
+                notification_service = NotificationService()
+                notification_service.send_notification(
+                    user=request.user,
+                    notification_type_code='financing_application',
+                    context={
+                        'application_number': application.application_number,
+                        'product_name': application.product.name if application.product else 'N/A',
+                        'amount': str(application.product_price) if application.product_price else 'N/A',
+                        'plan': application.financing_plan.name if application.financing_plan else 'N/A'
+                    }
+                )
+            except Exception as e:
+                # Log pero no bloquear el upload
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f'Notification failed but upload continues: {e}')
             
         elif application.status not in ['submitted', 'documentation_required']:
             return Response(
@@ -259,17 +270,22 @@ class PaymentViewSet(viewsets.ModelViewSet):
         
         self.perform_create(serializer)
         
-        # Crear notificación
-        notification_service = NotificationService()
-        notification_service.send_notification(
-            user=application.customer.user,
-            notification_type_code='payment_confirmation',
-            context={
-                'amount': str(serializer.instance.amount),
-                'application_number': application.application_number,
-                'payment_date': timezone.now().strftime('%Y-%m-%d')
-            }
-        )
+        # Crear notificación (no debe fallar el pago si falla el email)
+        try:
+            notification_service = NotificationService()
+            notification_service.send_notification(
+                user=application.customer.user,
+                notification_type_code='payment_confirmation',
+                context={
+                    'amount': str(serializer.instance.amount),
+                    'application_number': application.application_number,
+                    'payment_date': timezone.now().strftime('%Y-%m-%d')
+                }
+            )
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f'Payment notification failed but payment continues: {e}')
         
         headers = self.get_success_headers(serializer.data)
         return Response(
