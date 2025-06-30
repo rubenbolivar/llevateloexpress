@@ -422,6 +422,156 @@ El proyecto incluye un script para automatizar el proceso de despliegue en el se
 - Local: http://localhost:8000/admin/
 - Producción: https://llevateloexpress.com/admin/
 
+## Gestión de Servicios en Producción
+
+### Gunicorn Service Management
+
+El backend Django se ejecuta mediante Gunicorn a través de systemd. A continuación se detallan los comandos para gestionar el servicio:
+
+#### Verificar estado del servicio
+
+```bash
+# Verificar estado actual de Gunicorn
+sudo systemctl status llevateloexpress
+
+# Verificar si el servicio está habilitado (se inicia automáticamente al boot)
+sudo systemctl is-enabled llevateloexpress
+
+# Verificar procesos de Gunicorn en ejecución
+ps aux | grep gunicorn
+
+# Verificar socket Unix creado por Gunicorn
+ls -la /tmp/llevateloexpress.sock
+```
+
+#### Iniciar el servicio
+
+```bash
+# Iniciar el servicio Gunicorn
+sudo systemctl start llevateloexpress
+
+# Verificar que se inició correctamente
+sudo systemctl status llevateloexpress
+```
+
+#### Reiniciar el servicio
+
+```bash
+# Reinicio completo (detiene y vuelve a iniciar)
+sudo systemctl restart llevateloexpress
+
+# Recarga suave (recarga workers sin perder conexiones)
+sudo systemctl reload llevateloexpress
+
+# Si modificaste la configuración de systemd
+sudo systemctl daemon-reload
+sudo systemctl restart llevateloexpress
+```
+
+#### Detener el servicio
+
+```bash
+# Detener el servicio
+sudo systemctl stop llevateloexpress
+
+# Verificar que se detuvo
+sudo systemctl status llevateloexpress
+```
+
+#### Habilitar/Deshabilitar inicio automático
+
+```bash
+# Habilitar inicio automático al boot del sistema
+sudo systemctl enable llevateloexpress
+
+# Deshabilitar inicio automático
+sudo systemctl disable llevateloexpress
+```
+
+#### Monitoreo y logs
+
+```bash
+# Ver logs en tiempo real
+sudo journalctl -u llevateloexpress -f
+
+# Ver los últimos logs del servicio
+sudo journalctl -u llevateloexpress -n 50
+
+# Ver logs de error de Gunicorn
+sudo tail -f /var/log/llevateloexpress/error.log
+
+# Ver logs de acceso de Gunicorn
+sudo tail -f /var/log/llevateloexpress/access.log
+```
+
+#### Verificación completa del stack
+
+```bash
+# Verificar todos los servicios relacionados
+sudo systemctl status llevateloexpress nginx postgresql
+
+# Probar conectividad de la API
+curl -I http://localhost/api/financing/plans/
+
+# Verificar que nginx está sirviendo contenido estático
+curl -I http://localhost/static/css/styles.css
+```
+
+#### Troubleshooting
+
+Si Gunicorn no inicia correctamente:
+
+```bash
+# Verificar configuración de Django manualmente
+cd /var/www/llevateloexpress
+sudo -u llevateloexpress bash -c "source backend_env/bin/activate && python manage.py check"
+
+# Probar configuración de Gunicorn
+sudo -u llevateloexpress bash -c "source backend_env/bin/activate && gunicorn -c gunicorn_conf.py --check-config llevateloexpress_backend.wsgi:application"
+
+# Ver logs detallados del sistema
+sudo journalctl -u llevateloexpress -l
+
+# Verificar permisos del socket
+ls -la /tmp/llevateloexpress.sock
+
+# Limpiar socket si existe y reiniciar
+sudo rm -f /tmp/llevateloexpress.sock
+sudo systemctl restart llevateloexpress
+```
+
+### Reinicio completo del stack (en orden)
+
+```bash
+# 1. Detener servicios
+sudo systemctl stop llevateloexpress
+sudo systemctl stop nginx
+
+# 2. Limpiar socket
+sudo rm -f /tmp/llevateloexpress.sock
+
+# 3. Iniciar servicios en orden
+sudo systemctl start llevateloexpress
+sudo systemctl start nginx
+
+# 4. Verificar que todo está funcionando
+sudo systemctl status llevateloexpress nginx postgresql
+curl -I http://localhost/api/financing/plans/
+```
+
+### Configuración del servicio
+
+El servicio systemd está definido en `/etc/systemd/system/llevateloexpress.service` con la siguiente configuración:
+
+- **Nombre del servicio**: `llevateloexpress`
+- **Usuario de ejecución**: `llevateloexpress`
+- **Directorio de trabajo**: `/var/www/llevateloexpress`
+- **Socket Unix**: `/tmp/llevateloexpress.sock`
+- **Logs**: `/var/log/llevateloexpress/error.log` y `/var/log/llevateloexpress/access.log`
+- **Entorno virtual**: `/var/www/llevateloexpress/backend_env`
+
+**Nota importante**: Siempre usar `systemctl` para gestionar Gunicorn en lugar de matar procesos manualmente, ya que systemd se encarga de la gestión adecuada del servicio y sus dependencias.
+
 ## Recursos adicionales
 
 - [DEPLOYMENT_PROTOCOL.md](DEPLOYMENT_PROTOCOL.md): Protocolo detallado de despliegue
