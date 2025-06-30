@@ -11,18 +11,23 @@
 // Variables globales
 let currentProfile = null;
 
-// Elementos del DOM
-const profileForm = document.getElementById('profileForm');
-const loadingOverlay = document.querySelector('.loading');
-const successToast = new bootstrap.Toast(document.getElementById('successToast'));
-const errorToast = new bootstrap.Toast(document.getElementById('errorToast'));
+// Elementos del DOM (se inicializan cuando el DOM esté listo)
+let profileForm;
+let loadingOverlay;
+let successToast;
+let errorToast;
 
 /**
  * Carga los datos del perfil del usuario
  */
 async function loadProfile() {
     try {
-        showLoading(true);
+        showLoading(true, 'Cargando perfil...');
+        
+        // Verificar que Auth.fetch existe
+        if (!Auth || !Auth.fetch) {
+            throw new Error('Auth.fetch no está disponible');
+        }
         
         const result = await Auth.fetch('/api/users/profile/');
         
@@ -33,11 +38,11 @@ async function loadProfile() {
             calculateProfileCompleteness(result.data);
         } else {
             console.error('Error cargando perfil:', result);
-            showError('Error al cargar los datos del perfil');
+            showError('Error al cargar los datos del perfil: ' + (result.message || 'Error desconocido'));
         }
     } catch (error) {
         console.error('Error en loadProfile:', error);
-        showError('Error de conexión al cargar el perfil');
+        showError('Error de conexión al cargar el perfil: ' + error.message);
     } finally {
         showLoading(false);
     }
@@ -142,7 +147,7 @@ function calculateProfileCompleteness(profileData) {
  */
 async function saveProfile(formData) {
     try {
-        showLoading(true);
+        showLoading(true, 'Guardando cambios...');
         
         // Preparar datos para enviar
         const profileData = {
@@ -221,11 +226,24 @@ function validateForm(formData) {
 /**
  * Muestra/oculta el overlay de carga
  */
-function showLoading(show) {
+function showLoading(show, message = 'Cargando...') {
+    if (!loadingOverlay) {
+        console.error('loadingOverlay no encontrado');
+        return;
+    }
+    
+    // Actualizar texto del loading
+    const loadingText = document.getElementById('loadingText');
+    if (loadingText) {
+        loadingText.textContent = message;
+    }
+    
     if (show) {
-        loadingOverlay.classList.add('show');
+        loadingOverlay.style.display = 'flex';
+        loadingOverlay.style.visibility = 'visible';
     } else {
-        loadingOverlay.classList.remove('show');
+        loadingOverlay.style.display = 'none';
+        loadingOverlay.style.visibility = 'hidden';
     }
 }
 
@@ -233,59 +251,118 @@ function showLoading(show) {
  * Muestra un mensaje de éxito
  */
 function showSuccess(message) {
+    console.log('SUCCESS:', message);
     const toastBody = document.querySelector('#successToast .toast-body');
-    toastBody.textContent = message;
-    successToast.show();
+    if (toastBody) {
+        toastBody.textContent = message;
+    }
+    if (successToast) {
+        successToast.show();
+    } else {
+        alert('Éxito: ' + message);
+    }
 }
 
 /**
  * Muestra un mensaje de error
  */
 function showError(message) {
+    console.error('ERROR:', message);
     const toastBody = document.querySelector('#errorToast .toast-body');
-    toastBody.textContent = message;
-    errorToast.show();
+    if (toastBody) {
+        toastBody.textContent = message;
+    }
+    if (errorToast) {
+        errorToast.show();
+    } else {
+        alert('Error: ' + message);
+    }
 }
 
 /**
- * Maneja el envío del formulario
+ * Configura los event listeners
  */
-profileForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(profileForm);
-    
-    // Validar formulario
-    const errors = validateForm(formData);
-    if (errors.length > 0) {
-        showError(errors.join('. '));
-        return;
+function setupEventListeners() {
+    // Manejar envío del formulario
+    if (profileForm) {
+        profileForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(profileForm);
+            
+            // Validar formulario
+            const errors = validateForm(formData);
+            if (errors.length > 0) {
+                showError(errors.join('. '));
+                return;
+            }
+            
+            // Guardar perfil
+            await saveProfile(formData);
+        });
     }
     
-    // Guardar perfil
-    await saveProfile(formData);
-});
-
-/**
- * Maneja el logout desde la página de perfil
- */
-document.getElementById('logoutBtn').addEventListener('click', function(e) {
-    e.preventDefault();
-    if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-        Auth.logout();
+    // Manejar logout
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+                Auth.logout();
+            }
+        });
     }
-});
+}
 
 // Inicializar página cuando se carga el DOM
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM cargado, inicializando perfil...');
+    
+    // Inicializar elementos del DOM
+    profileForm = document.getElementById('profileForm');
+    loadingOverlay = document.querySelector('.loading');
+    
+    // Verificar elementos críticos
+    if (!profileForm) {
+        console.error('profileForm no encontrado');
+        return;
+    }
+    if (!loadingOverlay) {
+        console.error('loadingOverlay no encontrado');
+        return;
+    }
+    
+    // Inicializar toasts
+    const successToastElement = document.getElementById('successToast');
+    const errorToastElement = document.getElementById('errorToast');
+    
+    if (successToastElement) {
+        successToast = new bootstrap.Toast(successToastElement);
+    }
+    if (errorToastElement) {
+        errorToast = new bootstrap.Toast(errorToastElement);
+    }
+    
     // Verificar autenticación
-    if (!Auth.isAuthenticated()) {
+    if (!Auth || !Auth.isAuthenticated()) {
+        console.log('Usuario no autenticado, redirigiendo...');
         window.location.href = '/login.html';
         return;
     }
     
-    // Cargar datos del perfil
-    loadProfile();
+    console.log('Todos los elementos inicializados, configurando event listeners...');
+    // Configurar event listeners
+    setupEventListeners();
+    
+    console.log('Obteniendo token CSRF...');
+    // Obtener token CSRF antes de cargar perfil
+    Auth.fetchCsrfToken().then(() => {
+        console.log('Token CSRF obtenido, cargando perfil...');
+        loadProfile();
+    }).catch(error => {
+        console.error('Error obteniendo token CSRF:', error);
+        showError('Error de configuración. Por favor recarga la página.');
+    });
 });
 
 // Exponer funciones globalmente para uso desde HTML
