@@ -807,12 +807,12 @@ class FinancingRequestV2 {
                 this.showSuccess('¡Solicitud enviada exitosamente!');
                 this.log('info', `Solicitud creada con ID: ${requestId}`);
                 
-                // Cambiar estado a submitted para poder subir documentos
-                await this.submitForReview(requestId);
-                
-                // Opcional: subir documentos si hay
+                // Si hay documentos, subirlos (esto automáticamente cambia estado a submitted)
                 if (this.state.uploadedFiles.length > 0) {
                     await this.uploadDocuments(requestId);
+                } else {
+                    // Si no hay documentos, cambiar estado manualmente a submitted
+                    await this.submitForReview(requestId);
                 }
                 
                 // Redirigir al dashboard después de 3 segundos

@@ -140,11 +140,55 @@ class FinancingRequestViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def upload_documents(self, request, pk=None):
         """Subir documentos requeridos"""
         application = self.get_object()
         
-        if application.status not in ['submitted', 'documentation_required']:
+        # Validar estado y manejar transición de draft a submitted
+        if application.status == 'draft':
+            # Verificar que el perfil esté completo
+            if not application.customer.is_profile_complete:
+                return Response(
+                    {'error': 'Debe completar su perfil antes de enviar la solicitud'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Verificar que se está subiendo al menos un documento
+            if not any(key in request.FILES for key in ['income_proof', 'id_document', 'address_proof']):
+                return Response(
+                    {'error': 'Debe subir al menos un documento para enviar la solicitud'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Cambiar estado a submitted automáticamente
+            old_status = application.status
+            application.status = 'submitted'
+            application.submitted_at = timezone.now()
+            
+            # Registrar cambio de estado
+            ApplicationStatusHistory.objects.create(
+                application=application,
+                from_status=old_status,
+                to_status='submitted',
+                changed_by=request.user,
+                notes='Solicitud enviada automáticamente al subir documentos'
+            )
+            
+            # Enviar notificación
+            notification_service = NotificationService()
+            notification_service.send_notification(
+                user=request.user,
+                notification_type_code='financing_application',
+                context={
+                    'application_number': application.application_number,
+                    'product_name': application.product.name if application.product else 'N/A',
+                    'amount': str(application.product_price) if application.product_price else 'N/A',
+                    'plan': application.financing_plan.name if application.financing_plan else 'N/A'
+                }
+            )
+            
+        elif application.status not in ['submitted', 'documentation_required']:
             return Response(
                 {'error': 'No se pueden subir documentos en este estado'},
                 status=status.HTTP_400_BAD_REQUEST
