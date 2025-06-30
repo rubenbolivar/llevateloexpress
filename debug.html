@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Auth</title>
+</head>
+<body>
+    <h1>Debug de Autenticación</h1>
+    <div id="debug-info"></div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const debugInfo = document.getElementById('debug-info');
+            
+            const accessToken = localStorage.getItem('access_token');
+            const refreshToken = localStorage.getItem('refresh_token');
+            const userEmail = localStorage.getItem('user_email');
+            
+            debugInfo.innerHTML = `
+                <p><strong>Access Token:</strong> ${accessToken ? 'Existe' : 'No existe'}</p>
+                <p><strong>Refresh Token:</strong> ${refreshToken ? 'Existe' : 'No existe'}</p>
+                <p><strong>User Email:</strong> ${userEmail || 'No existe'}</p>
+                <p><strong>LocalStorage completo:</strong></p>
+                <pre>${JSON.stringify(localStorage, null, 2)}</pre>
+            `;
+        });
+    </script>
+</body>
+</html>

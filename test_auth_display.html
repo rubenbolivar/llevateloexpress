@@ -1,0 +1,67 @@
+<\!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba - Mostrar Nombre Usuario</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Prueba: Mostrar Nombre de Usuario</h2>
+        
+        <\!-- Simulamos la barra de navegación -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+            <div class="container">
+                <span class="navbar-brand">LlévateloExpress - Prueba</span>
+                <div class="d-flex" id="auth-buttons">
+                    <\!-- Se llenará dinámicamente -->
+                </div>
+            </div>
+        </nav>
+        
+        <div class="alert alert-info">
+            <h5>Estado de la prueba:</h5>
+            <p id="status">Cargando...</p>
+        </div>
+        
+        <div class="card">
+            <div class="card-body">
+                <h5>Información de localStorage:</h5>
+                <ul id="localStorage-info"></ul>
+            </div>
+        </div>
+    </div>
+    
+    <\!-- Scripts -->
+    <script src="js/api-fixed.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusElement = document.getElementById('status');
+            const localStorageInfo = document.getElementById('localStorage-info');
+            
+            // Mostrar estado de autenticación
+            if (isAuthenticated()) {
+                statusElement.innerHTML = '<span class="text-success">✅ Usuario autenticado</span>';
+                
+                // Mostrar información del localStorage
+                const email = localStorage.getItem('user_email');
+                const displayName = localStorage.getItem('user_display_name');
+                
+                localStorageInfo.innerHTML = `
+                    <li><strong>Email:</strong> ${email || 'No guardado'}</li>
+                    <li><strong>Nombre para mostrar:</strong> ${displayName || 'No guardado'}</li>
+                `;
+                
+                // Trigger updateAuthUI
+                updateAuthUI();
+            } else {
+                statusElement.innerHTML = '<span class="text-warning">⚠️ Usuario no autenticado</span>';
+                localStorageInfo.innerHTML = '<li>No hay datos de usuario</li>';
+            }
+        });
+    </script>
+</body>
+</html>
+EOF && echo 'Página de prueba creada'
