@@ -279,7 +279,7 @@ function logoutUser() {
     // Limpiar tokens del localStorage
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user_email');
+    localStorage.removeItem('user_email');    localStorage.removeItem('user_display_name');
     
     // Limpiar cookie CSRF (para prevenir cualquier problema de autenticación)
     document.cookie = "csrftoken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
@@ -312,21 +312,42 @@ async function getUserProfile() {
 /**
  * Actualiza los elementos de UI según el estado de autenticación
  */
-function updateAuthUI() {
+/**
+ * Actualiza los elementos de UI según el estado de autenticación
+ */
+async function updateAuthUI() {
     const authenticated = isAuthenticated();
     
     // Actualizar botones de autenticación en la barra de navegación
     const authButtonsContainer = document.getElementById('auth-buttons');
     if (authButtonsContainer) {
         if (authenticated) {
-            // Usuario autenticado: Mostrar "Mi Dashboard" y "Cerrar Sesión"
-            const userEmail = localStorage.getItem('user_email') || 'Usuario';
+            // Usuario autenticado: Obtener nombre del perfil
+            let userName = localStorage.getItem('user_display_name') || 'Usuario';
+            
+            // Si no tenemos el nombre guardado, obtenerlo del perfil
+            if (userName === 'Usuario' || \!localStorage.getItem('user_display_name')) {
+                try {
+                    const profileResult = await getUserProfile();
+                    if (profileResult.success && profileResult.data.user) {
+                        const { first_name, last_name } = profileResult.data.user;
+                        if (first_name || last_name) {
+                            userName = `${first_name || ''} ${last_name || ''}`.trim();
+                            localStorage.setItem('user_display_name', userName);
+                        }
+                    }
+                } catch (error) {
+                    console.log('No se pudo obtener el perfil del usuario');
+                    userName = localStorage.getItem('user_email') || 'Usuario';
+                }
+            }
+            
             authButtonsContainer.innerHTML = `
-                <a href="/dashboard.html" class="btn btn-outline-primary me-2">
-                    <i class="fas fa-user-circle"></i> Mi Dashboard
+                <a href=/dashboard.html class=btn btn-outline-primary me-2>
+                    <i class=fas fa-user-circle></i> Mi Dashboard
                 </a>
-                <span class="me-3 text-muted">${userEmail}</span>
-                <button id="logoutBtn" class="btn btn-outline-danger">Cerrar Sesión</button>
+                <span class=me-3 text-muted>Hola, ${userName}</span>
+                <button id=logoutBtn class=btn btn-outline-danger>Cerrar Sesión</button>
             `;
             
             // Añadir evento de logout
@@ -338,10 +359,10 @@ function updateAuthUI() {
                 });
             }
         } else {
-            // Usuario no autenticado: Mostrar "Registrarse" e "Iniciar Sesión"
+            // Usuario no autenticado: Mostrar Registrarse e Iniciar Sesión
             authButtonsContainer.innerHTML = `
-                <a href="registro.html" class="btn btn-outline-primary me-2">Registrarse</a>
-                <a href="login.html" class="btn btn-primary">Iniciar Sesión</a>
+                <a href=registro.html class=btn btn-outline-primary me-2>Registrarse</a>
+                <a href=login.html class=btn btn-primary>Iniciar Sesión</a>
             `;
         }
     }
@@ -354,7 +375,7 @@ function updateAuthUI() {
             const forAuthenticated = container.getAttribute('data-auth-container') === 'authenticated';
             
             // Mostrar u ocultar según corresponda
-            if ((forAuthenticated && authenticated) || (!forAuthenticated && !authenticated)) {
+            if ((forAuthenticated && authenticated) || (\!forAuthenticated && \!authenticated)) {
                 container.style.display = '';
             } else {
                 container.style.display = 'none';
@@ -364,15 +385,39 @@ function updateAuthUI() {
     
     // Si hay elementos que muestran el email del usuario
     if (authenticated) {
-        const userEmail = localStorage.getItem('user_email');
+        const userName = await getUserDisplayName();
         const emailElements = document.querySelectorAll('[data-auth-email]');
         emailElements.forEach(element => {
-            element.textContent = userEmail || 'Usuario';
+            element.textContent = userName || 'Usuario';
         });
     }
 }
 
-// Inicializar sistema de autenticación al cargar la página
+// Función auxiliar para obtener el nombre del usuario
+async function getUserDisplayName() {
+    try {
+        const savedName = localStorage.getItem('user_display_name');
+        if (savedName && savedName \!== 'Usuario') {
+            return savedName;
+        }
+        
+        const profileResult = await getUserProfile();
+        if (profileResult.success && profileResult.data.user) {
+            const { first_name, last_name } = profileResult.data.user;
+            if (first_name || last_name) {
+                const fullName = `${first_name || ''} ${last_name || ''}`.trim();
+                if (fullName) {
+                    localStorage.setItem('user_display_name', fullName);
+                    return fullName;
+                }
+            }
+        }
+        
+        return localStorage.getItem('user_email') || 'Usuario';
+    } catch (error) {
+        return localStorage.getItem('user_email') || 'Usuario';
+    }
+}
 document.addEventListener('DOMContentLoaded', function() {
     // Obtener token CSRF
     fetchCsrfToken().then(() => {
