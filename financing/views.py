@@ -33,7 +33,7 @@ from .serializers.financing_serializers import (
     PaymentScheduleSerializer,
     FinancingCalculatorSerializer
 )
-from notifications.models import EmailNotification
+from notifications.services import NotificationService
 from products.models import Product, Category
 
 
@@ -121,12 +121,16 @@ class FinancingRequestViewSet(viewsets.ModelViewSet):
         )
         
         # Crear notificación
-        EmailNotification.objects.create(
+        notification_service = NotificationService()
+        notification_service.send_notification(
             user=request.user,
-            notification_type='application_submitted',
-            subject='Solicitud Enviada',
-            message=f'Su solicitud {application.application_number} ha sido enviada para revisión.',
-            context={'application_number': application.application_number}
+            notification_type_code='financing_application',
+            context={
+                'application_number': application.application_number,
+                'product_name': application.product.name if application.product else 'N/A',
+                'amount': str(application.product_price) if application.product_price else 'N/A',
+                'plan': application.financing_plan.name if application.financing_plan else 'N/A'
+            }
         )
         
         serializer = FinancingRequestDetailSerializer(
@@ -212,14 +216,14 @@ class PaymentViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
         
         # Crear notificación
-        EmailNotification.objects.create(
+        notification_service = NotificationService()
+        notification_service.send_notification(
             user=application.customer.user,
-            notification_type='payment_registered',
-            subject='Pago Registrado',
-            message=f'Se ha registrado un pago de ${serializer.instance.amount} para su solicitud {application.application_number}',
+            notification_type_code='payment_confirmation',
             context={
                 'amount': str(serializer.instance.amount),
-                'application_number': application.application_number
+                'application_number': application.application_number,
+                'payment_date': timezone.now().strftime('%Y-%m-%d')
             }
         )
         
