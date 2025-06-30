@@ -287,7 +287,7 @@ function logoutUser() {
     console.log('Sesión cerrada correctamente');
     
     // Actualizar la UI inmediatamente antes de redireccionar
-    updateAuthUI();
+    updateAuthUI().catch(console.error);
     
     // Redireccionar a la página principal con un parámetro para mostrar mensaje
     window.location.href = 'index.html?logout=true';
@@ -312,20 +312,37 @@ async function getUserProfile() {
 /**
  * Actualiza los elementos de UI según el estado de autenticación
  */
-function updateAuthUI() {
+async function updateAuthUI() {
     const authenticated = isAuthenticated();
     
     // Actualizar botones de autenticación en la barra de navegación
     const authButtonsContainer = document.getElementById('auth-buttons');
     if (authButtonsContainer) {
         if (authenticated) {
-            // Usuario autenticado: Mostrar "Mi Dashboard" y "Cerrar Sesión"
-            const userEmail = localStorage.getItem('user_email') || 'Usuario';
+            // Usuario autenticado: Obtener email desde localStorage o API
+            let userEmail = localStorage.getItem('user_email');
+            
+            // Si no hay email en localStorage, obtenerlo de la API
+            if (!userEmail) {
+                try {
+                    const profileResult = await getUserProfile();
+                    if (profileResult.success && profileResult.data && profileResult.data.user) {
+                        userEmail = profileResult.data.user.email;
+                        // Guardarlo para próximas veces
+                        localStorage.setItem('user_email', userEmail);
+                    }
+                } catch (error) {
+                    console.error('Error obteniendo perfil:', error);
+                }
+            }
+            
+            const displayName = userEmail || 'Usuario';
+            
             authButtonsContainer.innerHTML = `
                 <a href="/dashboard.html" class="btn btn-outline-primary me-2">
                     <i class="fas fa-user-circle"></i> Mi Dashboard
                 </a>
-                <span class="me-3 text-muted">${userEmail}</span>
+                <span class="me-3 text-muted">${displayName}</span>
                 <button id="logoutBtn" class="btn btn-outline-danger">Cerrar Sesión</button>
             `;
             
@@ -377,7 +394,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Obtener token CSRF
     fetchCsrfToken().then(() => {
         // Actualizar UI según estado de autenticación
-        updateAuthUI();
+        updateAuthUI().catch(console.error);
         
         // Solo redirigir si el usuario ya ha iniciado sesión anteriormente
         // y está intentando acceder a páginas de login/registro
@@ -416,5 +433,5 @@ window.Auth = {
 // export const Auth = window.Auth; 
 // Actualizar UI automáticamente cuando se carga la página
 document.addEventListener("DOMContentLoaded", function() {
-    updateAuthUI();
+    updateAuthUI().catch(console.error);
 });
