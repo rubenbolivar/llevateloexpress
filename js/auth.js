@@ -72,13 +72,19 @@ async function authenticatedFetch(url, options = {}) {
     }
     
     // Configurar headers autenticados
+    const headers = {
+        ...options.headers,
+        'Authorization': `Bearer ${accessToken}`
+    };
+    
+    // Solo establecer Content-Type si no es FormData
+    if (!(options.body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+    }
+    
     const authOptions = {
         ...options,
-        headers: {
-            ...options.headers,
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-        },
+        headers,
         credentials: 'include'
     };
     

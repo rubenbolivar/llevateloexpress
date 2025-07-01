@@ -49,6 +49,7 @@ class FinancingRequestViewSet(viewsets.ModelViewSet):
     """ViewSet para solicitudes de financiamiento"""
     permission_classes = [permissions.IsAuthenticated]
     
+    
     def get_queryset(self):
         """Filtrar solicitudes por usuario"""
         user = self.request.user
@@ -144,7 +145,7 @@ class FinancingRequestViewSet(viewsets.ModelViewSet):
         )
         return Response(serializer.data)
     
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], parser_classes=[MultiPartParser, FormParser])
     @transaction.atomic
     def upload_documents(self, request, pk=None):
         """Subir documentos requeridos"""
