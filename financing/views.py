@@ -146,9 +146,74 @@ class FinancingRequestViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
     @action(detail=True, methods=['post'], parser_classes=[MultiPartParser, FormParser])
-    @transaction.atomic
     def upload_documents(self, request, pk=None):
-        """Subir documentos requeridos"""
+        """Subir documentos requeridos - Versión simplificada y confiable"""
+        application = self.get_object()
+        
+        # Verificar permisos básicos
+        if application.customer.user != request.user:
+            return Response(
+                {'error': 'No tiene permisos para subir documentos a esta solicitud'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Actualizar documentos directamente como Django Admin
+        updated_fields = []
+        if 'income_proof' in request.FILES:
+            application.income_proof = request.FILES['income_proof']
+            updated_fields.append('income_proof')
+        if 'id_document' in request.FILES:
+            application.id_document = request.FILES['id_document']
+            updated_fields.append('id_document')
+        if 'address_proof' in request.FILES:
+            application.address_proof = request.FILES['address_proof']
+            updated_fields.append('address_proof')
+        
+        if not updated_fields:
+            return Response(
+                {'error': 'No se proporcionaron archivos para subir'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Guardar cambios
+        application.save()
+        
+        # AUTO-SUBMIT: Si la solicitud está en draft y tiene documentos, enviarla automáticamente
+        if application.status == 'draft' and application.customer.is_profile_complete:
+            # Verificar que tenga al menos un documento subido
+            has_documents = any([
+                application.income_proof,
+                application.id_document, 
+                application.address_proof
+            ])
+            
+            if has_documents:
+                # Cambiar estado automáticamente
+                old_status = application.status
+                application.status = 'submitted'
+                application.submitted_at = timezone.now()
+                application.save()
+                
+                # Registrar cambio de estado
+                ApplicationStatusHistory.objects.create(
+                    application=application,
+                    from_status=old_status,
+                    to_status='submitted',
+                    changed_by=request.user,
+                    notes='Solicitud enviada automáticamente después de subir documentos'
+                )
+        
+        # Respuesta compatible con frontend existente
+        serializer = FinancingRequestDetailSerializer(
+            application,
+            context={'request': request}
+        )
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'], parser_classes=[MultiPartParser, FormParser])
+    @transaction.atomic
+    def upload_documents_legacy(self, request, pk=None):
+        """Subir documentos requeridos - Versión con validaciones completas (respaldo)"""
         application = self.get_object()
         
         # Validar estado y manejar transición de draft a submitted

@@ -1101,22 +1101,23 @@ class FinancingRequestV2 {
      * Enviar solicitud para revisión (cambiar estado a submitted)
      */
     async submitForReview(requestId) {
-        this.log('info', 'Enviando solicitud para revisión...');
+        this.log('info', '📤 Enviando solicitud para revisión (cambio de estado draft → submitted)...');
         
         try {
-            const result = await API.users.authFetch(
+            const result = await this.authenticatedRequest(
                 `/api/financing/requests/${requestId}/submit/`,
                 { method: 'POST' }
             );
             
             if (result.success) {
-                this.log('info', 'Solicitud enviada para revisión exitosamente');
+                this.log('info', '✅ Solicitud enviada para revisión exitosamente - Estado: submitted');
+                return result.data;
             } else {
-                this.log('error', 'Error enviando para revisión:', result);
+                this.log('error', '❌ Error enviando para revisión:', result);
                 throw new Error('Error al enviar para revisión: ' + (result.message || 'Error desconocido'));
             }
         } catch (error) {
-            this.log('error', 'Error en submitForReview:', error);
+            this.log('error', '💥 Exception en submitForReview:', error);
             throw error;
         }
     }
@@ -1130,7 +1131,13 @@ class FinancingRequestV2 {
             return;
         }
         
-        this.log('info', `Subiendo ${this.state.uploadedFiles.length} documentos...`);
+        // Verificación proactiva de autenticación
+        if (typeof window.API === 'undefined' || !window.API.users || !window.API.users.isAuthenticated()) {
+            this.log('error', 'Usuario no autenticado antes del upload');
+            throw new Error('Usuario no autenticado. Por favor, inicie sesión nuevamente.');
+        }
+        
+        this.log('info', `📤 Iniciando upload de ${this.state.uploadedFiles.length} documentos para solicitud ${requestId}...`);
         
         try {
             const formData = new FormData();
@@ -1144,7 +1151,7 @@ class FinancingRequestV2 {
                     // Nuevo sistema con tipos específicos
                     fieldName = fileData.documentType;
                     actualFile = fileData.file;
-                    this.log('info', `Archivo ${index + 1}: ${fileData.name} → ${fieldName} (específico)`);
+                    this.log('info', `📎 Archivo ${index + 1}: ${fileData.name} → ${fieldName} (específico)`);
                 } else {
                     // Sistema legacy - detectar por nombre
                     actualFile = fileData;
@@ -1165,13 +1172,15 @@ class FinancingRequestV2 {
                             default: fieldName = 'income_proof'; break;
                         }
                     }
-                    this.log('info', `Archivo ${index + 1}: ${fileData.name} → ${fieldName} (detectado)`);
+                    this.log('info', `📎 Archivo ${index + 1}: ${fileData.name} → ${fieldName} (detectado)`);
                 }
                 
                 formData.append(fieldName, actualFile);
             });
             
-            const result = await API.users.authFetch(
+            this.log('info', `🚀 Enviando FormData al endpoint: /api/financing/requests/${requestId}/upload_documents/`);
+            
+            const result = await this.authenticatedRequest(
                 `/api/financing/requests/${requestId}/upload_documents/`,
                 {
                     method: 'POST',
@@ -1180,20 +1189,78 @@ class FinancingRequestV2 {
             );
             
             if (result.success) {
-                this.log('info', 'Documentos subidos exitosamente');
+                this.log('info', '✅ Documentos subidos exitosamente');
+                // Limpiar archivos subidos del estado
+                this.state.uploadedFiles = [];
+                
+                // CRUCIAL: Después de subir documentos, enviar para revisión (cambiar estado a submitted)
+                try {
+                    this.log('info', '📤 Enviando solicitud para revisión después del upload...');
+                    await this.submitForReview(requestId);
+                    this.log('info', '✅ Solicitud enviada para revisión - Estado cambiado a "submitted"');
+                } catch (submitError) {
+                    this.log('warning', '⚠️ Documentos subidos pero error al cambiar estado:', submitError);
+                    // No lanzar error aquí - los documentos ya se subieron exitosamente
+                }
+                
+                return result.data;
             } else {
-                this.log('error', 'Error subiendo documentos:', result);
-                throw new Error('Error al subir documentos: ' + (result.message || 'Error desconocido'));
+                // Manejo mejorado de errores específicos
+                let errorMessage = 'Error desconocido';
+                
+                if (result.message) {
+                    errorMessage = result.message;
+                } else if (result.data && result.data.error) {
+                    errorMessage = result.data.error;
+                } else if (result.status === 401) {
+                    errorMessage = 'Sesión expirada. Por favor, inicie sesión nuevamente.';
+                } else if (result.status === 403) {
+                    errorMessage = 'No tiene permisos para subir documentos a esta solicitud.';
+                } else if (result.status === 400) {
+                    errorMessage = 'Error en los archivos enviados. Verifique el formato y tamaño.';
+                } else if (result.status >= 500) {
+                    errorMessage = 'Error interno del servidor. Intente nuevamente.';
+                }
+                
+                this.log('error', '❌ Error subiendo documentos:', {
+                    status: result.status,
+                    message: errorMessage,
+                    debug: result.debug || 'No debug info'
+                });
+                
+                throw new Error(errorMessage);
             }
         } catch (error) {
-            this.log('error', 'Error en uploadDocuments:', error);
-            throw error;
+            this.log('error', '💥 Exception en uploadDocuments:', error);
+            
+            // Re-lanzar con mensaje más claro para el usuario
+            if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+                throw new Error('Error de conexión. Verifique su conexión a internet.');
+            } else {
+                throw error;
+            }
         }
     }
 }
 
-// Crear instancia global
-window.FinancingRequestV2 = new FinancingRequestV2();
+// Función para inicializar cuando el DOM esté listo y API esté disponible
+function initializeFinancingRequestV2() {
+    // Verificar que API esté disponible
+    if (typeof window.API === 'undefined') {
+        console.warn('⏳ API no disponible aún, reintentando en 100ms...');
+        setTimeout(initializeFinancingRequestV2, 100);
+        return;
+    }
+    
+    // Crear instancia global
+    window.FinancingRequestV2 = new FinancingRequestV2();
+    console.info('🎯 FinancingRequestV2 - Versión con Autenticación Integrada inicializada correctamente');
+}
 
-// Log de inicialización
-console.info('🎯 FinancingRequestV2 - Versión con Autenticación Integrada inicializada correctamente'); 
+// Inicializar cuando el DOM esté listo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeFinancingRequestV2);
+} else {
+    // DOM ya está cargado
+    initializeFinancingRequestV2();
+} 
