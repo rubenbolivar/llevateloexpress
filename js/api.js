@@ -125,13 +125,20 @@ const API = {
             const token = localStorage.getItem('access_token');
             if (!token) return { error: true, message: 'No autenticado' };
             
+            // No establecer Content-Type para FormData (el navegador lo hace automáticamente)
+            const headers = {
+                ...options.headers,
+                'Authorization': `Bearer ${token}`
+            };
+            
+            // Solo agregar Content-Type si no es FormData
+            if (!(options.body instanceof FormData)) {
+                headers['Content-Type'] = 'application/json';
+            }
+            
             const authOptions = {
                 ...options,
-                headers: {
-                    ...options.headers,
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                headers
             };
             
             try {
