@@ -33,7 +33,7 @@ from .serializers.financing_serializers import (
     PaymentScheduleSerializer,
     FinancingCalculatorSerializer
 )
-from notifications.models import EmailNotification
+from notifications.services import NotificationService
 from products.models import Product, Category
 
 
@@ -48,6 +48,7 @@ class FinancingPlanViewSet(viewsets.ReadOnlyModelViewSet):
 class FinancingRequestViewSet(viewsets.ModelViewSet):
     """ViewSet para solicitudes de financiamiento"""
     permission_classes = [permissions.IsAuthenticated]
+    
     
     def get_queryset(self):
         """Filtrar solicitudes por usuario"""
@@ -120,14 +121,23 @@ class FinancingRequestViewSet(viewsets.ModelViewSet):
             notes='Solicitud enviada para revisión'
         )
         
-        # Crear notificación
-        EmailNotification.objects.create(
-            user=request.user,
-            notification_type='application_submitted',
-            subject='Solicitud Enviada',
-            message=f'Su solicitud {application.application_number} ha sido enviada para revisión.',
-            context={'application_number': application.application_number}
-        )
+        # Crear notificación (no debe fallar el submit si falla el email)
+        try:
+            notification_service = NotificationService()
+            notification_service.send_notification(
+                user=request.user,
+                notification_type_code='financing_application',
+                context={
+                    'application_number': application.application_number,
+                    'product_name': application.product.name if application.product else 'N/A',
+                    'amount': str(application.product_price) if application.product_price else 'N/A',
+                    'plan': application.financing_plan.name if application.financing_plan else 'N/A'
+                }
+            )
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f'Notification failed but submit continues: {e}')
         
         serializer = FinancingRequestDetailSerializer(
             application,
@@ -135,12 +145,127 @@ class FinancingRequestViewSet(viewsets.ModelViewSet):
         )
         return Response(serializer.data)
     
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], parser_classes=[MultiPartParser, FormParser])
     def upload_documents(self, request, pk=None):
-        """Subir documentos requeridos"""
+        """Subir documentos requeridos - Versión simplificada y confiable"""
         application = self.get_object()
         
-        if application.status not in ['submitted', 'documentation_required']:
+        # Verificar permisos básicos
+        if application.customer.user != request.user:
+            return Response(
+                {'error': 'No tiene permisos para subir documentos a esta solicitud'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Actualizar documentos directamente como Django Admin
+        updated_fields = []
+        if 'income_proof' in request.FILES:
+            application.income_proof = request.FILES['income_proof']
+            updated_fields.append('income_proof')
+        if 'id_document' in request.FILES:
+            application.id_document = request.FILES['id_document']
+            updated_fields.append('id_document')
+        if 'address_proof' in request.FILES:
+            application.address_proof = request.FILES['address_proof']
+            updated_fields.append('address_proof')
+        
+        if not updated_fields:
+            return Response(
+                {'error': 'No se proporcionaron archivos para subir'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Guardar cambios
+        application.save()
+        
+        # AUTO-SUBMIT: Si la solicitud está en draft y tiene documentos, enviarla automáticamente
+        if application.status == 'draft' and application.customer.is_profile_complete:
+            # Verificar que tenga al menos un documento subido
+            has_documents = any([
+                application.income_proof,
+                application.id_document, 
+                application.address_proof
+            ])
+            
+            if has_documents:
+                # Cambiar estado automáticamente
+                old_status = application.status
+                application.status = 'submitted'
+                application.submitted_at = timezone.now()
+                application.save()
+                
+                # Registrar cambio de estado
+                ApplicationStatusHistory.objects.create(
+                    application=application,
+                    from_status=old_status,
+                    to_status='submitted',
+                    changed_by=request.user,
+                    notes='Solicitud enviada automáticamente después de subir documentos'
+                )
+        
+        # Respuesta compatible con frontend existente
+        serializer = FinancingRequestDetailSerializer(
+            application,
+            context={'request': request}
+        )
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'], parser_classes=[MultiPartParser, FormParser])
+    @transaction.atomic
+    def upload_documents_legacy(self, request, pk=None):
+        """Subir documentos requeridos - Versión con validaciones completas (respaldo)"""
+        application = self.get_object()
+        
+        # Validar estado y manejar transición de draft a submitted
+        if application.status == 'draft':
+            # Verificar que el perfil esté completo
+            if not application.customer.is_profile_complete:
+                return Response(
+                    {'error': 'Debe completar su perfil antes de enviar la solicitud'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Verificar que se está subiendo al menos un documento
+            if not any(key in request.FILES for key in ['income_proof', 'id_document', 'address_proof']):
+                return Response(
+                    {'error': 'Debe subir al menos un documento para enviar la solicitud'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Cambiar estado a submitted automáticamente
+            old_status = application.status
+            application.status = 'submitted'
+            application.submitted_at = timezone.now()
+            
+            # Registrar cambio de estado
+            ApplicationStatusHistory.objects.create(
+                application=application,
+                from_status=old_status,
+                to_status='submitted',
+                changed_by=request.user,
+                notes='Solicitud enviada automáticamente al subir documentos'
+            )
+            
+            # Enviar notificación (no debe fallar el upload si falla el email)
+            try:
+                notification_service = NotificationService()
+                notification_service.send_notification(
+                    user=request.user,
+                    notification_type_code='financing_application',
+                    context={
+                        'application_number': application.application_number,
+                        'product_name': application.product.name if application.product else 'N/A',
+                        'amount': str(application.product_price) if application.product_price else 'N/A',
+                        'plan': application.financing_plan.name if application.financing_plan else 'N/A'
+                    }
+                )
+            except Exception as e:
+                # Log pero no bloquear el upload
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f'Notification failed but upload continues: {e}')
+            
+        elif application.status not in ['submitted', 'documentation_required']:
             return Response(
                 {'error': 'No se pueden subir documentos en este estado'},
                 status=status.HTTP_400_BAD_REQUEST
@@ -211,17 +336,22 @@ class PaymentViewSet(viewsets.ModelViewSet):
         
         self.perform_create(serializer)
         
-        # Crear notificación
-        EmailNotification.objects.create(
-            user=application.customer.user,
-            notification_type='payment_registered',
-            subject='Pago Registrado',
-            message=f'Se ha registrado un pago de ${serializer.instance.amount} para su solicitud {application.application_number}',
-            context={
-                'amount': str(serializer.instance.amount),
-                'application_number': application.application_number
-            }
-        )
+        # Crear notificación (no debe fallar el pago si falla el email)
+        try:
+            notification_service = NotificationService()
+            notification_service.send_notification(
+                user=application.customer.user,
+                notification_type_code='payment_confirmation',
+                context={
+                    'amount': str(serializer.instance.amount),
+                    'application_number': application.application_number,
+                    'payment_date': timezone.now().strftime('%Y-%m-%d')
+                }
+            )
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f'Payment notification failed but payment continues: {e}')
         
         headers = self.get_success_headers(serializer.data)
         return Response(
@@ -832,6 +962,17 @@ class PaymentSubmissionView(APIView):
     parser_classes = [MultiPartParser, FormParser]
     
     def post(self, request):
+        # Debug logging at the very start
+        try:
+            with open('/tmp/payment_debug.log', 'a') as f:
+                f.write(f"[{timezone.now()}] POST /api/financing/submit-payment/ STARTED\n")
+                f.write(f"User: {request.user}\n")
+                f.write(f"Is authenticated: {request.user.is_authenticated if hasattr(request.user, 'is_authenticated') else 'NO USER'}\n")
+                f.write("=" * 30 + "\n")
+        except Exception as e:
+            with open('/tmp/payment_debug.log', 'a') as f:
+                f.write(f"ERROR in initial debug: {e}\n")
+        
         try:
             # Validar datos requeridos
             required_fields = ['application_id', 'payment_method_id', 'amount', 'payment_date']
@@ -882,17 +1023,47 @@ class PaymentSubmissionView(APIView):
             
             # Validar monto
             try:
-                amount = float(request.data['amount'])
+                from decimal import Decimal
+                amount_str = request.data['amount']
+                # Convert to Decimal for proper precision
+                amount = Decimal(str(amount_str))
                 if amount <= 0:
                     raise ValueError("El monto debe ser mayor que cero")
+            except (ValueError, TypeError, Decimal.InvalidOperation) as e:
+                return Response({
+                    'success': False,
+                    'error': f'Monto no válido: {amount_str}'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validar y convertir fecha
+            try:
+                from datetime import datetime
+                payment_date_str = request.data['payment_date']
+                # Si viene como string de fecha, convertir a datetime
+                if isinstance(payment_date_str, str):
+                    payment_date = datetime.fromisoformat(payment_date_str + 'T12:00:00')
+                else:
+                    payment_date = payment_date_str
             except (ValueError, TypeError):
                 return Response({
                     'success': False,
-                    'error': 'Monto no válido'
+                    'error': 'Fecha de pago no válida'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             # Validar archivo de comprobante si es requerido
             receipt_file = request.FILES.get('receipt_file')
+            
+            # Debug logging to file
+            with open('/tmp/payment_debug.log', 'a') as f:
+                f.write(f"[{timezone.now()}] DEBUG PaymentSubmission\n")
+                f.write(f"User: {request.user.username} (ID: {request.user.id})\n")
+                f.write(f"receipt_file: {receipt_file}\n")
+                f.write(f"payment_method.requires_receipt: {payment_method.requires_receipt}\n")
+                f.write(f"request.FILES keys: {list(request.FILES.keys())}\n")
+                f.write(f"request.data keys: {list(request.data.keys())}\n")
+                f.write(f"amount: {request.data.get('amount')}\n")
+                f.write("=" * 50 + "\n")
+            
             if payment_method.requires_receipt and not receipt_file:
                 return Response({
                     'success': False,
@@ -907,34 +1078,58 @@ class PaymentSubmissionView(APIView):
                     'error': 'Este método de pago requiere número de referencia'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
-            # Crear el pago
-            payment = Payment.objects.create(
-                application=application,
-                payment_method=payment_method,
-                # company_account=company_account,  # COMENTADO: Campo no existe en modelo
-                payment_type=request.data.get('payment_type', 'installment'),
-                amount=amount,
-                currency=request.data.get("currency", "USD"),
-                payment_date=request.data['payment_date'],
-                reference_number=reference_number,
-                transaction_id=request.data.get('transaction_id', ''),
-                sender_bank=request.data.get('sender_bank', ''),
-                sender_account=request.data.get('sender_account', ''),
-                sender_name=request.data.get('sender_name', ''),
-                sender_identification=request.data.get('sender_identification', ''),
-                receipt_file=receipt_file,
-                customer_notes=request.data.get('customer_notes', ''),
-                submitted_by=request.user,
-                ip_address=self.get_client_ip(request),
-                user_agent=request.META.get('HTTP_USER_AGENT', '')
-            )
+            # Crear el pago usando SQL directo para manejar el campo notes faltante
+            from django.db import connection
+            
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    INSERT INTO financing_payment (
+                        payment_type, payment_method, status, amount, currency, payment_date,
+                        reference_number, transaction_id, sender_bank, sender_account, 
+                        sender_name, sender_identification, customer_notes, admin_notes,
+                        rejection_reason, notes, submitted_at, created_at, updated_at,
+                        application_id, submitted_by_id, recorded_by_id, ip_address, user_agent, receipt_file
+                    ) VALUES (
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                    ) RETURNING id
+                """, [
+                    request.data.get('payment_type', 'installment'),
+                    payment_method.payment_type,
+                    'pending',
+                    amount,
+                    request.data.get("currency", "USD"),
+                    payment_date,
+                    reference_number,
+                    request.data.get('transaction_id', ''),
+                    request.data.get('sender_bank', ''),
+                    request.data.get('sender_account', ''),
+                    request.data.get('sender_name', ''),
+                    request.data.get('sender_identification', ''),
+                    request.data.get('customer_notes', ''),
+                    '',  # admin_notes
+                    '',  # rejection_reason
+                    '',  # notes - el campo faltante
+                    timezone.now(),
+                    timezone.now(),
+                    timezone.now(),
+                    application.id,
+                    request.user.id,
+                    request.user.id,  # recorded_by_id (same as submitted_by_id)
+                    self.get_client_ip(request),
+                    request.META.get('HTTP_USER_AGENT', ''),
+                    receipt_file.name if receipt_file else None
+                ])
+                payment_id = cursor.fetchone()[0]
+            
+            # Obtener el pago creado
+            payment = Payment.objects.get(id=payment_id)
             
             # Crear respuesta
             payment_data = {
                 'id': payment.id,
                 'application_number': payment.application.application_number,
                 'payment_type': payment.get_payment_type_display(),
-                'payment_method': payment.payment_method.name,
+                'payment_method': payment.get_payment_method_display(),
                 'amount': float(payment.amount),
                 'currency': payment.currency,
                 'status': payment.get_status_display(),
@@ -951,6 +1146,17 @@ class PaymentSubmissionView(APIView):
             }, status=status.HTTP_201_CREATED)
             
         except Exception as e:
+            # Debug logging for exceptions
+            try:
+                with open('/tmp/payment_debug.log', 'a') as f:
+                    import traceback
+                    f.write(f"[{timezone.now()}] EXCEPTION in PaymentSubmissionView\n")
+                    f.write(f"Error: {str(e)}\n")
+                    f.write(f"Traceback:\n{traceback.format_exc()}\n")
+                    f.write("=" * 50 + "\n")
+            except:
+                pass
+            
             return Response({
                 'success': False,
                 'error': f'Error interno del servidor: {str(e)}'
@@ -980,7 +1186,7 @@ class UserPaymentsView(APIView):
             queryset = Payment.objects.filter(
                 application__customer__user=request.user
             ).select_related(
-                'application', 'payment_method', 'verified_by'  # company_account removido
+                'application', 'verified_by'  # payment_method no es ForeignKey
             ).order_by('-payment_date')
             
             # Aplicar filtros
@@ -997,7 +1203,7 @@ class UserPaymentsView(APIView):
                     'id': payment.id,
                     'application_number': payment.application.application_number,
                     'payment_type': payment.get_payment_type_display(),
-                    'payment_method': payment.payment_method.name,
+                    'payment_method': payment.get_payment_method_display(),
                     'amount': float(payment.amount),
                     'currency': payment.currency,
                     'status': payment.get_status_display(),
@@ -1044,7 +1250,7 @@ class PaymentStatusView(APIView):
     def get(self, request, payment_id):
         try:
             payment = Payment.objects.select_related(
-                'application', 'payment_method', 'verified_by'  # company_account removido
+                'application', 'verified_by'  # payment_method no es ForeignKey
             ).get(
                 id=payment_id,
                 application__customer__user=request.user
@@ -1054,7 +1260,7 @@ class PaymentStatusView(APIView):
                 'id': payment.id,
                 'application_number': payment.application.application_number,
                 'payment_type': payment.get_payment_type_display(),
-                'payment_method': payment.payment_method.name,
+                'payment_method': payment.get_payment_method_display(),
                 'amount': float(payment.amount),
                 'currency': payment.currency,
                 'status': payment.get_status_display(),
