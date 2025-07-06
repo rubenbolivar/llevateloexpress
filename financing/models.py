@@ -431,22 +431,24 @@ class Payment(models.Model):
     # Detalles del comprobante
     reference_number = models.CharField(
         max_length=100, 
+        null=True,
         blank=True,
         verbose_name="Número de Referencia",
         help_text="Número de referencia del banco o sistema de pago"
     )
     transaction_id = models.CharField(
         max_length=100,
+        null=True,
         blank=True,
         verbose_name="ID de Transacción",
         help_text="ID único de la transacción (para Zelle, Binance, etc.)"
     )
     
     # Información bancaria específica
-    sender_bank = models.CharField(max_length=100, blank=True, verbose_name="Banco Emisor")
-    sender_account = models.CharField(max_length=50, blank=True, verbose_name="Cuenta Emisora")
-    sender_name = models.CharField(max_length=200, blank=True, verbose_name="Nombre del Emisor")
-    sender_identification = models.CharField(max_length=50, blank=True, verbose_name="Cédula/RIF Emisor")
+    sender_bank = models.CharField(max_length=100, null=True, blank=True, verbose_name="Banco Emisor")
+    sender_account = models.CharField(max_length=50, null=True, blank=True, verbose_name="Cuenta Emisora")
+    sender_name = models.CharField(max_length=200, null=True, blank=True, verbose_name="Nombre del Emisor")
+    sender_identification = models.CharField(max_length=50, null=True, blank=True, verbose_name="Cédula/RIF Emisor")
     
     # Comprobante (archivo)
     receipt_file = models.FileField(
@@ -458,6 +460,12 @@ class Payment(models.Model):
     )
     
     # Notas y observaciones
+    notes = models.TextField(
+        blank=True,
+        default='',
+        verbose_name="Notas",
+        help_text="Notas generales sobre el pago"
+    )
     customer_notes = models.TextField(
         blank=True,
         verbose_name="Notas del Cliente",
@@ -478,6 +486,8 @@ class Payment(models.Model):
     submitted_by = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
+        null=True,
+        blank=True,
         related_name='submitted_payments',
         verbose_name="Registrado por"
     )
@@ -982,15 +992,22 @@ def auto_generate_payment_schedule(sender, instance, created, **kwargs):
         
         # Si cambió de cualquier estado a 'approved', generar cronograma
         if old_status != 'approved' and current_status == 'approved':
-            print(f"🔄 Generando cronograma automático para solicitud {instance.application_number}")
+            print(f"Generando cronograma automatico para solicitud {instance.application_number}")
             instance.calculate_payment_schedule()
-            print(f"✅ Cronograma generado exitosamente para {instance.application_number}")
+            print(f"Cronograma generado exitosamente para {instance.application_number}")
             
             # Registrar en el historial
-            ApplicationStatusHistory.objects.create(
-                application=instance,
-                from_status=old_status or 'unknown',
-                to_status=current_status,
-                changed_by=instance.reviewed_by,
-                notes="Cronograma de pagos generado automáticamente"
-            )
+            from django.contrib.auth.models import User
+            changed_by_user = instance.reviewed_by
+            if not changed_by_user:
+                # Usar el primer superuser disponible como fallback
+                changed_by_user = User.objects.filter(is_superuser=True).first()
+            
+            if changed_by_user:
+                ApplicationStatusHistory.objects.create(
+                    application=instance,
+                    from_status=old_status or 'unknown',
+                    to_status=current_status,
+                    changed_by=changed_by_user,
+                    notes="Cronograma de pagos generado automáticamente"
+                )
