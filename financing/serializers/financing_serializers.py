@@ -204,7 +204,7 @@ class PaymentCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """Crear el pago"""
         request = self.context.get('request')
-        validated_data['recorded_by'] = request.user
+        validated_data['submitted_by'] = request.user
         validated_data['status'] = 'pending'
         return super().create(validated_data)
 
