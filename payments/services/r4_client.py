@@ -2,6 +2,7 @@ import requests
 import logging
 from django.conf import settings
 from .hmac_utils import create_consulta_pm_auth, create_c2p_auth, create_webhook_auth
+from .r4_validators import R4RequestValidator
 
 logger = logging.getLogger(__name__)
 
@@ -59,17 +60,29 @@ class R4Client:
         MBconsulta_pm - Consulta pago móvil por referencia
         """
         try:
+            # Validar datos de entrada según documentación oficial
+            validation_result = R4RequestValidator.validate_consulta_pm_request({
+                'referencia': referencia,
+                'telefono_origen': telefono_origen
+            })
+            
+            if not validation_result['valid']:
+                logger.error(f"Validación fallida para consulta PM: {validation_result['errors']}")
+                return {
+                    'success': False,
+                    'found': False,
+                    'message': f'Datos inválidos: {", ".join(validation_result["errors"])}',
+                    'validation_errors': validation_result['errors']
+                }
+            
+            # Usar datos validados
+            validated_data = validation_result['data']
+            
             # Crear autenticación HMAC
-            auth_token = create_consulta_pm_auth(referencia, telefono_origen)
+            auth_token = create_consulta_pm_auth(validated_data['referencia'], validated_data['telefono_origen'])
             
-            # Datos del request
-            data = {
-                "referencia": str(referencia),
-                "telefono_origen": str(telefono_origen)
-            }
-            
-            # Hacer request
-            response = self._make_request('MBconsulta_pm', data, auth_token)
+            # Hacer request con datos validados
+            response = self._make_request('MBconsulta_pm', validated_data, auth_token)
             
             # Procesar respuesta
             if response.get('code') == '00':
@@ -110,24 +123,39 @@ class R4Client:
         MBc2p - Procesar cobro C2P
         """
         try:
+            # Validar datos de entrada según documentación oficial
+            validation_result = R4RequestValidator.validate_c2p_request({
+                'TelefonoDestino': telefono_destino,
+                'Cedula': cedula,
+                'Concepto': concepto,
+                'Banco': banco,
+                'Monto': monto,
+                'Otp': otp,
+                'Ip': ip
+            })
+            
+            if not validation_result['valid']:
+                logger.error(f"Validación fallida para C2P: {validation_result['errors']}")
+                return {
+                    'success': False,
+                    'approved': False,
+                    'message': f'Datos inválidos: {", ".join(validation_result["errors"])}',
+                    'validation_errors': validation_result['errors']
+                }
+            
+            # Usar datos validados
+            validated_data = validation_result['data']
+            
             # Crear autenticación HMAC
-            auth_token = create_c2p_auth(telefono_destino, monto, banco, cedula)
+            auth_token = create_c2p_auth(
+                validated_data['TelefonoDestino'], 
+                validated_data['Monto'], 
+                validated_data['Banco'], 
+                validated_data['Cedula']
+            )
             
-            # Datos del request
-            data = {
-                "TelefonoDestino": str(telefono_destino),
-                "Cedula": str(cedula),
-                "Concepto": str(concepto),
-                "Banco": str(banco),
-                "Monto": str(monto),
-                "Otp": str(otp)
-            }
-            
-            if ip:
-                data["Ip"] = str(ip)
-            
-            # Hacer request
-            response = self._make_request('MBc2p', data, auth_token)
+            # Hacer request con datos validados
+            response = self._make_request('MBc2p', validated_data, auth_token)
             
             # Procesar respuesta
             if response.get('code') == '00':
