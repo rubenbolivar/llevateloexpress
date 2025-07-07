@@ -148,8 +148,11 @@ const PaymentFlow = {
             const response = await API.users.authFetch('/api/financing/payment-methods/');
             
             if (response.success) {
-                const methods = response.data.results || response.data;
-                const activeMethods = methods.filter(method => method.is_active);
+                console.log("🔍 Response payment-methods:", response);
+                const methods = response.data.data || response.data.results || response.data;
+                const activeMethods = Array.isArray(methods) ? methods : [];
+                console.log("🔍 Methods data:", methods);
+                console.log("🔍 Active methods:", activeMethods);
                 this.renderPaymentMethods(activeMethods);
             } else {
                 this.showError('Error al cargar métodos de pago: ' + response.message);
@@ -360,36 +363,27 @@ const PaymentFlow = {
             formData.append('receipt_file', this.selectedFile);
             
             // Enviar al servidor
-            const response = await fetch('/api/financing/submit-payment/', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${Auth.getToken()}`,
-                    'X-CSRFToken': this.getCSRFToken()
-                },
+            const result = await Auth.fetch("/api/financing/submit-payment/", {
+                method: "POST",
                 body: formData
             });
             
-            const result = await response.json();
-            
-            if (response.ok && result.success) {
-                console.log('✅ Pago enviado exitosamente:', result);
+            if (result.success) {
+                console.log("✅ Pago enviado exitosamente:", result);
                 this.showSuccessModal(result.data);
             } else {
-                throw new Error(result.message || 'Error al enviar el pago');
+                throw new Error(result.message || "Error al enviar el pago");
             }
-            
         } catch (error) {
-            console.error('❌ Error enviando pago:', error);
-            this.showError('Error al enviar el pago: ' + error.message);
+            console.error("❌ Error enviando pago:", error);
+            this.showError("Error al enviar el pago: " + error.message);
             
+            const submitBtn = document.getElementById("submitPayment");
+            submitBtn.innerHTML = "🔄 Enviar Pago";
             // Restaurar botón
-            const submitBtn = document.getElementById('submitPayment');
-            submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
         }
     },
-    
-    // Mostrar modal de éxito
     showSuccessModal(paymentData) {
         document.getElementById('paymentReference').textContent = paymentData.reference_number || paymentData.id;
         const modal = new bootstrap.Modal(document.getElementById('successModal'));

@@ -962,6 +962,17 @@ class PaymentSubmissionView(APIView):
     parser_classes = [MultiPartParser, FormParser]
     
     def post(self, request):
+        # Debug logging at the very start
+        try:
+            with open('/tmp/payment_debug.log', 'a') as f:
+                f.write(f"[{timezone.now()}] POST /api/financing/submit-payment/ STARTED\n")
+                f.write(f"User: {request.user}\n")
+                f.write(f"Is authenticated: {request.user.is_authenticated if hasattr(request.user, 'is_authenticated') else 'NO USER'}\n")
+                f.write("=" * 30 + "\n")
+        except Exception as e:
+            with open('/tmp/payment_debug.log', 'a') as f:
+                f.write(f"ERROR in initial debug: {e}\n")
+        
         try:
             # Validar datos requeridos
             required_fields = ['application_id', 'payment_method_id', 'amount', 'payment_date']
@@ -1012,17 +1023,47 @@ class PaymentSubmissionView(APIView):
             
             # Validar monto
             try:
-                amount = float(request.data['amount'])
+                from decimal import Decimal
+                amount_str = request.data['amount']
+                # Convert to Decimal for proper precision
+                amount = Decimal(str(amount_str))
                 if amount <= 0:
                     raise ValueError("El monto debe ser mayor que cero")
+            except (ValueError, TypeError, Decimal.InvalidOperation) as e:
+                return Response({
+                    'success': False,
+                    'error': f'Monto no válido: {amount_str}'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validar y convertir fecha
+            try:
+                from datetime import datetime
+                payment_date_str = request.data['payment_date']
+                # Si viene como string de fecha, convertir a datetime
+                if isinstance(payment_date_str, str):
+                    payment_date = datetime.fromisoformat(payment_date_str + 'T12:00:00')
+                else:
+                    payment_date = payment_date_str
             except (ValueError, TypeError):
                 return Response({
                     'success': False,
-                    'error': 'Monto no válido'
+                    'error': 'Fecha de pago no válida'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             # Validar archivo de comprobante si es requerido
             receipt_file = request.FILES.get('receipt_file')
+            
+            # Debug logging to file
+            with open('/tmp/payment_debug.log', 'a') as f:
+                f.write(f"[{timezone.now()}] DEBUG PaymentSubmission\n")
+                f.write(f"User: {request.user.username} (ID: {request.user.id})\n")
+                f.write(f"receipt_file: {receipt_file}\n")
+                f.write(f"payment_method.requires_receipt: {payment_method.requires_receipt}\n")
+                f.write(f"request.FILES keys: {list(request.FILES.keys())}\n")
+                f.write(f"request.data keys: {list(request.data.keys())}\n")
+                f.write(f"amount: {request.data.get('amount')}\n")
+                f.write("=" * 50 + "\n")
+            
             if payment_method.requires_receipt and not receipt_file:
                 return Response({
                     'success': False,
@@ -1037,15 +1078,14 @@ class PaymentSubmissionView(APIView):
                     'error': 'Este método de pago requiere número de referencia'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
-            # Crear el pago
+            # Crear el pago usando el ORM de Django
             payment = Payment.objects.create(
                 application=application,
-                payment_method=payment_method,
-                # company_account=company_account,  # COMENTADO: Campo no existe en modelo
+                payment_method=payment_method.payment_type,
                 payment_type=request.data.get('payment_type', 'installment'),
                 amount=amount,
                 currency=request.data.get("currency", "USD"),
-                payment_date=request.data['payment_date'],
+                payment_date=payment_date,
                 reference_number=reference_number,
                 transaction_id=request.data.get('transaction_id', ''),
                 sender_bank=request.data.get('sender_bank', ''),
@@ -1054,7 +1094,11 @@ class PaymentSubmissionView(APIView):
                 sender_identification=request.data.get('sender_identification', ''),
                 receipt_file=receipt_file,
                 customer_notes=request.data.get('customer_notes', ''),
+                notes='',  # Campo notes 
+                admin_notes='',
+                rejection_reason='',
                 submitted_by=request.user,
+                recorded_by=request.user,
                 ip_address=self.get_client_ip(request),
                 user_agent=request.META.get('HTTP_USER_AGENT', '')
             )
@@ -1064,7 +1108,7 @@ class PaymentSubmissionView(APIView):
                 'id': payment.id,
                 'application_number': payment.application.application_number,
                 'payment_type': payment.get_payment_type_display(),
-                'payment_method': payment.payment_method.name,
+                'payment_method': payment.get_payment_method_display(),
                 'amount': float(payment.amount),
                 'currency': payment.currency,
                 'status': payment.get_status_display(),
@@ -1081,6 +1125,17 @@ class PaymentSubmissionView(APIView):
             }, status=status.HTTP_201_CREATED)
             
         except Exception as e:
+            # Debug logging for exceptions
+            try:
+                with open('/tmp/payment_debug.log', 'a') as f:
+                    import traceback
+                    f.write(f"[{timezone.now()}] EXCEPTION in PaymentSubmissionView\n")
+                    f.write(f"Error: {str(e)}\n")
+                    f.write(f"Traceback:\n{traceback.format_exc()}\n")
+                    f.write("=" * 50 + "\n")
+            except:
+                pass
+            
             return Response({
                 'success': False,
                 'error': f'Error interno del servidor: {str(e)}'
@@ -1110,7 +1165,7 @@ class UserPaymentsView(APIView):
             queryset = Payment.objects.filter(
                 application__customer__user=request.user
             ).select_related(
-                'application', 'payment_method', 'verified_by'  # company_account removido
+                'application', 'verified_by'  # payment_method no es ForeignKey
             ).order_by('-payment_date')
             
             # Aplicar filtros
@@ -1127,7 +1182,7 @@ class UserPaymentsView(APIView):
                     'id': payment.id,
                     'application_number': payment.application.application_number,
                     'payment_type': payment.get_payment_type_display(),
-                    'payment_method': payment.payment_method.name,
+                    'payment_method': payment.get_payment_method_display(),
                     'amount': float(payment.amount),
                     'currency': payment.currency,
                     'status': payment.get_status_display(),
@@ -1174,7 +1229,7 @@ class PaymentStatusView(APIView):
     def get(self, request, payment_id):
         try:
             payment = Payment.objects.select_related(
-                'application', 'payment_method', 'verified_by'  # company_account removido
+                'application', 'verified_by'  # payment_method no es ForeignKey
             ).get(
                 id=payment_id,
                 application__customer__user=request.user
@@ -1184,7 +1239,7 @@ class PaymentStatusView(APIView):
                 'id': payment.id,
                 'application_number': payment.application.application_number,
                 'payment_type': payment.get_payment_type_display(),
-                'payment_method': payment.payment_method.name,
+                'payment_method': payment.get_payment_method_display(),
                 'amount': float(payment.amount),
                 'currency': payment.currency,
                 'status': payment.get_status_display(),
