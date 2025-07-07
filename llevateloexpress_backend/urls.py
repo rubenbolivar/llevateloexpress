@@ -38,6 +38,7 @@ urlpatterns = [
     path('contacto.html', TemplateView.as_view(template_name='contacto.html')),
     path('dashboard.html', TemplateView.as_view(template_name='dashboard.html')),
     path('login.html', TemplateView.as_view(template_name='login.html')),
+    path('perfil.html', TemplateView.as_view(template_name='perfil.html')),
 ]
 
 # Servir archivos estáticos en desarrollo

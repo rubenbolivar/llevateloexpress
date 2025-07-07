@@ -1078,51 +1078,6 @@ class PaymentSubmissionView(APIView):
                     'error': 'Este método de pago requiere número de referencia'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
-            # Crear el pago usando SQL directo para manejar el campo notes faltante
-            from django.db import connection
-            
-            with connection.cursor() as cursor:
-                cursor.execute("""
-                    INSERT INTO financing_payment (
-                        payment_type, payment_method, status, amount, currency, payment_date,
-                        reference_number, transaction_id, sender_bank, sender_account, 
-                        sender_name, sender_identification, customer_notes, admin_notes,
-                        rejection_reason, notes, submitted_at, created_at, updated_at,
-                        application_id, submitted_by_id, recorded_by_id, ip_address, user_agent, receipt_file
-                    ) VALUES (
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-                    ) RETURNING id
-                """, [
-                    request.data.get('payment_type', 'installment'),
-                    payment_method.payment_type,
-                    'pending',
-                    amount,
-                    request.data.get("currency", "USD"),
-                    payment_date,
-                    reference_number,
-                    request.data.get('transaction_id', ''),
-                    request.data.get('sender_bank', ''),
-                    request.data.get('sender_account', ''),
-                    request.data.get('sender_name', ''),
-                    request.data.get('sender_identification', ''),
-                    request.data.get('customer_notes', ''),
-                    '',  # admin_notes
-                    '',  # rejection_reason
-                    '',  # notes - el campo faltante
-                    timezone.now(),
-                    timezone.now(),
-                    timezone.now(),
-                    application.id,
-                    request.user.id,
-                    request.user.id,  # recorded_by_id (same as submitted_by_id)
-                    self.get_client_ip(request),
-                    request.META.get('HTTP_USER_AGENT', ''),
-                    receipt_file.name if receipt_file else None
-                ])
-                payment_id = cursor.fetchone()[0]
-            
-            # Obtener el pago creado
-            payment = Payment.objects.get(id=payment_id)
             
             # Crear respuesta
             payment_data = {

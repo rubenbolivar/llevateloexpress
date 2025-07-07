@@ -491,6 +491,14 @@ class Payment(models.Model):
         related_name='submitted_payments',
         verbose_name="Registrado por"
     )
+    recorded_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='recorded_payments',
+        verbose_name="Grabado por"
+    )
     verified_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,

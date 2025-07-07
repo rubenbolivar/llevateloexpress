@@ -123,42 +123,95 @@ const API = {
         // Método para realizar peticiones autenticadas
         async authFetch(url, options = {}) {
             const token = localStorage.getItem('access_token');
-            if (!token) return { error: true, message: 'No autenticado' };
+            if (!token) {
+                console.warn('🔐 No hay token de acceso disponible');
+                return { error: true, message: 'No autenticado' };
+            }
+            
+            // Preparar headers base
+            const headers = {
+                ...options.headers,
+                'Authorization': `Bearer ${token}`
+            };
+            
+            // Solo establecer Content-Type si no es FormData
+            if (!(options.body instanceof FormData)) {
+                headers['Content-Type'] = 'application/json';
+            }
             
             const authOptions = {
                 ...options,
-                headers: {
-                    ...options.headers,
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                headers
             };
+            
+            console.log(`🔐 AuthFetch: ${options.method || 'GET'} ${url}`);
             
             try {
                 let response = await fetch(url, authOptions);
+                console.log(`📡 Response Status: ${response.status} ${response.statusText}`);
                 
                 // Si el token expiró, intentar refrescarlo
                 if (response.status === 401) {
+                    console.log('🔄 Token expirado, intentando refrescar...');
                     const refreshSuccess = await this.refreshToken();
                     
                     if (refreshSuccess) {
                         // Reintentar con el nuevo token
                         authOptions.headers.Authorization = `Bearer ${localStorage.getItem('access_token')}`;
                         response = await fetch(url, authOptions);
+                        console.log(`🔄 Retry Response Status: ${response.status} ${response.statusText}`);
                     } else {
+                        console.error('❌ No se pudo refrescar el token');
                         return { error: true, message: 'Sesión expirada' };
                     }
                 }
                 
-                const data = await response.json();
+                // Verificar content-type antes de parsear (SOLUCIÓN ESTRUCTURAL)
+                const contentType = response.headers.get('content-type') || '';
+                console.log(`📄 Content-Type: ${contentType}`);
+                let data;
+                
+                if (contentType.includes('application/json')) {
+                    try {
+                        data = await response.json();
+                    } catch (parseError) {
+                        console.error('❌ Error parsing JSON:', parseError);
+                        const text = await response.text();
+                        console.error('📄 Response text preview:', text.substring(0, 200));
+                        return { 
+                            error: true, 
+                            message: 'Error de formato en respuesta del servidor'
+                        };
+                    }
+                } else {
+                    // Si no es JSON, leer como texto para manejar errores Django
+                    const text = await response.text();
+                    console.error('📄 Non-JSON Response preview:', text.substring(0, 200));
+                    
+                    // Detectar páginas de error Django
+                    if (text.includes('<!DOCTYPE') || text.includes('<html>')) {
+                        return { 
+                            error: true, 
+                            message: 'Error interno del servidor',
+                            status: response.status
+                        };
+                    }
+                    
+                    return { 
+                        error: true, 
+                        message: 'Respuesta no válida del servidor'
+                    };
+                }
                 
                 if (response.ok) {
+                    console.log('✅ Request successful');
                     return { success: true, data };
                 } else {
+                    console.error('❌ Request failed:', data);
                     return { error: true, data, status: response.status };
                 }
             } catch (error) {
-                console.error('Error en petición autenticada:', error);
+                console.error('❌ Network error in authFetch:', error);
                 return { error: true, message: 'Error de conexión' };
             }
         }

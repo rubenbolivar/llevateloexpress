@@ -274,6 +274,9 @@ class FinancingRequestV2 {
             });
         }
         
+        // Configurar eventos para las nuevas zonas de upload específicas
+        this.setupDocumentUploadEvents();
+        
         if (this.elements.uploadZone) {
             this.elements.uploadZone.addEventListener('click', () => {
                 this.elements.documentInput?.click();
@@ -307,6 +310,164 @@ class FinancingRequestV2 {
                 field.addEventListener('change', () => this.clearFieldError(field));
             }
         });
+    }
+    
+    /**
+     * Configurar eventos para las nuevas zonas de upload específicas
+     */
+    setupDocumentUploadEvents() {
+        // Buscar todas las zonas de upload específicas
+        const uploadZones = document.querySelectorAll('.upload-zone-small');
+        
+        uploadZones.forEach(zone => {
+            const documentType = zone.getAttribute('data-document-type');
+            const input = zone.querySelector('.document-input');
+            const button = zone.querySelector('button');
+            
+            if (!documentType || !input) return;
+            
+            // Click en la zona o botón para seleccionar archivo
+            const handleClick = () => input.click();
+            zone.addEventListener('click', handleClick);
+            if (button) button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                handleClick();
+            });
+            
+            // Drag & drop
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.classList.add('drag-over');
+            });
+            
+            zone.addEventListener('dragleave', () => {
+                zone.classList.remove('drag-over');
+            });
+            
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+                if (e.dataTransfer.files.length > 0) {
+                    this.handleSpecificDocumentUpload(e.dataTransfer.files[0], documentType, zone);
+                }
+            });
+            
+            // Cambio en input
+            input.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    this.handleSpecificDocumentUpload(e.target.files[0], documentType, zone);
+                }
+            });
+        });
+    }
+    
+    /**
+     * Manejar subida de documento específico
+     */
+    handleSpecificDocumentUpload(file, documentType, zone) {
+        if (!this.validateFile(file)) {
+            return;
+        }
+        
+        // Almacenar archivo con su tipo específico
+        const existingIndex = this.state.uploadedFiles.findIndex(f => f.documentType === documentType);
+        const fileWithType = { file, documentType, name: file.name, size: file.size };
+        
+        if (existingIndex !== -1) {
+            // Reemplazar archivo existente del mismo tipo
+            this.state.uploadedFiles[existingIndex] = fileWithType;
+        } else {
+            // Agregar nuevo archivo
+            this.state.uploadedFiles.push(fileWithType);
+        }
+        
+        // Actualizar UI de la zona específica
+        this.updateDocumentZoneUI(zone, file);
+        
+        this.log('info', `Documento ${documentType} subido: ${file.name}`);
+    }
+    
+    /**
+     * Actualizar UI de zona de documento específica
+     */
+    updateDocumentZoneUI(zone, file) {
+        const uploadedDiv = zone.parentElement.querySelector('.uploaded-file');
+        
+        if (uploadedDiv) {
+            uploadedDiv.style.display = 'flex';
+            uploadedDiv.querySelector('.file-name').textContent = file.name;
+            
+            // Ocultar contenido de upload
+            const uploadElements = zone.querySelectorAll('i, p, button');
+            uploadElements.forEach(el => el.style.display = 'none');
+            
+            // Mostrar nombre del archivo en la zona
+            zone.innerHTML = `
+                <i class="fas fa-file-check fa-2x text-success mb-2"></i>
+                <p class="small text-success mb-0">${file.name}</p>
+                <small class="text-muted">${this.formatFileSize(file.size)}</small>
+            `;
+            
+            // Configurar botón de eliminar
+            const removeBtn = uploadedDiv.querySelector('.remove-file');
+            if (removeBtn) {
+                removeBtn.onclick = (e) => {
+                    e.preventDefault();
+                    this.removeSpecificDocument(zone);
+                };
+            }
+        }
+    }
+    
+    /**
+     * Remover documento específico
+     */
+    removeSpecificDocument(zone) {
+        const documentType = zone.getAttribute('data-document-type');
+        
+        // Remover del estado
+        this.state.uploadedFiles = this.state.uploadedFiles.filter(f => f.documentType !== documentType);
+        
+        // Restaurar UI de la zona
+        const uploadedDiv = zone.parentElement.querySelector('.uploaded-file');
+        if (uploadedDiv) {
+            uploadedDiv.style.display = 'none';
+        }
+        
+        // Restaurar contenido original de la zona
+        this.restoreUploadZoneUI(zone, documentType);
+        
+        this.log('info', `Documento ${documentType} removido`);
+    }
+    
+    /**
+     * Restaurar UI original de zona de upload
+     */
+    restoreUploadZoneUI(zone, documentType) {
+        const icons = {
+            'income_proof': 'fas fa-upload fa-2x text-muted mb-2',
+            'id_document': 'fas fa-upload fa-2x text-muted mb-2',
+            'address_proof': 'fas fa-upload fa-2x text-muted mb-2'
+        };
+        
+        const colors = {
+            'income_proof': 'info',
+            'id_document': 'warning', 
+            'address_proof': 'success'
+        };
+        
+        zone.innerHTML = `
+            <i class="${icons[documentType]}"></i>
+            <p class="small text-muted mb-2">Arrastra o haz clic para subir</p>
+            <input type="file" class="d-none document-input" 
+                   accept=".pdf,.jpg,.jpeg,.png" data-type="${documentType}">
+            <button type="button" class="btn btn-outline-${colors[documentType]} btn-sm">
+                <i class="fas fa-plus"></i> Seleccionar archivo
+            </button>
+        `;
+        
+        // Reconfigurar eventos
+        this.setupDocumentUploadEvents();
     }
     
     /**
@@ -646,9 +807,12 @@ class FinancingRequestV2 {
                 this.showSuccess('¡Solicitud enviada exitosamente!');
                 this.log('info', `Solicitud creada con ID: ${requestId}`);
                 
-                // Opcional: subir documentos si hay
+                // Si hay documentos, subirlos (esto automáticamente cambia estado a submitted)
                 if (this.state.uploadedFiles.length > 0) {
                     await this.uploadDocuments(requestId);
+                } else {
+                    // Si no hay documentos, cambiar estado manualmente a submitted
+                    await this.submitForReview(requestId);
                 }
                 
                 // Redirigir al dashboard después de 3 segundos
@@ -932,10 +1096,171 @@ class FinancingRequestV2 {
             logFunction.call(console, logMessage);
         }
     }
+
+    /**
+     * Enviar solicitud para revisión (cambiar estado a submitted)
+     */
+    async submitForReview(requestId) {
+        this.log('info', '📤 Enviando solicitud para revisión (cambio de estado draft → submitted)...');
+        
+        try {
+            const result = await this.authenticatedRequest(
+                `/api/financing/requests/${requestId}/submit/`,
+                { method: 'POST' }
+            );
+            
+            if (result.success) {
+                this.log('info', '✅ Solicitud enviada para revisión exitosamente - Estado: submitted');
+                return result.data;
+            } else {
+                this.log('error', '❌ Error enviando para revisión:', result);
+                throw new Error('Error al enviar para revisión: ' + (result.message || 'Error desconocido'));
+            }
+        } catch (error) {
+            this.log('error', '💥 Exception en submitForReview:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Subir documentos después de crear la solicitud
+     */
+    async uploadDocuments(requestId) {
+        if (this.state.uploadedFiles.length === 0) {
+            this.log('info', 'No hay documentos para subir');
+            return;
+        }
+        
+        // Verificación proactiva de autenticación
+        if (typeof window.API === 'undefined' || !window.API.users || !window.API.users.isAuthenticated()) {
+            this.log('error', 'Usuario no autenticado antes del upload');
+            throw new Error('Usuario no autenticado. Por favor, inicie sesión nuevamente.');
+        }
+        
+        this.log('info', `📤 Iniciando upload de ${this.state.uploadedFiles.length} documentos para solicitud ${requestId}...`);
+        
+        try {
+            const formData = new FormData();
+            
+            // Usar tipos de documentos específicos de las zonas de upload
+            this.state.uploadedFiles.forEach((fileData, index) => {
+                let fieldName;
+                let actualFile;
+                
+                if (fileData.documentType) {
+                    // Nuevo sistema con tipos específicos
+                    fieldName = fileData.documentType;
+                    actualFile = fileData.file;
+                    this.log('info', `📎 Archivo ${index + 1}: ${fileData.name} → ${fieldName} (específico)`);
+                } else {
+                    // Sistema legacy - detectar por nombre
+                    actualFile = fileData;
+                    const fileName = fileData.name.toLowerCase();
+                    
+                    if (fileName.includes('ingreso') || fileName.includes('nomina') || fileName.includes('salario')) {
+                        fieldName = 'income_proof';
+                    } else if (fileName.includes('cedula') || fileName.includes('identidad') || fileName.includes('id')) {
+                        fieldName = 'id_document';
+                    } else if (fileName.includes('direccion') || fileName.includes('domicilio') || fileName.includes('residencia')) {
+                        fieldName = 'address_proof';
+                    } else {
+                        // Por defecto, asignar según el orden
+                        switch (index) {
+                            case 0: fieldName = 'income_proof'; break;
+                            case 1: fieldName = 'id_document'; break;
+                            case 2: fieldName = 'address_proof'; break;
+                            default: fieldName = 'income_proof'; break;
+                        }
+                    }
+                    this.log('info', `📎 Archivo ${index + 1}: ${fileData.name} → ${fieldName} (detectado)`);
+                }
+                
+                formData.append(fieldName, actualFile);
+            });
+            
+            this.log('info', `🚀 Enviando FormData al endpoint: /api/financing/requests/${requestId}/upload_documents/`);
+            
+            const result = await this.authenticatedRequest(
+                `/api/financing/requests/${requestId}/upload_documents/`,
+                {
+                    method: 'POST',
+                    body: formData
+                }
+            );
+            
+            if (result.success) {
+                this.log('info', '✅ Documentos subidos exitosamente');
+                // Limpiar archivos subidos del estado
+                this.state.uploadedFiles = [];
+                
+                // CRUCIAL: Después de subir documentos, enviar para revisión (cambiar estado a submitted)
+                try {
+                    this.log('info', '📤 Enviando solicitud para revisión después del upload...');
+                    await this.submitForReview(requestId);
+                    this.log('info', '✅ Solicitud enviada para revisión - Estado cambiado a "submitted"');
+                } catch (submitError) {
+                    this.log('warning', '⚠️ Documentos subidos pero error al cambiar estado:', submitError);
+                    // No lanzar error aquí - los documentos ya se subieron exitosamente
+                }
+                
+                return result.data;
+            } else {
+                // Manejo mejorado de errores específicos
+                let errorMessage = 'Error desconocido';
+                
+                if (result.message) {
+                    errorMessage = result.message;
+                } else if (result.data && result.data.error) {
+                    errorMessage = result.data.error;
+                } else if (result.status === 401) {
+                    errorMessage = 'Sesión expirada. Por favor, inicie sesión nuevamente.';
+                } else if (result.status === 403) {
+                    errorMessage = 'No tiene permisos para subir documentos a esta solicitud.';
+                } else if (result.status === 400) {
+                    errorMessage = 'Error en los archivos enviados. Verifique el formato y tamaño.';
+                } else if (result.status >= 500) {
+                    errorMessage = 'Error interno del servidor. Intente nuevamente.';
+                }
+                
+                this.log('error', '❌ Error subiendo documentos:', {
+                    status: result.status,
+                    message: errorMessage,
+                    debug: result.debug || 'No debug info'
+                });
+                
+                throw new Error(errorMessage);
+            }
+        } catch (error) {
+            this.log('error', '💥 Exception en uploadDocuments:', error);
+            
+            // Re-lanzar con mensaje más claro para el usuario
+            if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+                throw new Error('Error de conexión. Verifique su conexión a internet.');
+            } else {
+                throw error;
+            }
+        }
+    }
 }
 
-// Crear instancia global
-window.FinancingRequestV2 = new FinancingRequestV2();
+// Función para inicializar cuando el DOM esté listo y API esté disponible
+function initializeFinancingRequestV2() {
+    // Verificar que API esté disponible
+    if (typeof window.API === 'undefined') {
+        console.warn('⏳ API no disponible aún, reintentando en 100ms...');
+        setTimeout(initializeFinancingRequestV2, 100);
+        return;
+    }
+    
+    // Crear instancia global
+    window.FinancingRequestV2 = new FinancingRequestV2();
+    console.info('🎯 FinancingRequestV2 - Versión con Autenticación Integrada inicializada correctamente');
+}
 
-// Log de inicialización
-console.info('🎯 FinancingRequestV2 - Versión con Autenticación Integrada inicializada correctamente'); 
+// Inicializar cuando el DOM esté listo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeFinancingRequestV2);
+} else {
+    // DOM ya está cargado
+    initializeFinancingRequestV2();
+} 
