@@ -171,6 +171,9 @@ const Dashboard = {
                 </tr>
             `;
         }).join('');
+
+        // Inicializar botones R4 para solicitudes aprobadas
+        this.initializeR4PaymentButtons(requests);
     },
 
     // Actualizar estadísticas
@@ -192,14 +195,36 @@ const Dashboard = {
         // Habilitar botón de pago si hay solicitudes activas o aprobadas
         const payableRequests = requests.filter(r => 
             ['approved', 'active'].includes(r.status)
-        ).length;
+        );
         const makePaymentBtn = document.getElementById('makePaymentBtn');
         if (makePaymentBtn) {
-            makePaymentBtn.disabled = payableRequests === 0;
+            makePaymentBtn.disabled = payableRequests.length === 0;
+            
+            // Actualizar text del botón para indicar R4 con estilo destacado
+            if (payableRequests.length > 0) {
+                makePaymentBtn.innerHTML = `
+                    <i class="fas fa-mobile-alt"></i> Pago Móvil R4
+                    <span class="r4-payment-badge" style="margin-left: 8px;">PRINCIPAL</span>
+                `;
+                makePaymentBtn.className = 'btn r4-payment-button';
+            }
+            
             // Agregar event listener si no existe
             if (!makePaymentBtn.hasAttribute('data-listener')) {
                 makePaymentBtn.addEventListener('click', () => {
-                    window.location.href = 'realizar-pago.html';
+                    if (payableRequests.length === 1) {
+                        // Si solo hay una solicitud, ir directo a pagar con R4
+                        const request = payableRequests[0];
+                        if (typeof window.R4PaymentButton !== 'undefined') {
+                            // Iniciar pago R4 directamente
+                            this.initiateQuickR4Payment(request);
+                        } else {
+                            window.location.href = `realizar-pago.html?request=${request.id}`;
+                        }
+                    } else {
+                        // Si hay múltiples, ir a la página de pagos
+                        window.location.href = 'realizar-pago.html';
+                    }
                 });
                 makePaymentBtn.setAttribute('data-listener', 'true');
             }
@@ -299,9 +324,11 @@ const Dashboard = {
                 break;
             case 'approved':
             case 'active':
+                // Botón R4 como método principal para pagos - destacado visualmente
                 buttons.push(`
-                    <button class="btn btn-sm btn-success" onclick="Dashboard.makePayment(${request.id})">
-                        <i class="fas fa-credit-card"></i> Pagar
+                    <span class="r4-primary-indicator">PRINCIPAL</span>
+                    <button class="btn btn-sm r4-payment-button" onclick="showR4Modal(${request.id}, '${request.product_name}', ${request.payment_amount})">
+                        <i class="fas fa-mobile-alt"></i> R4 Pago
                     </button>
                 `);
                 break;
@@ -514,6 +541,149 @@ const Dashboard = {
         // Implementar notificación de éxito
         console.log(message);
         alert(message); // Temporal
+    },
+
+    // Iniciar pago R4 rápido desde el botón de acciones rápidas
+    initiateQuickR4Payment(request) {
+        try {
+            if (typeof window.R4PaymentButton === 'undefined') {
+                console.warn('⚠️ R4PaymentButton no disponible, redirigiendo...');
+                window.location.href = `realizar-pago.html?request=${request.id}`;
+                return;
+            }
+
+            // Crear modal temporal para el pago R4
+            const modalHtml = `
+                <div class="modal fade" id="quickR4PaymentModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-mobile-alt"></i> 
+                                    Pago Móvil R4
+                                    <span class="r4-payment-badge" style="background: rgba(255,255,255,0.3); color: white;">PRINCIPAL</span>
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="text-center mb-3">
+                                    <h6>Solicitud: ${request.application_number || request.id}</h6>
+                                    <p class="text-muted">${request.product_name}</p>
+                                    <h4 class="text-success">$${this.formatNumber(request.payment_amount || request.product_price)}</h4>
+                                </div>
+                                <div id="quickR4ButtonContainer" class="text-center">
+                                    <!-- Botón R4 se generará aquí -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Agregar modal al DOM si no existe
+            let existingModal = document.getElementById('quickR4PaymentModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+            // Mostrar modal
+            const modal = new bootstrap.Modal(document.getElementById('quickR4PaymentModal'));
+            modal.show();
+
+            // Configurar botón R4 en el modal con estilo destacado
+            const buttonConfig = {
+                applicationId: request.id,
+                amount: request.payment_amount || request.product_price,
+                currency: 'VES',
+                size: 'large',
+                variant: 'success',
+                cssClass: 'r4-payment-button', // Estilo destacado
+                showBadge: true,
+                onSuccess: (paymentData) => {
+                    console.log('✅ Pago R4 rápido exitoso:', paymentData);
+                    modal.hide();
+                    this.showSuccess('¡Pago procesado exitosamente!');
+                    this.loadDashboardData(); // Recargar datos
+                },
+                onError: (error) => {
+                    console.error('❌ Error en pago R4 rápido:', error);
+                    this.showError('Error procesando el pago: ' + error.message);
+                }
+            };
+
+            // Crear botón R4 en el modal
+            const container = document.getElementById('quickR4ButtonContainer');
+            window.R4PaymentButton.createPaymentButton(container, buttonConfig);
+
+        } catch (error) {
+            console.error('Error iniciando pago R4 rápido:', error);
+            window.location.href = `realizar-pago.html?request=${request.id}`;
+        }
+    },
+
+    // Inicializar botones R4 para solicitudes aprobadas
+    initializeR4PaymentButtons(requests) {
+        // Verificar si R4PaymentButton está disponible
+        if (typeof window.R4PaymentButton === 'undefined') {
+            console.warn('⚠️ R4PaymentButton no está disponible');
+            return;
+        }
+
+        // Filtrar solicitudes aprobadas/activas
+        const approvedRequests = requests.filter(request => 
+            ['approved', 'active'].includes(request.status)
+        );
+
+        // Crear botón R4 para cada solicitud aprobada
+        approvedRequests.forEach(request => {
+            const containerId = `r4-payment-container-${request.id}`;
+            const container = document.getElementById(containerId);
+            
+            if (container) {
+                try {
+                    // Configuración del botón R4 con estilos destacados
+                    const buttonConfig = {
+                        applicationId: request.id,
+                        amount: request.payment_amount || request.product_price,
+                        currency: 'VES', // R4 opera en bolívares
+                        size: 'small',
+                        variant: 'success',
+                        cssClass: 'r4-payment-button', // Clase CSS especial
+                        showBadge: true, // Mostrar badge "R4"
+                        onSuccess: (paymentData) => {
+                            console.log('✅ Pago R4 exitoso:', paymentData);
+                            this.showSuccess('¡Pago procesado exitosamente!');
+                            this.loadDashboardData(); // Recargar datos
+                        },
+                        onError: (error) => {
+                            console.error('❌ Error en pago R4:', error);
+                            this.showError('Error procesando el pago: ' + error.message);
+                        }
+                    };
+
+                    // Crear botón R4 con estilo destacado
+                    window.R4PaymentButton.createPaymentButton(container, buttonConfig);
+                    
+                    // Agregar badge R4 al contenedor
+                    const r4Badge = document.createElement('span');
+                    r4Badge.className = 'r4-payment-badge';
+                    r4Badge.textContent = 'R4';
+                    r4Badge.title = 'Pago Móvil R4 - Método Principal';
+                    container.appendChild(r4Badge);
+                    
+                } catch (error) {
+                    console.error('Error creando botón R4:', error);
+                    // Fallback al botón tradicional con estilo R4
+                    container.innerHTML = `
+                        <button class="btn btn-sm r4-payment-button" onclick="window.location.href='/realizar-pago.html?request=${request.id}'">
+                            <i class="fas fa-mobile-alt"></i> Pago Móvil
+                        </button>
+                        <span class="r4-payment-badge">R4</span>
+                    `;
+                }
+            }
+        });
     },
 
     // Funciones pendientes de implementar

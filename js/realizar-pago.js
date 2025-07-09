@@ -168,7 +168,7 @@ const PaymentFlow = {
         const container = document.getElementById('paymentMethodsContainer');
         
         container.innerHTML = methods.map(method => `
-            <div class="payment-card p-3 mb-3" data-method-id="${method.id}" onclick="PaymentFlow.selectPaymentMethod(${method.id})">
+            <div class="payment-card p-3 mb-3 ${method.name.includes("R4") ? "r4-payment-method" : ""}" data-method-id="${method.id}" onclick="PaymentFlow.selectPaymentMethod(${method.id})">
                 <div class="row align-items-center">
                     <div class="col-md-8">
                         <h6 class="mb-1">

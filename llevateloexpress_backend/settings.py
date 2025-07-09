@@ -35,7 +35,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-key-to-be-chan
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost 127.0.0.1 .llevateloexpress.com').split()
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost 127.0.0.1 203.161.55.87 .llevateloexpress.com').split()
 
 
 # Application definition
@@ -287,3 +287,5 @@ R4_BASE_URL = os.getenv('R4_BASE_URL', 'https://r4conecta.mibanco.com.ve/')
 R4_COMMERCE_TOKEN = os.getenv('R4_COMMERCE_TOKEN', '')
 R4_TIMEOUT = int(os.getenv('R4_TIMEOUT', '30'))
 R4_DEBUG = os.getenv('R4_DEBUG', 'False').lower() == 'true'
+R4_SECRET_KEY = os.getenv("R4_SECRET_KEY", "")
+R4_UUID_TOKEN = os.getenv("R4_UUID_TOKEN", "")
