@@ -33,7 +33,7 @@ from .serializers.financing_serializers import (
     PaymentScheduleSerializer,
     FinancingCalculatorSerializer
 )
-from notifications.models import EmailNotification
+from notifications.services import NotificationService
 from products.models import Product, Category
 
 
@@ -48,6 +48,7 @@ class FinancingPlanViewSet(viewsets.ReadOnlyModelViewSet):
 class FinancingRequestViewSet(viewsets.ModelViewSet):
     """ViewSet para solicitudes de financiamiento"""
     permission_classes = [permissions.IsAuthenticated]
+    
     
     def get_queryset(self):
         """Filtrar solicitudes por usuario"""
@@ -120,14 +121,23 @@ class FinancingRequestViewSet(viewsets.ModelViewSet):
             notes='Solicitud enviada para revisión'
         )
         
-        # Crear notificación
-        EmailNotification.objects.create(
-            user=request.user,
-            notification_type='application_submitted',
-            subject='Solicitud Enviada',
-            message=f'Su solicitud {application.application_number} ha sido enviada para revisión.',
-            context={'application_number': application.application_number}
-        )
+        # Crear notificación (no debe fallar el submit si falla el email)
+        try:
+            notification_service = NotificationService()
+            notification_service.send_notification(
+                user=request.user,
+                notification_type_code='financing_application',
+                context={
+                    'application_number': application.application_number,
+                    'product_name': application.product.name if application.product else 'N/A',
+                    'amount': str(application.product_price) if application.product_price else 'N/A',
+                    'plan': application.financing_plan.name if application.financing_plan else 'N/A'
+                }
+            )
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f'Notification failed but submit continues: {e}')
         
         serializer = FinancingRequestDetailSerializer(
             application,
@@ -135,12 +145,103 @@ class FinancingRequestViewSet(viewsets.ModelViewSet):
         )
         return Response(serializer.data)
     
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], parser_classes=[MultiPartParser, FormParser])
     def upload_documents(self, request, pk=None):
-        """Subir documentos requeridos"""
+        """Subir documentos requeridos - Versión simplificada como Django Admin"""
         application = self.get_object()
         
-        if application.status not in ['submitted', 'documentation_required']:
+        # Verificar permisos básicos
+        if application.customer.user != request.user:
+            return Response(
+                {'error': 'No tiene permisos para subir documentos a esta solicitud'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Actualizar documentos directamente como Django Admin
+        updated_fields = []
+        if 'income_proof' in request.FILES:
+            application.income_proof = request.FILES['income_proof']
+            updated_fields.append('income_proof')
+        if 'id_document' in request.FILES:
+            application.id_document = request.FILES['id_document']
+            updated_fields.append('id_document')
+        if 'address_proof' in request.FILES:
+            application.address_proof = request.FILES['address_proof']
+            updated_fields.append('address_proof')
+        
+        if not updated_fields:
+            return Response(
+                {'error': 'No se proporcionaron archivos para subir'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        application.save()
+        
+        # Respuesta simple y clara
+        return Response({
+            'success': True,
+            'message': f'Documentos actualizados: {", ".join(updated_fields)}',
+            'uploaded_files': updated_fields,
+            'application_id': application.id,
+            'application_number': application.application_number
+        })
+    
+    @action(detail=True, methods=['post'], parser_classes=[MultiPartParser, FormParser])
+    @transaction.atomic
+    def upload_documents_legacy(self, request, pk=None):
+        """Subir documentos requeridos - Versión con validaciones completas (respaldo)"""
+        application = self.get_object()
+        
+        # Validar estado y manejar transición de draft a submitted
+        if application.status == 'draft':
+            # Verificar que el perfil esté completo
+            if not application.customer.is_profile_complete:
+                return Response(
+                    {'error': 'Debe completar su perfil antes de enviar la solicitud'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Verificar que se está subiendo al menos un documento
+            if not any(key in request.FILES for key in ['income_proof', 'id_document', 'address_proof']):
+                return Response(
+                    {'error': 'Debe subir al menos un documento para enviar la solicitud'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Cambiar estado a submitted automáticamente
+            old_status = application.status
+            application.status = 'submitted'
+            application.submitted_at = timezone.now()
+            
+            # Registrar cambio de estado
+            ApplicationStatusHistory.objects.create(
+                application=application,
+                from_status=old_status,
+                to_status='submitted',
+                changed_by=request.user,
+                notes='Solicitud enviada automáticamente al subir documentos'
+            )
+            
+            # Enviar notificación (no debe fallar el upload si falla el email)
+            try:
+                notification_service = NotificationService()
+                notification_service.send_notification(
+                    user=request.user,
+                    notification_type_code='financing_application',
+                    context={
+                        'application_number': application.application_number,
+                        'product_name': application.product.name if application.product else 'N/A',
+                        'amount': str(application.product_price) if application.product_price else 'N/A',
+                        'plan': application.financing_plan.name if application.financing_plan else 'N/A'
+                    }
+                )
+            except Exception as e:
+                # Log pero no bloquear el upload
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f'Notification failed but upload continues: {e}')
+            
+        elif application.status not in ['submitted', 'documentation_required']:
             return Response(
                 {'error': 'No se pueden subir documentos en este estado'},
                 status=status.HTTP_400_BAD_REQUEST
@@ -211,17 +312,22 @@ class PaymentViewSet(viewsets.ModelViewSet):
         
         self.perform_create(serializer)
         
-        # Crear notificación
-        EmailNotification.objects.create(
-            user=application.customer.user,
-            notification_type='payment_registered',
-            subject='Pago Registrado',
-            message=f'Se ha registrado un pago de ${serializer.instance.amount} para su solicitud {application.application_number}',
-            context={
-                'amount': str(serializer.instance.amount),
-                'application_number': application.application_number
-            }
-        )
+        # Crear notificación (no debe fallar el pago si falla el email)
+        try:
+            notification_service = NotificationService()
+            notification_service.send_notification(
+                user=application.customer.user,
+                notification_type_code='payment_confirmation',
+                context={
+                    'amount': str(serializer.instance.amount),
+                    'application_number': application.application_number,
+                    'payment_date': timezone.now().strftime('%Y-%m-%d')
+                }
+            )
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f'Payment notification failed but payment continues: {e}')
         
         headers = self.get_success_headers(serializer.data)
         return Response(
@@ -867,18 +973,18 @@ class PaymentSubmissionView(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             # Obtener cuenta de destino si se especifica
-            company_account = None
-            if 'company_account_id' in request.data:
-                try:
-                    company_account = CompanyBankAccount.objects.get(
-                        id=request.data['company_account_id'],
-                        is_active=True
-                    )
-                except CompanyBankAccount.DoesNotExist:
-                    return Response({
-                        'success': False,
-                        'error': 'Cuenta de destino no válida'
-                    }, status=status.HTTP_400_BAD_REQUEST)
+            #             company_account = None
+            #             if 'company_account_id' in request.data:
+            #                 try:
+            #                     company_account = CompanyBankAccount.objects.get(
+            #                         id=request.data['company_account_id'],
+            #                         is_active=True
+            #                     )
+                #                 except CompanyBankAccount.DoesNotExist:
+                #                     return Response({
+                #                         'success': False,
+                #                         'error': 'Cuenta de destino no válida'
+                #                     }, status=status.HTTP_400_BAD_REQUEST)
             
             # Validar monto
             try:
@@ -911,7 +1017,7 @@ class PaymentSubmissionView(APIView):
             payment = Payment.objects.create(
                 application=application,
                 payment_method=payment_method,
-                company_account=company_account,
+                # company_account=company_account,  # COMENTADO: Campo no existe en modelo
                 payment_type=request.data.get('payment_type', 'installment'),
                 amount=amount,
                 currency=request.data.get("currency", "USD"),
@@ -980,7 +1086,7 @@ class UserPaymentsView(APIView):
             queryset = Payment.objects.filter(
                 application__customer__user=request.user
             ).select_related(
-                'application', 'payment_method', 'company_account', 'verified_by'
+                'application', 'payment_method', 'verified_by'  # company_account removido
             ).order_by('-payment_date')
             
             # Aplicar filtros
@@ -1015,12 +1121,12 @@ class UserPaymentsView(APIView):
                     'verification_timeline': str(payment.get_verification_timeline()) if payment.verified_at else None
                 }
                 
-                if payment.company_account:
-                    payment_data['company_account'] = {
-                        'bank_name': payment.company_account.bank_name,
-                        'account_number': payment.company_account.account_number,
-                        'currency': payment.company_account.currency
-                    }
+                #                 if payment.company_account:
+                #                     payment_data['company_account'] = {
+                #                         'bank_name': payment.company_account.bank_name,
+                #                         'account_number': payment.company_account.account_number,
+                #                         'currency': payment.company_account.currency
+                #                     }
                 
                 payments_data.append(payment_data)
             
@@ -1044,7 +1150,7 @@ class PaymentStatusView(APIView):
     def get(self, request, payment_id):
         try:
             payment = Payment.objects.select_related(
-                'application', 'payment_method', 'company_account', 'verified_by'
+                'application', 'payment_method', 'verified_by'  # company_account removido
             ).get(
                 id=payment_id,
                 application__customer__user=request.user
@@ -1073,13 +1179,13 @@ class PaymentStatusView(APIView):
                 'verification_timeline': str(payment.get_verification_timeline())
             }
             
-            if payment.company_account:
-                data['company_account'] = {
-                    'bank_name': payment.company_account.bank_name,
-                    'account_number': payment.company_account.account_number,
-                    'account_holder': payment.company_account.account_holder,
-                    'currency': payment.company_account.currency
-                }
+            #             if payment.company_account:
+            #                 data['company_account'] = {
+            #                     'bank_name': payment.company_account.bank_name,
+            #                     'account_number': payment.company_account.account_number,
+            #                     'account_holder': payment.company_account.account_holder,
+            #                     'currency': payment.company_account.currency
+            #                 }
             
             return Response({
                 'success': True,

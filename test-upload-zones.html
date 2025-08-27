@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <title>Solicitud de Financiamiento | LlévateloExpress</title>
     <link rel="icon" type="image/png" href="static/img/favicon.png">
     <link rel="apple-touch-icon" href="static/img/favicon.png">
@@ -94,6 +95,49 @@
             padding: 1rem;
             margin-bottom: 1rem;
         }
+        .upload-zone-small {
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 1rem;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .upload-zone-small:hover {
+            border-color: #007bff;
+            background-color: #f8f9fa;
+        }
+        .upload-zone-small.drag-over {
+            border-color: #007bff;
+            background-color: #e7f3ff;
+        }
+        .document-upload-card {
+            transition: transform 0.2s;
+        }
+        .document-upload-card:hover {
+            transform: translateY(-2px);
+        }
+        .uploaded-file {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 0.5rem;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .uploaded-file .file-name {
+            flex: 1;
+            margin: 0 0.5rem;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -170,8 +214,11 @@
                     <!-- Mensajes de Estado -->
                     <div id="alertContainer"></div>
 
-                    <!-- Formulario -->
+                    <!-- Formulario con protección CSRF -->
                     <form id="financingRequestForm">
+                        <!-- Token CSRF para Django -->
+                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                        
                         <!-- Paso 1: Resumen del Cálculo -->
                         <div class="form-section active" id="section1">
                             <div class="card shadow-lg border-0">
@@ -202,7 +249,7 @@
                                         <a href="calculadora.html" class="btn btn-outline-secondary">
                                             <i class="fas fa-arrow-left"></i> Volver a Calculadora
                                         </a>
-                                        <button type="button" class="btn btn-primary" onclick="FinancingRequest.nextStep()">
+                                        <button type="button" class="btn btn-primary" onclick="FinancingRequestV2.nextStep()">
                                             Continuar <i class="fas fa-arrow-right"></i>
                                         </button>
                                     </div>
@@ -291,10 +338,10 @@
                                     </div>
 
                                     <div class="d-flex justify-content-between mt-4">
-                                        <button type="button" class="btn btn-outline-secondary" onclick="FinancingRequest.prevStep()">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="FinancingRequestV2.prevStep()">
                                             <i class="fas fa-arrow-left"></i> Anterior
                                         </button>
-                                        <button type="button" class="btn btn-primary" onclick="FinancingRequest.nextStep()">
+                                        <button type="button" class="btn btn-primary" onclick="FinancingRequestV2.nextStep()">
                                             Continuar <i class="fas fa-arrow-right"></i>
                                         </button>
                                     </div>
@@ -320,17 +367,107 @@
                                         <small class="text-muted">Formatos permitidos: PDF, JPG, PNG (máx. 5MB por archivo)</small>
                                     </div>
 
-                                    <!-- Zona de Subida -->
-                                    <div class="upload-zone" id="uploadZone">
-                                        <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
-                                        <h5>Arrastra tus documentos aquí</h5>
-                                        <p class="text-muted">o haz clic para seleccionar archivos</p>
-                                        <input type="file" id="documentInput" class="d-none" multiple 
-                                               accept=".pdf,.jpg,.jpeg,.png">
-                                    </div>
+                                    <!-- Zonas de Subida Específicas -->
+                                    <div class="row g-4">
+                                        <!-- Comprobante de Ingresos -->
+                                        <div class="col-md-4">
+                                            <div class="document-upload-card">
+                                                <div class="card h-100">
+                                                    <div class="card-header bg-info text-white text-center">
+                                                        <i class="fas fa-dollar-sign fa-2x mb-2"></i>
+                                                        <h6 class="mb-0">Comprobante de Ingresos</h6>
+                                                    </div>
+                                                    <div class="card-body text-center">
+                                                        <div class="upload-zone-small" data-document-type="income_proof">
+                                                            <i class="fas fa-upload fa-2x text-muted mb-2"></i>
+                                                            <p class="small text-muted mb-2">Arrastra o haz clic para subir</p>
+                                                            <input type="file" class="d-none document-input" 
+                                                                   accept=".pdf,.jpg,.jpeg,.png" data-type="income_proof">
+                                                            <button type="button" class="btn btn-outline-info btn-sm">
+                                                                <i class="fas fa-plus"></i> Seleccionar archivo
+                                                            </button>
+                                                        </div>
+                                                        <div class="uploaded-file" style="display: none;">
+                                                            <i class="fas fa-file-alt text-success"></i>
+                                                            <span class="file-name"></span>
+                                                            <button type="button" class="btn btn-sm btn-outline-danger ms-2 remove-file">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                        <small class="text-muted d-block mt-2">
+                                                            Nómina, constancia de trabajo, declaración de renta
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
 
-                                    <!-- Lista de Archivos -->
-                                    <div id="filesList"></div>
+                                        <!-- Documento de Identidad -->
+                                        <div class="col-md-4">
+                                            <div class="document-upload-card">
+                                                <div class="card h-100">
+                                                    <div class="card-header bg-warning text-white text-center">
+                                                        <i class="fas fa-id-card fa-2x mb-2"></i>
+                                                        <h6 class="mb-0">Documento de Identidad</h6>
+                                                    </div>
+                                                    <div class="card-body text-center">
+                                                        <div class="upload-zone-small" data-document-type="id_document">
+                                                            <i class="fas fa-upload fa-2x text-muted mb-2"></i>
+                                                            <p class="small text-muted mb-2">Arrastra o haz clic para subir</p>
+                                                            <input type="file" class="d-none document-input" 
+                                                                   accept=".pdf,.jpg,.jpeg,.png" data-type="id_document">
+                                                            <button type="button" class="btn btn-outline-warning btn-sm">
+                                                                <i class="fas fa-plus"></i> Seleccionar archivo
+                                                            </button>
+                                                        </div>
+                                                        <div class="uploaded-file" style="display: none;">
+                                                            <i class="fas fa-file-alt text-success"></i>
+                                                            <span class="file-name"></span>
+                                                            <button type="button" class="btn btn-sm btn-outline-danger ms-2 remove-file">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                        <small class="text-muted d-block mt-2">
+                                                            Cédula de identidad (ambas caras), pasaporte
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Comprobante de Domicilio -->
+                                        <div class="col-md-4">
+                                            <div class="document-upload-card">
+                                                <div class="card h-100">
+                                                    <div class="card-header bg-success text-white text-center">
+                                                        <i class="fas fa-home fa-2x mb-2"></i>
+                                                        <h6 class="mb-0">Comprobante de Domicilio</h6>
+                                                    </div>
+                                                    <div class="card-body text-center">
+                                                        <div class="upload-zone-small" data-document-type="address_proof">
+                                                            <i class="fas fa-upload fa-2x text-muted mb-2"></i>
+                                                            <p class="small text-muted mb-2">Arrastra o haz clic para subir</p>
+                                                            <input type="file" class="d-none document-input" 
+                                                                   accept=".pdf,.jpg,.jpeg,.png" data-type="address_proof">
+                                                            <button type="button" class="btn btn-outline-success btn-sm">
+                                                                <i class="fas fa-plus"></i> Seleccionar archivo
+                                                            </button>
+                                                        </div>
+                                                        <div class="uploaded-file" style="display: none;">
+                                                            <i class="fas fa-file-alt text-success"></i>
+                                                            <span class="file-name"></span>
+                                                            <button type="button" class="btn btn-sm btn-outline-danger ms-2 remove-file">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                        <small class="text-muted d-block mt-2">
+                                                            Recibo de luz, agua, teléfono, gas
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
 
                                     <div class="alert alert-info mt-3">
                                         <i class="fas fa-lightbulb"></i>
@@ -339,10 +476,10 @@
                                     </div>
 
                                     <div class="d-flex justify-content-between mt-4">
-                                        <button type="button" class="btn btn-outline-secondary" onclick="FinancingRequest.prevStep()">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="FinancingRequestV2.prevStep()">
                                             <i class="fas fa-arrow-left"></i> Anterior
                                         </button>
-                                        <button type="button" class="btn btn-primary" onclick="FinancingRequest.nextStep()">
+                                        <button type="button" class="btn btn-primary" onclick="FinancingRequestV2.nextStep()">
                                             Continuar <i class="fas fa-arrow-right"></i>
                                         </button>
                                     </div>
@@ -384,7 +521,7 @@
                                     </div>
 
                                     <div class="d-flex justify-content-between mt-4">
-                                        <button type="button" class="btn btn-outline-secondary" onclick="FinancingRequest.prevStep()">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="FinancingRequestV2.prevStep()">
                                             <i class="fas fa-arrow-left"></i> Anterior
                                         </button>
                                         <button type="submit" class="btn btn-success btn-lg" id="submitBtn">
@@ -440,7 +577,35 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module" src="js/auth.js"></script>
-    <script type="module" src="js/api.js"></script>
-    <script type="module" src="js/solicitud-financiamiento.js"></script>
+    <script src="js/api-fixed.js"></script>
+    <script src="js/solicitud-financiamiento-v2-part2.js"></script>
+
+<!-- Botón flotante oficial de WhatsApp -->
+<a href="https://api.whatsapp.com/send?phone=5804128701585&text=¡Hola!%20Necesito%20información%20sobre%20financiamiento%20de%20vehículos%20en%20LlévateloExpress.%20¿Pueden%20ayudarme?" 
+   class="whatsapp-float" 
+   target="_blank" 
+   rel="noopener noreferrer"
+   aria-label="Contactar por WhatsApp"
+   title="¿Necesitas ayuda? ¡Escríbenos por WhatsApp!">
+    
+    <!-- Logo oficial de WhatsApp SVG -->
+    <svg class="whatsapp-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.465 3.085"/>
+    </svg>
+</a>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const whatsappButton = document.querySelector('.whatsapp-float');
+    if (whatsappButton) {
+        setTimeout(function() {
+            whatsappButton.style.opacity = '1';
+            whatsappButton.style.transform = 'scale(1)';
+        }, 1000);
+    }
+});
+</script>
+
+
 </body>
 </html> 

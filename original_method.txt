@@ -1,0 +1,25 @@
+    def upload_documents(self, request, pk=None):
+        """Subir documentos requeridos"""
+        application = self.get_object()
+        
+        if application.status not in ['submitted', 'documentation_required']:
+            return Response(
+                {'error': 'No se pueden subir documentos en este estado'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Actualizar documentos
+        if 'income_proof' in request.FILES:
+            application.income_proof = request.FILES['income_proof']
+        if 'id_document' in request.FILES:
+            application.id_document = request.FILES['id_document']
+        if 'address_proof' in request.FILES:
+            application.address_proof = request.FILES['address_proof']
+        
+        application.save()
+        
+        serializer = FinancingRequestDetailSerializer(
+            application,
+            context={'request': request}
+        )
+        return Response(serializer.data)
