@@ -72,3 +72,47 @@ deploy.tar.gz
 *.backup
 backups/
 sistema_*.tar.gz
+
+# ===== PATRONES ADICIONALES IDENTIFICADOS =====
+
+# Archivos de testing y debug
+test_*.html
+test_*.py
+test_*.js
+debug_*.py
+debug_*.html
+simple_test.html
+
+# Archivos temporales específicos del proyecto
+*.bak
+*.backup-*
+*.obsoleto_*
+*_old.py
+*_v*.py
+
+# Archivos de configuración sensibles
+*.txt.backup
+token_response.json
+cookies*.tmp
+*.pdf
+
+# Directorios de backup organizados
+backup_*/
+Screenshots/
+
+# Archivos específicos de R4
+r4_*.html
+r4_test_*
+
+# Archivos de documentación temporal
+*.tmp.md
+clean_*.js
+complete_*.js
+simple_*.js
+
+# Archivos de subida de documentos
+documento_prueba_*
+test_upload.*
+test_flujo_*
+
+# ===== FIN PATRONES ADICIONALES =====

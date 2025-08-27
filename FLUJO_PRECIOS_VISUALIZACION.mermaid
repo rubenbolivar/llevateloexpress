@@ -1,0 +1,134 @@
+flowchart TD
+    %% ===== INICIO DEL PROCESO =====
+    Start([👤 Usuario Visita LlévateloExpress.com]) --> Landing[🏠 Página Principal<br/>💰 **PRECIOS VES VISIBLES**<br/>- Catálogo de Motocicletas<br/>- Bs. formatCurrency en cards<br/>- Planes de Financiamiento]
+    
+    Landing --> Browse[🔍 Usuario Navega Catálogo<br/>💰 **PRECIOS DETALLADOS**<br/>- Filtro por rango de precios<br/>- Ordenamiento por precio<br/>- Cards con precio prominente<br/>- Formato: Bs. X.XXX,XX]
+    
+    Browse --> ProductDetail[📱 Detalle de Producto<br/>💰 **PRECIO PRINCIPAL**<br/>- Precio destacado<br/>- Especificaciones técnicas<br/>- Galería de imágenes<br/>- Botón "Financiar"]
+    
+    ProductDetail --> Interest{💭 Usuario Interesado<br/>en Financiamiento?}
+    
+    Interest -->|Sí| Calculator[🧮 Simulador de Financiamiento<br/>💰 **CALCULADORA INTERACTIVA**<br/>- Precio base del producto<br/>- Cuota inicial configurable<br/>- Cuotas mensuales calculadas<br/>- Total a pagar visible<br/>- Intereses mostrados]
+    
+    Interest -->|No| DirectContact[📞 Contacto Directo<br/>💰 **PRECIO DE REFERENCIA**<br/>- Precio mencionado en consulta<br/>- WhatsApp/Teléfono]
+    
+    %% ===== REGISTRO DE USUARIO =====
+    Calculator --> RegisterDecision{🔐 Usuario Registrado?}
+    
+    RegisterDecision -->|No| Register[📝 Registro de Usuario<br/>- Formulario de registro<br/>- Datos personales<br/>- Email y contraseña<br/>- Verificación de email]
+    
+    Register --> CustomerCreated[✅ Usuario Creado<br/>- Customer record en DB<br/>- Estado: Activo<br/>- Profile completo]
+    
+    RegisterDecision -->|Sí| Login[🔑 Inicio de Sesión<br/>- JWT Authentication<br/>- Validación credenciales]
+    
+    CustomerCreated --> Login
+    
+    %% ===== SOLICITUD DE FINANCIAMIENTO =====
+    Login --> CreateApp[📋 Crear Solicitud de Financiamiento<br/>💰 **RESUMEN FINANCIERO**<br/>- Producto y precio seleccionado<br/>- Plan de financiamiento<br/>- Términos de pago<br/>- Cuota inicial requerida]
+    
+    CreateApp --> FillPersonal[👤 Llenar Datos Personales<br/>- Información personal<br/>- Datos de contacto<br/>- Información laboral<br/>- Referencias personales]
+    
+    FillPersonal --> FillFinancial[💰 Datos Financieros<br/>💰 **CAPACIDAD DE PAGO**<br/>- Ingresos mensuales<br/>- Gastos fijos<br/>- Cuota mensual estimada<br/>- Ratio de endeudamiento]
+    
+    FillFinancial --> UploadDocs[📎 Subir Documentos<br/>- Cédula de identidad<br/>- Constancia de trabajo<br/>- Estados de cuenta<br/>- Referencias comerciales]
+    
+    UploadDocs --> SubmitApp[📤 Enviar Solicitud<br/>💰 **CONFIRMACIÓN PRECIOS**<br/>- Resumen final de costos<br/>- Precio del vehículo<br/>- Cuota inicial<br/>- Plan de pagos<br/>- Estado: DRAFT → SUBMITTED]
+    
+    %% ===== PROCESO ADMINISTRATIVO =====
+    SubmitApp --> AdminNotification[🔔 Notificación Admin<br/>- Email al equipo<br/>- Dashboard actualizado<br/>- Cola de revisión]
+    
+    AdminNotification --> AdminReview[👨‍💼 Revisión Administrativa<br/>💰 **EVALUACIÓN FINANCIERA**<br/>- Verificar documentos<br/>- Evaluar capacidad vs precio<br/>- Ajustar términos si necesario<br/>- Verificar referencias]
+    
+    AdminReview --> AdminDecision{⚖️ Decisión Administrativa}
+    
+    AdminDecision -->|Rechazo| Reject[❌ Solicitud Rechazada<br/>- Estado: REJECTED<br/>- Razón del rechazo<br/>- Notificación al cliente<br/>- Posibilidad de reapplicar]
+    
+    AdminDecision -->|Términos Modificados| ModifyTerms[📝 Modificación de Términos<br/>💰 **NUEVOS PRECIOS/TÉRMINOS**<br/>- Ajuste de cuota inicial<br/>- Modificación de plazos<br/>- Nueva estructura de pagos<br/>- Aprobación cliente requerida]
+    
+    ModifyTerms --> ClientApproval{✅ Cliente Acepta<br/>Nuevos Términos?}
+    
+    ClientApproval -->|No| Reject
+    ClientApproval -->|Sí| Approve
+    
+    AdminDecision -->|Aprobación| Approve[✅ Solicitud Aprobada<br/>💰 **TÉRMINOS FINALES**<br/>- Precio final confirmado<br/>- Cronograma de pagos<br/>- Condiciones definitivas<br/>- Estado: APPROVED]
+    
+    %% ===== PROCESO DE CONTRATACIÓN =====
+    Approve --> Contract[📄 Generación de Contrato<br/>💰 **DETALLES FINANCIEROS LEGALES**<br/>- Precio del vehículo<br/>- Cuota inicial especificada<br/>- PaymentSchedule detallado<br/>- Intereses y cargos<br/>- Términos y condiciones<br/>- Estado: ACTIVE]
+    
+    Contract --> InitialPayment[💵 Pago Inicial Requerido<br/>💰 **MONTO EXACTO A PAGAR**<br/>- Cantidad específica en Bs.<br/>- Múltiples métodos de pago<br/>- R4 Pago Móvil (Principal)<br/>- Transferencias bancarias]
+    
+    %% ===== SISTEMA DE PAGOS R4 =====
+    InitialPayment --> PaymentMethod{💳 Método de Pago Seleccionado}
+    
+    PaymentMethod -->|R4 Pago Móvil| R4Payment[📱 Pago Móvil R4<br/>💰 **MONTO EXACTO EN MODAL**<br/>- Instrucciones detalladas<br/>- RIF: J-506654547<br/>- Teléfono: 0412 1193126<br/>- Concepto: LlévateloExpress-ID<br/>- **Monto exacto en Bs. destacado**]
+    
+    R4Payment --> R4Process[⚡ Procesamiento R4<br/>- Webhook MBnotifica<br/>- Verificación automática<br/>- UUID: 39f97f26-b0cb-4527<br/>- Confirmación de monto]
+    
+    R4Process --> R4Confirm[✅ Confirmación R4<br/>💰 **PAGO VERIFICADO**<br/>- Monto confirmado<br/>- Payment: VERIFIED<br/>- Saldo actualizado<br/>- Usuario y admin notificados]
+    
+    PaymentMethod -->|Transferencia| BankTransfer[🏦 Transferencia Bancaria<br/>💰 **MONTO ESPECÍFICO**<br/>- Cantidad exacta a transferir<br/>- Datos bancarios empresa<br/>- Comprobante requerido<br/>- Verificación manual admin]
+    
+    BankTransfer --> ManualVerify[👨‍💼 Verificación Manual<br/>💰 **VERIFICACIÓN DE MONTO**<br/>- Admin revisa comprobante<br/>- Confirma cantidad exacta<br/>- Actualiza saldo en sistema<br/>- Payment: VERIFIED]
+    
+    PaymentMethod -->|Otros Métodos| OtherPayment[💰 Otros Métodos<br/>💰 **MONTO ESPECIFICADO**<br/>- Zelle: monto en USD<br/>- Efectivo: cantidad exacta<br/>- Procesamiento manual<br/>- Verificación admin]
+    
+    OtherPayment --> ManualVerify
+    
+    %% ===== ENTREGA DEL VEHÍCULO =====
+    R4Confirm --> DeliverySchedule[🚚 Programar Entrega<br/>- Coordinación logística<br/>- Fecha y lugar<br/>- Documentación legal<br/>- Seguro vehicular]
+    ManualVerify --> DeliverySchedule
+    
+    DeliverySchedule --> VehicleDelivery[🏍️ Entrega del Vehículo<br/>💰 **DOCUMENTOS CON PRECIOS**<br/>- Verificación física<br/>- Documentos de propiedad<br/>- Factura con precio final<br/>- Manual del usuario<br/>- Garantía activada]
+    
+    VehicleDelivery --> ContractActive[📋 Contrato Activo<br/>💰 **CRONOGRAMA DE PAGOS ACTIVO**<br/>- Saldo pendiente visible<br/>- Próximas cuotas programadas<br/>- Calendario de vencimientos<br/>- Estado: ACTIVE]
+    
+    %% ===== PAGOS MENSUALES =====
+    ContractActive --> MonthlyPayments[💰 Cronograma de Pagos Mensuales<br/>💰 **DASHBOARD DE PAGOS**<br/>- Saldo pendiente actual<br/>- Próxima cuota y monto<br/>- Historial de pagos<br/>- PaymentSchedule visible<br/>- Notificaciones automáticas]
+    
+    MonthlyPayments --> PaymentDue[📅 Cuota Vencida<br/>💰 **MONTO DE CUOTA ESPECÍFICO**<br/>- Cantidad exacta a pagar<br/>- Fecha de vencimiento<br/>- Mora si aplica<br/>- Opciones de pago disponibles]
+    
+    PaymentDue --> MonthlyPaymentMethod{💳 Cliente Selecciona Método}
+    
+    MonthlyPaymentMethod -->|R4 Pago Móvil| MonthlyR4[📱 Pago Móvil Mensual<br/>💰 **MONTO CUOTA EN MODAL**<br/>- Mismo proceso R4<br/>- Cantidad de cuota exacta<br/>- Identificación automática<br/>- Aplicación a cuota específica]
+    
+    MonthlyR4 --> PaymentProcessed[✅ Pago Procesado<br/>💰 **SALDO ACTUALIZADO**<br/>- Payment: VERIFIED<br/>- PaymentSchedule actualizado<br/>- Nuevo saldo pendiente<br/>- Próxima cuota calculada<br/>- Confirmación con montos]
+    
+    MonthlyPaymentMethod -->|Otros| OtherMonthlyPayment[💰 Otros Métodos Mensuales<br/>💰 **MONTO DE CUOTA**<br/>- Transferencia: cantidad exacta<br/>- Efectivo: monto específico<br/>- Verificación manual<br/>- Aplicación a cuenta]
+    
+    OtherMonthlyPayment --> PaymentProcessed
+    
+    %% ===== GESTIÓN DE MOROSIDAD =====
+    PaymentDue --> LatePayment{⏰ Pago a Tiempo?}
+    
+    LatePayment -->|No| LateFee[🚨 Generación de Mora<br/>💰 **CÁLCULO DE MORA**<br/>- Interés moratorio calculado<br/>- Monto adicional específico<br/>- Payment: LATE_FEE<br/>- Notificación con nuevos montos<br/>- Total actualizado a pagar]
+    
+    LateFee --> CollectionProcess[📞 Proceso de Cobranza<br/>💰 **NEGOCIACIÓN DE MONTOS**<br/>- Planes de pago especiales<br/>- Descuentos por pronto pago<br/>- Reestructuración de deuda<br/>- Montos acordados documentados]
+    
+    LatePayment -->|Sí| PaymentProcessed
+    
+    %% ===== FINALIZACIÓN DEL CONTRATO =====
+    PaymentProcessed --> CheckBalance{💰 Saldo Pendiente?}
+    
+    CheckBalance -->|Sí| MonthlyPayments
+    CheckBalance -->|No| ContractComplete[🎉 Contrato Completado<br/>💰 **SALDO CERO CONFIRMADO**<br/>- Estado: COMPLETED<br/>- Total pagado documentado<br/>- Liberación de garantías<br/>- Documentos finales<br/>- Paz y salvo financiero]
+    
+    ContractComplete --> PostSale[🤝 Servicio Post-Venta<br/>- Mantenimiento disponible<br/>- Garantía vigente<br/>- Cliente referidor<br/>- Historial crediticio positivo]
+    
+    %% STYLING - Destacar puntos de visualización de precios
+    classDef priceDisplay fill:#fff3cd,stroke:#f57c00,stroke-width:4px,color:#000
+    classDef userAction fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef adminAction fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+    classDef systemProcess fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
+    classDef paymentProcess fill:#fff8e1,stroke:#f57f17,stroke-width:2px
+    classDef decision fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef milestone fill:#f3e5f5,stroke:#7b1fa2,stroke-width:3px
+    
+    %% Aplicar estilo de precio a nodos con visualización de precios
+    class Landing,Browse,ProductDetail,Calculator,CreateApp,FillFinancial,SubmitApp,AdminReview,ModifyTerms,Approve,Contract,InitialPayment,R4Payment,R4Confirm,BankTransfer,ManualVerify,OtherPayment,VehicleDelivery,ContractActive,MonthlyPayments,PaymentDue,MonthlyR4,PaymentProcessed,LateFee,CollectionProcess,ContractComplete priceDisplay
+    
+    class Register,Login,FillPersonal,UploadDocs userAction
+    class AdminNotification,AdminReview,ManualVerify,CollectionProcess adminAction
+    class R4Process,CustomerCreated systemProcess
+    class InitialPayment,R4Payment,BankTransfer,OtherPayment,MonthlyR4,OtherMonthlyPayment paymentProcess
+    class Interest,RegisterDecision,AdminDecision,ClientApproval,PaymentMethod,MonthlyPaymentMethod,LatePayment,CheckBalance decision
+    class ContractActive,VehicleDelivery,ContractComplete,PostSale milestone
