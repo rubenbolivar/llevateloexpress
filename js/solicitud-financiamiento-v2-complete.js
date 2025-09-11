@@ -916,6 +916,7 @@ prepareRequestData() {
         payment_frequency: this.normalizePaymentFrequency(calc.payment_frequency || 'monthly'),
         number_of_payments: parseInt(calc.number_of_payments || 0),
         payment_amount: parseFloat(calc.payment_amount || 0).toFixed(2),
+        payment_amount_llevos: parseInt(this.state.calculationData.cuotaMensual || 0),
         
         // Datos personales
         employment_type: this.state.formData.employment_type || '',

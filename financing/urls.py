@@ -31,4 +31,10 @@ urlpatterns = [
     path('my-payments/', views.UserPaymentsView.as_view(), name='user-payments'),
     path('payment-status/<int:payment_id>/', views.PaymentStatusView.as_view(), name='payment-status'),
     # path('upload-attachment/<int:payment_id>/', views.upload_additional_attachment, name='upload-attachment'),  # Comentado temporalmente
+    
+    # Sistema LLEVO
+    path('llevo/current-rate/', views.LlevoCurrentRateView.as_view(), name='llevo-current-rate'),
+    
+    # Admin helpers
+    path('admin/product-data/<int:product_id>/', views.AdminProductDataView.as_view(), name='admin-product-data'),
 ]

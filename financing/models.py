@@ -27,6 +27,7 @@ class FinancingPlan(models.Model):
         verbose_name="Tasa de interés anual %"
     )
     
+    
     # Restricciones
     min_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Monto mínimo")
     max_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Monto máximo")
@@ -98,11 +99,33 @@ class FinancingRequest(models.Model):
         verbose_name="Estado"
     )
     
-    # Montos
+    # Montos en LLEVO (sistema actual)
+    product_price_llevos = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name="Precio del producto (LLEVO)"
+    )
+    down_payment_llevos = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name="Monto de inicial (LLEVO)"
+    )
+    financed_amount_llevos = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name="Monto a financiar (LLEVO)"
+    )
+    payment_amount_llevos = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name="Monto de cada cuota (LLEVO)"
+    )
+    
+    # Montos antiguos (mantenidos por compatibilidad)
     product_price = models.DecimalField(
         max_digits=10, 
         decimal_places=2,
-        verbose_name="Precio del producto"
+        verbose_name="Precio del producto (USD) - DEPRECADO"
     )
     down_payment_percentage = models.IntegerField(
         validators=[MinValueValidator(0), MaxValueValidator(100)],
@@ -111,12 +134,12 @@ class FinancingRequest(models.Model):
     down_payment_amount = models.DecimalField(
         max_digits=10, 
         decimal_places=2,
-        verbose_name="Monto de inicial"
+        verbose_name="Monto de inicial (USD) - DEPRECADO"
     )
     financed_amount = models.DecimalField(
         max_digits=10, 
         decimal_places=2,
-        verbose_name="Monto a financiar"
+        verbose_name="Monto a financiar (USD) - DEPRECADO"
     )
     interest_rate = models.DecimalField(
         max_digits=5, 
@@ -144,7 +167,7 @@ class FinancingRequest(models.Model):
     payment_amount = models.DecimalField(
         max_digits=10, 
         decimal_places=2,
-        verbose_name="Monto de cada cuota"
+        verbose_name="Monto de cada cuota (USD) - DEPRECADO"
     )
     
     # Información adicional del cliente
@@ -1011,11 +1034,20 @@ def auto_generate_payment_schedule(sender, instance, created, **kwargs):
                 # Usar el primer superuser disponible como fallback
                 changed_by_user = User.objects.filter(is_superuser=True).first()
             
+            # Crear historial solo si no existe uno reciente
             if changed_by_user:
-                ApplicationStatusHistory.objects.create(
+                recent_history = ApplicationStatusHistory.objects.filter(
                     application=instance,
-                    from_status=old_status or 'unknown',
                     to_status=current_status,
                     changed_by=changed_by_user,
-                    notes="Cronograma de pagos generado automáticamente"
-                )
+                    change_date__gte=timezone.now() - timezone.timedelta(seconds=5)
+                ).exists()
+                
+                if not recent_history:
+                    ApplicationStatusHistory.objects.create(
+                        application=instance,
+                        from_status=old_status or 'unknown',
+                        to_status=current_status,
+                        changed_by=changed_by_user,
+                        notes="Aprobado - Cronograma de pagos generado automáticamente"
+                    )

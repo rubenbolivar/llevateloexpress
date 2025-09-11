@@ -204,15 +204,18 @@ function initTooltips() {
 }
 
 /**
- * Utilidad para formatear moneda
+ * Utilidad para formatear precios LLEVO
  */
-function formatCurrency(amount) {
-    return amount.toLocaleString('es-ES', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    });
+function formatCurrency(amount, isLlevo = false) {
+    const price = parseFloat(amount);
+    if (isNaN(price)) return "Precio no disponible";
+    
+    if (isLlevo) {
+        return price.toLocaleString() + " LLEVO";
+    } else {
+        // Fallback a USD si no es LLEVO
+        return "$" + price.toLocaleString();
+    }
 }
 
 /**

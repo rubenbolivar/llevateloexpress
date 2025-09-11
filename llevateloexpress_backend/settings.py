@@ -260,6 +260,12 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
+        'error_file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': '/var/log/llevateloexpress/django_errors.log',
+            'formatter': 'simple',
+        },
     },
     'loggers': {
         'notifications': {
@@ -270,6 +276,16 @@ LOGGING = {
         'django.core.mail': {
             'handlers': ['console'],
             'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['error_file', 'console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'financing': {
+            'handlers': ['error_file', 'console'],
+            'level': 'ERROR',
             'propagate': False,
         },
     },

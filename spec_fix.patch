@@ -1,0 +1,27 @@
+--- detalle-producto.html.orig
++++ detalle-producto.html
+@@ -447,18 +447,30 @@
+                         if (apiProduct.specs_general) {
+                             specs.general = typeof apiProduct.specs_general === 'string' ? 
+                                 JSON.parse(apiProduct.specs_general) : apiProduct.specs_general;
++                        } else {
++                            specs.general = [];
+                         }
+                         if (apiProduct.specs_engine) {
+                             specs.engine = typeof apiProduct.specs_engine === 'string' ? 
+                                 JSON.parse(apiProduct.specs_engine) : apiProduct.specs_engine;
++                        } else {
++                            specs.engine = [];
+                         }
+                         if (apiProduct.specs_comfort) {
+                             specs.comfort = typeof apiProduct.specs_comfort === 'string' ? 
+                                 JSON.parse(apiProduct.specs_comfort) : apiProduct.specs_comfort;
++                        } else {
++                            specs.comfort = [];
+                         }
+                         if (apiProduct.specs_safety) {
+                             specs.safety = typeof apiProduct.specs_safety === 'string' ? 
+                                 JSON.parse(apiProduct.specs_safety) : apiProduct.specs_safety;
++                        } else {
++                            specs.safety = [];
+                         }

@@ -1,11 +1,12 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from django.urls import reverse
+from django.urls import reverse, path
 from django.utils import timezone
 from django.db.models import Sum, Count
 from django.utils.safestring import mark_safe
 from django.db.models import Q
 from django.contrib.admin import SimpleListFilter
+from django.http import JsonResponse
 from .models import (
     FinancingPlan, FinancingRequest, Payment, 
     PaymentSchedule, ApplicationStatusHistory,
@@ -94,18 +95,29 @@ class FinancingPlanAdmin(admin.ModelAdmin):
     search_fields = ('name', 'description')
     prepopulated_fields = {'slug': ('name',)}
     
+    # Simplified configuration for CrediLlevo-only system
+    def has_add_permission(self, request):
+        # Only allow one financing plan (CrediLlevo)
+        return not FinancingPlan.objects.exists()
+    
+    def has_delete_permission(self, request, obj=None):
+        # Prevent deletion of the single CrediLlevo plan
+        return False
+    
     fieldsets = (
-        ('Información Básica', {
-            'fields': ('name', 'slug', 'description', 'is_active')
+        ('Plan CrediLlevo Inmediato', {
+            'fields': ('name', 'slug', 'description', 'is_active'),
+            'description': 'Plan único de financiamiento CrediLlevo con pagos fijos en LLEVOs durante 24 meses.'
         }),
         ('Configuración del Plan', {
             'fields': (
                 'min_down_payment_percentage',
                 'max_term_months',
                 'interest_rate'
-            )
+            ),
+            'description': 'Configuración: 24 meses plazo fijo, 0% interés. Las iniciales se definen por producto.'
         }),
-        ('Restricciones', {
+        ('Restricciones de Monto', {
             'fields': ('min_amount', 'max_amount')
         }),
     )
@@ -114,7 +126,7 @@ class FinancingPlanAdmin(admin.ModelAdmin):
 class FinancingRequestAdmin(admin.ModelAdmin):
     list_display = (
         'application_number', 'customer_name', 'product_name', 
-        'status_badge', 'product_price', 'created_at'
+        'status_badge', 'product_price_llevo_formatted', 'down_payment_llevo_formatted', 'created_at'
     )
     list_filter = ('status', 'payment_frequency', 'created_at', 'financing_plan')
     search_fields = (
@@ -129,6 +141,32 @@ class FinancingRequestAdmin(admin.ModelAdmin):
     
     inlines = [PaymentInline, PaymentScheduleInline, ApplicationStatusHistoryInline]
     
+    def save_model(self, request, obj, form, change):
+        """Personalizar el guardado del modelo para manejar cambios de estado"""
+        if change:
+            # Obtener el objeto original para comparar estados
+            try:
+                original = FinancingRequest.objects.get(pk=obj.pk)
+                old_status = original.status
+                new_status = obj.status
+                
+                # Si cambió el estado, establecer campos relacionados
+                if old_status != new_status:
+                    obj.reviewed_by = request.user
+                    obj.review_date = timezone.now()
+                    
+                    # Para aprobación, establecer fecha de aprobación
+                    if new_status == 'approved' and old_status != 'approved':
+                        obj.approved_at = timezone.now()
+                        
+                    # Almacenar el estado anterior para el signal
+                    obj._old_status = old_status
+            except FinancingRequest.DoesNotExist:
+                pass
+        
+        # Guardar el objeto (el signal se encargará del historial)
+        super().save_model(request, obj, form, change)
+    
     fieldsets = (
         ('Información de la Solicitud', {
             'fields': (
@@ -136,16 +174,24 @@ class FinancingRequestAdmin(admin.ModelAdmin):
                 'financing_plan', 'status'
             )
         }),
-        ('Detalles Financieros', {
+        ('Detalles Financieros (LLEVO)', {
             'fields': (
-                'product_price', 'down_payment_percentage', 'down_payment_amount',
-                'financed_amount', 'interest_rate', 'total_interest', 'total_amount'
-            )
+                'product_price_llevos', 'down_payment_llevos', 'financed_amount_llevos', 'payment_amount_llevos'
+            ),
+            'description': 'Montos principales en LLEVO para el sistema CrediLlevo'
         }),
         ('Plan de Pagos', {
             'fields': (
-                'payment_frequency', 'number_of_payments', 'payment_amount'
+                'payment_frequency', 'number_of_payments'
             )
+        }),
+        ('Detalles Financieros Antiguos', {
+            'fields': (
+                'product_price', 'down_payment_percentage', 'down_payment_amount',
+                'financed_amount', 'interest_rate', 'total_interest', 'total_amount', 'payment_amount'
+            ),
+            'classes': ('collapse',),
+            'description': 'Campos antiguos mantenidos por compatibilidad'
         }),
         ('Información del Cliente', {
             'fields': (
@@ -182,6 +228,62 @@ class FinancingRequestAdmin(admin.ModelAdmin):
     def product_name(self, obj):
         return obj.product.name
     product_name.short_description = 'Producto'
+    
+    def product_price_llevo_formatted(self, obj):
+        if obj.product_price_llevos:
+            return format_html(
+                '<strong style="color: #28a745;">{} LLEVO</strong>',
+                obj.product_price_llevos
+            )
+        return "-"
+    product_price_llevo_formatted.short_description = 'Precio (LLEVO)'
+    
+    def down_payment_llevo_formatted(self, obj):
+        if obj.down_payment_llevos:
+            return format_html(
+                '<strong style="color: #007bff;">{} LLEVO</strong>',
+                obj.down_payment_llevos
+            )
+        return "-"
+    down_payment_llevo_formatted.short_description = 'Inicial (LLEVO)'
+    
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            path('get-product-data/<int:product_id>/', self.get_product_data, name='financing_get_product_data'),
+        ]
+        return my_urls + urls
+    
+    def get_product_data(self, request, product_id):
+        """Endpoint para obtener datos del producto y calcular financiamiento"""
+        try:
+            from products.models import Product
+            product = Product.objects.get(id=product_id)
+            
+            # Obtener datos básicos del producto
+            data = {
+                'price_llevos': product.price_llevo,
+                'inicial_llevos': product.inicial_llevos,
+            }
+            
+            # Calcular datos de financiamiento si ambos valores existen
+            if product.price_llevo and product.inicial_llevos:
+                financed_amount = product.price_llevo - product.inicial_llevos
+                monthly_payment = financed_amount / 24  # 24 meses fijos
+                
+                data.update({
+                    'financed_amount_llevos': financed_amount,
+                    'payment_amount_llevos': int(monthly_payment),  # Redondear a entero
+                    'number_of_payments': 24,
+                    'payment_frequency': 'monthly'
+                })
+            
+            return JsonResponse({'success': True, 'data': data})
+            
+        except Product.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Producto no encontrado'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
     
     def status_badge(self, obj):
         colors = {
@@ -261,6 +363,9 @@ class FinancingRequestAdmin(admin.ModelAdmin):
             count += 1
         self.message_user(request, f'Calendario de pagos generado para {count} solicitudes.')
     generate_payment_schedule.short_description = "Generar calendario de pagos"
+    
+    class Media:
+        js = ('financing/js/financing_request_admin.js',)
 
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):

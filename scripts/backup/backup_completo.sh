@@ -60,7 +60,14 @@ log "📁 Creando backup del código fuente..."
 CODE_BACKUP_FILE="$BACKUP_DIR/code_backup_$TIMESTAMP.tar.gz"
 
 cd /var/www
-if tar -czf $CODE_BACKUP_FILE llevateloexpress/ --exclude='llevateloexpress/backend_env' --exclude='llevateloexpress/__pycache__' --exclude='llevateloexpress/*/__pycache__' --exclude='llevateloexpress/logs' --exclude='llevateloexpress/media/temp'; then
+if tar -czf $CODE_BACKUP_FILE llevateloexpress/ \
+    --exclude='llevateloexpress/backups' \
+    --exclude='llevateloexpress/backend_env' \
+    --exclude='llevateloexpress/__pycache__' \
+    --exclude='llevateloexpress/*/__pycache__' \
+    --exclude='llevateloexpress/logs' \
+    --exclude='llevateloexpress/media/temp' \
+    --exclude='llevateloexpress/*.log'; then
     log "✅ Backup de código creado: $CODE_BACKUP_FILE"
     CODE_SIZE=$(du -h $CODE_BACKUP_FILE | cut -f1)
     info "   Tamaño: $CODE_SIZE"

@@ -22,6 +22,7 @@ from .models import (
     FinancingConfiguration, ProductCategory, SimulatorProduct, HelpText,
     CalculatorMode, PaymentMethod, CompanyBankAccount  # PaymentAttachment comentado temporalmente
 )
+from products.llevo_models import LlevoRate
 from .serializers.financing_serializers import (
     FinancingPlanSerializer,
     FinancingRequestListSerializer,
@@ -1311,3 +1312,69 @@ class PaymentStatusView(APIView):
 #             'success': False,
 #             'error': f'Error al subir archivo: {str(e)}'
 #         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class LlevoCurrentRateView(APIView):
+    """
+    Vista para obtener la tasa LLEVO actual
+    GET /api/financing/llevo/current-rate/
+    """
+    permission_classes = [permissions.AllowAny]  # Público para frontend
+    
+    def get(self, request):
+        """Obtener tasa LLEVO actual"""
+        current_rate = LlevoRate.get_current_rate()
+        
+        if not current_rate:
+            return Response({
+                'success': False,
+                'error': 'No hay tasa LLEVO activa configurada'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        return Response({
+            'success': True,
+            'data': {
+                'usdt_ves_rate': float(current_rate.usdt_ves_rate),
+                'llevo_value': float(current_rate.llevo_value),
+                'created_at': current_rate.created_at.isoformat(),
+                'calculation': f"1 LLEVO = {current_rate.usdt_ves_rate} × 15 × 1.18 = {current_rate.llevo_value} VES"
+            }
+        })
+
+
+class AdminProductDataView(APIView):
+    """
+    Vista para obtener datos del producto para el admin
+    GET /api/financing/admin/product-data/<product_id>/
+    """
+    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    
+    def get(self, request, product_id):
+        """Obtener datos del producto y calcular financiamiento"""
+        try:
+            product = get_object_or_404(Product, id=product_id)
+            
+            # Datos básicos del producto
+            data = {
+                'price_llevos': product.price_llevo,
+                'inicial_llevos': product.inicial_llevos,
+            }
+            
+            # Calcular datos de financiamiento si ambos valores existen
+            if product.price_llevo and product.inicial_llevos:
+                financed_amount = product.price_llevo - product.inicial_llevos
+                monthly_payment = financed_amount / 24  # 24 meses fijos
+                
+                data.update({
+                    'financed_amount_llevos': financed_amount,
+                    'payment_amount_llevos': int(monthly_payment),  # Redondear a entero
+                    'number_of_payments': 24,
+                    'payment_frequency': 'monthly'
+                })
+            
+            return Response({'success': True, 'data': data})
+            
+        except Product.DoesNotExist:
+            return Response({'success': False, 'error': 'Producto no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'success': False, 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

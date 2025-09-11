@@ -1,4 +1,23 @@
 // Dashboard Module
+
+// Variable global para la tasa LLEVO actual
+let currentLlevoRate = 4186.05;
+
+// Función para obtener la tasa LLEVO actual
+async function getCurrentLlevoRate() {
+    try {
+        const response = await fetch('/api/financing/llevo/current-rate/');
+        if (!response.ok) {
+            throw new Error('Error al obtener tasa LLEVO');
+        }
+        const data = await response.json();
+        return data.data.llevo_value || 4186.05;
+    } catch (error) {
+        console.error('Error obteniendo tasa LLEVO:', error);
+        return 4186.05;
+    }
+}
+
 const Dashboard = {
     currentRequestId: null,
     selectedFiles: [],
@@ -15,6 +34,8 @@ const Dashboard = {
         this.setupEventListeners();
         
         // Cargar datos del dashboard
+        // Cargar tasa LLEVO actual
+        currentLlevoRate = await getCurrentLlevoRate();
         await this.loadDashboardData();
         
         // Actualizar UI de autenticación
@@ -164,7 +185,7 @@ const Dashboard = {
                 <tr>
                     <td>${request.application_number || request.id}</td>
                     <td>${request.product_name || 'N/A'}</td>
-                    <td>$${this.formatNumber(request.product_price || 0)}</td>
+                    <td>${this.formatNumber(request.product_price_llevo || 0)} LLEVO</td>
                     <td>${statusBadge}</td>
                     <td>${this.formatDate(request.created_at)}</td>
                     <td>${actions}</td>
@@ -249,7 +270,7 @@ const Dashboard = {
         const nextPayment = schedule.find(p => p.status === 'pending');
         if (nextPayment) {
             document.getElementById('nextPaymentAmount').textContent = 
-                `$${this.formatNumber(nextPayment.amount)}`;
+                `${this.formatNumber(nextPayment.amount_llevo || nextPayment.amount)} LLEVO`;
             document.getElementById('nextPaymentDate').textContent = 
                 this.formatDate(nextPayment.due_date);
         }
@@ -268,7 +289,7 @@ const Dashboard = {
                                 <small class="text-muted">Vence: ${this.formatDate(payment.due_date)}</small>
                             </div>
                             <div class="col-auto">
-                                <h6 class="mb-0">$${this.formatNumber(payment.amount)}</h6>
+                                <h6 class="mb-0">${this.formatNumber(payment.amount_llevo || payment.amount)} LLEVO</h6>
                                 <small>${statusText}</small>
                             </div>
                         </div>
@@ -327,7 +348,7 @@ const Dashboard = {
                 // Botón R4 como método principal para pagos - destacado visualmente
                 buttons.push(`
                     <span class="r4-primary-indicator">PRINCIPAL</span>
-                    <button class="btn btn-sm r4-payment-button" onclick="showR4Modal(${request.id}, '${request.product_name}', ${request.payment_amount})">
+                    <button class="btn btn-sm r4-payment-button" onclick="console.log(\u0027🔍 Datos R4:\u0027, {id: ${request.id}, llevos: ${request.payment_amount_llevo || 0}, rate: ${currentLlevoRate}, total: ${(request.payment_amount_llevo || 0) * currentLlevoRate}}); showR4Modal(${request.id}, \u0027${request.product_name}\u0027, ${(request.payment_amount_llevo || 0) * currentLlevoRate})">
                         <i class="fas fa-mobile-alt"></i> R4 Pago
                     </button>
                 `);
@@ -360,13 +381,13 @@ const Dashboard = {
                     <h6>Información del Producto</h6>
                     <p><strong>N° Solicitud:</strong> ${request.application_number || request.id}</p>
                     <p><strong>Producto:</strong> ${request.product_name || 'N/A'}</p>
-                    <p><strong>Precio:</strong> $${this.formatNumber(request.product_price || 0)}</p>
+                    <p><strong>Precio:</strong> ${this.formatNumber(request.product_price_llevo || 0)} LLEVO</p>
                 </div>
                 <div class="col-md-6">
                     <h6>Información del Financiamiento</h6>
                     <p><strong>Estado:</strong> ${request.status_display || request.status}</p>
                     <p><strong>Frecuencia de Pago:</strong> ${request.payment_frequency || 'N/A'}</p>
-                    <p><strong>Monto de Cuota:</strong> $${this.formatNumber(request.payment_amount || 0)}</p>
+                    <p><strong>Monto de Cuota:</strong> ${this.formatNumber(request.payment_amount_llevo || 0)} LLEVO</p>
                 </div>
             </div>
             <hr>
@@ -569,7 +590,8 @@ const Dashboard = {
                                 <div class="text-center mb-3">
                                     <h6>Solicitud: ${request.application_number || request.id}</h6>
                                     <p class="text-muted">${request.product_name}</p>
-                                    <h4 class="text-success">$${this.formatNumber(request.payment_amount || request.product_price)}</h4>
+                                    <h4 class="text-success">${this.formatNumber(request.payment_amount_llevo || 0)} LLEVO</h4>
+                                    <small class="text-muted">Pago R4: ${this.formatNumber(request.payment_amount_ves || 0)} VES</small>
                                 </div>
                                 <div id="quickR4ButtonContainer" class="text-center">
                                     <!-- Botón R4 se generará aquí -->
@@ -594,7 +616,7 @@ const Dashboard = {
             // Configurar botón R4 en el modal con estilo destacado
             const buttonConfig = {
                 applicationId: request.id,
-                amount: request.payment_amount || request.product_price,
+                amount: request.payment_amount_ves || request.payment_amount || request.product_price,
                 currency: 'VES',
                 size: 'large',
                 variant: 'success',
@@ -645,7 +667,7 @@ const Dashboard = {
                     // Configuración del botón R4 con estilos destacados
                     const buttonConfig = {
                         applicationId: request.id,
-                        amount: request.payment_amount || request.product_price,
+                        amount: request.payment_amount_ves || request.payment_amount || request.product_price,
                         currency: 'VES', // R4 opera en bolívares
                         size: 'small',
                         variant: 'success',

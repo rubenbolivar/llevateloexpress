@@ -9,6 +9,66 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- Estilos para ticker financiero -->
+    <style>
+        .financial-ticker {
+            overflow: hidden;
+            position: relative;
+            border-top: 2px solid #ffc107;
+            border-bottom: 2px solid #ffc107;
+        }
+        
+        .ticker-wrapper {
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        .ticker-content {
+            display: flex;
+            animation: scroll-left 60s linear infinite;
+            white-space: nowrap;
+            align-items: center;
+            gap: 2rem;
+        }
+        
+        .ticker-item {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 2rem;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+        
+        .ticker-item strong {
+            font-weight: 600;
+            margin-right: 0.8rem;
+        }
+        
+        .ticker-separator {
+            color: #6c757d;
+            margin: 0 1rem;
+        }
+        
+        @keyframes scroll-left {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        
+        .ticker-content:hover {
+            animation-play-state: paused;
+        }
+        
+        @media (max-width: 768px) {
+            .ticker-item {
+                font-size: 0.8rem;
+            }
+            
+            .ticker-content {
+                animation-duration: 45s;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Header -->
@@ -30,7 +90,7 @@
                             <a class="nav-link" href="catalogo.html">Catálogo</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link active" href="planes.html">Planes de Financiamiento</a>
+                            <a class="nav-link active" href="planes.html">CrediLlevo Inmediato</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="nosotros.html">Nosotros</a>
@@ -60,354 +120,232 @@
         </div>
     </section>
 
-    <!-- Planes Tabs -->
+    <!-- Plan CrediLlevo -->
     <section class="financing-plans py-5">
         <div class="container">
-            <ul class="nav nav-pills nav-justified mb-5" id="financingTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="programada-tab" data-bs-toggle="pill" data-bs-target="#programada" type="button" role="tab" aria-selected="true">
-                        <i class="fas fa-calendar-check me-2"></i>Compra Programada
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="credito-tab" data-bs-toggle="pill" data-bs-target="#credito" type="button" role="tab" aria-selected="false">
-                        <i class="fas fa-rocket me-2"></i>Crédito Inmediato
-                    </button>
-                </li>
-            </ul>
-            <div class="tab-content" id="financingTabsContent">
-                <!-- Compra Programada -->
-                <div class="tab-pane fade show active" id="programada" role="tabpanel" aria-labelledby="programada-tab">
-                    <div class="row">
-                        <div class="col-lg-6 mb-4 mb-lg-0">
-                            <div class="plan-intro">
-                                <h2 class="mb-4">Compra Programada con Adjudicación al 45%</h2>
-                                <p class="lead mb-4">Sistema de adquisición basado en pagos programados donde obtienes tu vehículo al completar el 45% del valor total, sin sorteos.</p>
-                                <div class="mb-4">
-                                    <h5 class="text-primary mb-3">¿Cómo funciona?</h5>
-                                    <ol class="how-it-works">
-                                        <li class="mb-3">
-                                            <strong>Inscripción inicial:</strong> Pagas una cuota inicial del 5% del valor del vehículo.
-                                        </li>
-                                        <li class="mb-3">
-                                            <strong>Aporte inicial:</strong> Realizas un aporte entre el 10% y 15% del valor total.
-                                        </li>
-                                        <li class="mb-3">
-                                            <strong>Cuotas mensuales:</strong> Continúas con pagos mensuales hasta completar el 45% del valor.
-                                        </li>
-                                        <li class="mb-3">
-                                            <strong>Adjudicación:</strong> Recibes tu vehículo al alcanzar el 45% del pago total.
-                                        </li>
-                                        <li>
-                                            <strong>Financiamiento restante:</strong> El 55% restante se financia hasta en 36 meses.
-                                        </li>
-                                    </ol>
-                                </div>
-                            </div>
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold text-primary">CrediLlevo Inmediato</h2>
+                <p class="lead">El plan de financiamiento que te permite obtener tu vehículo de inmediato</p>
+                
+                <!-- Ticker financiero estilo casa de bolsa -->
+                <div class="financial-ticker bg-dark text-white py-2 mt-4">
+                    <div class="ticker-wrapper">
+                        <div class="ticker-content" id="financial-ticker">
+                            <span class="ticker-item">
+                                <svg class="llevo-icon me-2" viewBox="0 0 24 24" fill="currentColor">
+                                    <circle cx="12" cy="12" r="10" fill="#ffc107"/>
+                                    <text x="12" y="16" text-anchor="middle" fill="#000" font-size="8" font-weight="bold">L</text>
+                                </svg>
+                                <strong>LLEVO/VES</strong> <span id="ticker-llevo-rate" class="text-success">Cargando...</span>
+                            </span>
+                            <span class="ticker-separator">|</span>
+                            <span class="ticker-item">
+                                <i class="fas fa-shield-alt text-success me-2"></i>
+                                <strong>Garantía:</strong> <span class="text-success">Cubierta por fabricantes y distribuidores</span>
+                            </span>
+                            <span class="ticker-separator">|</span>
+                            <span class="ticker-item">
+                                <i class="fas fa-clock text-muted me-2"></i>
+                                <strong>Actualizado:</strong> <span id="ticker-time" class="text-muted">--:--</span>
+                            </span>
+                            <span class="ticker-separator">|</span>
+                            <span class="ticker-item">
+                                <i class="fas fa-percentage text-warning me-2"></i>
+                                <strong>CrediLlevo:</strong> <span class="text-success">Inmediato</span>
+                            </span>
+                            <span class="ticker-separator">|</span>
+                            <span class="ticker-item">
+                                <i class="fas fa-calendar text-primary me-2"></i>
+                                <strong>Plazo Fijo:</strong> <span class="text-primary">24 meses</span>
+                            </span>
                         </div>
-                        <div class="col-lg-6">
-                            <div class="card border-0 shadow-lg rounded-lg p-4">
-                                <div class="card-body">
-                                    <h3 class="card-title text-center mb-4">Beneficios de la Compra Programada</h3>
-                                    <div class="benefit-item d-flex align-items-start mb-4">
-                                        <div class="benefit-icon me-3 text-primary">
-                                            <i class="fas fa-calendar-day fa-2x"></i>
-                                        </div>
-                                        <div>
-                                            <h5>Certeza en fecha de adjudicación</h5>
-                                            <p class="mb-0">Conoces exactamente cuándo recibirás tu vehículo al completar el 45% del valor, sin depender de sorteos o variables externas.</p>
-                                        </div>
-                                    </div>
-                                    <div class="benefit-item d-flex align-items-start mb-4">
-                                        <div class="benefit-icon me-3 text-primary">
-                                            <i class="fas fa-hand-holding-usd fa-2x"></i>
-                                        </div>
-                                        <div>
-                                            <h5>Control mediante pagos puntuales</h5>
-                                            <p class="mb-0">Tus pagos puntuales te permiten acumular puntos que pueden acelerar la fecha de entrega de tu vehículo.</p>
-                                        </div>
-                                    </div>
-                                    <div class="benefit-item d-flex align-items-start mb-4">
-                                        <div class="benefit-icon me-3 text-primary">
-                                            <i class="fas fa-percentage fa-2x"></i>
-                                        </div>
-                                        <div>
-                                            <h5>Adquisición pagando menos de la mitad</h5>
-                                            <p class="mb-0">Obtienes tu vehículo al completar solo el 45% del valor total, permitiéndote disfrutarlo mientras continúas pagando.</p>
-                                        </div>
-                                    </div>
-                                    <div class="benefit-item d-flex align-items-start">
-                                        <div class="benefit-icon me-3 text-primary">
-                                            <i class="fas fa-shield-alt fa-2x"></i>
-                                        </div>
-                                        <div>
-                                            <h5>Mayor seguridad financiera</h5>
-                                            <p class="mb-0">El plan protege tu inversión con un sistema de pagos escalonado que se ajusta a tu capacidad financiera.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Sistema de Puntos -->
-                    <div class="points-system my-5 py-4 px-4 bg-light rounded">
-                        <h3 class="mb-4 text-center">Sistema de Puntos por Puntualidad</h3>
-                        <p class="text-center mb-4">Nuestro exclusivo sistema de bonificación premia tu puntualidad y te ayuda a obtener tu vehículo más rápido.</p>
-                        <div class="row g-4">
-                            <div class="col-md-4">
-                                <div class="card h-100 border-0 shadow-sm">
-                                    <div class="card-body text-center p-4">
-                                        <i class="fas fa-clock text-success mb-3" style="font-size: 2.5rem;"></i>
-                                        <h5>Pago Anticipado</h5>
-                                        <p class="mb-0">Al pagar antes de la fecha límite, obtienes 2 puntos por cada cuota.</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="card h-100 border-0 shadow-sm">
-                                    <div class="card-body text-center p-4">
-                                        <i class="fas fa-calendar-check text-primary mb-3" style="font-size: 2.5rem;"></i>
-                                        <h5>Pago en Fecha</h5>
-                                        <p class="mb-0">Al pagar en la fecha exacta, obtienes 1 punto por cada cuota.</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="card h-100 border-0 shadow-sm">
-                                    <div class="card-body text-center p-4">
-                                        <i class="fas fa-award text-warning mb-3" style="font-size: 2.5rem;"></i>
-                                        <h5>Beneficios Adicionales</h5>
-                                        <p class="mb-0">Al acumular 20 puntos, puedes adelantar tu adjudicación en un mes.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Call to Action -->
-                    <div class="text-center mt-5">
-                        <a href="calculadora.html?plan=programada" class="btn btn-primary btn-lg px-5">Simular Plan de Compra Programada</a>
                     </div>
                 </div>
-
-                <!-- Crédito Inmediato -->
-                <div class="tab-pane fade" id="credito" role="tabpanel" aria-labelledby="credito-tab">
-                    <div class="row">
-                        <div class="col-lg-6 mb-4 mb-lg-0">
-                            <div class="plan-intro">
-                                <h2 class="mb-4">Crédito de Adjudicación Inmediata</h2>
-                                <p class="lead mb-4">Entrega inmediata del vehículo con un aporte inicial significativo y financiamiento del saldo restante.</p>
-                                <div class="mb-4">
-                                    <h5 class="text-primary mb-3">¿Cómo funciona?</h5>
-                                    <ol class="how-it-works">
-                                        <li class="mb-3">
-                                            <strong>Selección del vehículo:</strong> Eliges el vehículo que deseas adquirir de nuestro catálogo.
-                                        </li>
-                                        <li class="mb-3">
-                                            <strong>Aporte inicial:</strong> Realizas un pago inicial según el plan seleccionado (40%, 50% o 60%).
-                                        </li>
-                                        <li class="mb-3">
-                                            <strong>Aprobación del crédito:</strong> Evaluamos tu solicitud en 24-48 horas.
-                                        </li>
-                                        <li class="mb-3">
-                                            <strong>Entrega del vehículo:</strong> Recibes tu vehículo inmediatamente después de la aprobación.
-                                        </li>
-                                        <li>
-                                            <strong>Pagos mensuales:</strong> Realizas pagos mensuales hasta cubrir el saldo financiado.
-                                        </li>
-                                    </ol>
-                                </div>
+            </div>
+            <!-- CrediLlevo Inmediato Content -->
+            <div class="row">
+                <div class="col-lg-6 mb-4 mb-lg-0">
+                    <div class="plan-intro">
+                        <h2 class="mb-4">¿Cómo funciona CrediLlevo Inmediato?</h2>
+                        <p class="lead mb-4">Financiamiento inmediato con precios en LLEVO para obtener tu vehículo al instante con las mejores condiciones del mercado.</p>
+                        <div class="mb-4">
+                            <h5 class="text-primary mb-3">Proceso simple y rápido</h5>
+                            <ol class="how-it-works">
+                                <li class="mb-3">
+                                    <strong>Selección del vehículo:</strong> Elige tu vehículo del catálogo con precios transparentes en LLEVO.
+                                </li>
+                                <li class="mb-3">
+                                    <strong>Aporte inicial:</strong> Realiza un pago inicial fijo en LLEVO según el valor del vehículo.
+                                </li>
+                                <li class="mb-3">
+                                    <strong>Aprobación rápida:</strong> Evaluamos tu solicitud en 24-48 horas.
+                                </li>
+                                <li class="mb-3">
+                                    <strong>Entrega inmediata:</strong> Recibes tu vehículo inmediatamente después de la aprobación.
+                                </li>
+                                <li>
+                                    <strong>Cuotas fijas:</strong> Realizas 24 pagos mensuales fijos en llevos.
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-lg rounded-lg">
+                        <div class="card-header bg-primary text-white py-3">
+                            <h3 class="card-title text-center mb-0">Planes CrediLlevo</h3>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-striped mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th class="py-3">CrediLlevo Inmediato</th>
+                                            <th class="py-3">Aporte Inicial</th>
+                                            <th class="py-3">Plazo</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="py-3">
+                                                <strong class="text-primary">Plan Único</strong>
+                                            </td>
+                                            <td class="py-3">Monto fijo en LLEVO<br><small class="text-muted">Según valor del vehículo</small></td>
+                                            <td class="py-3"><strong>24 meses</strong><br><small class="text-muted">Plazo fijo</small></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
-                        <div class="col-lg-6">
-                            <div class="card border-0 shadow-lg rounded-lg">
-                                <div class="card-header bg-primary text-white py-3">
-                                    <h3 class="card-title text-center mb-0">Opciones de Planes</h3>
-                                </div>
-                                <div class="card-body p-0">
-                                    <div class="table-responsive">
-                                        <table class="table table-striped mb-0">
-                                            <thead>
-                                                <tr>
-                                                    <th class="py-3">Plan</th>
-                                                    <th class="py-3">Aporte Inicial</th>
-                                                    <th class="py-3">Plazo Máximo</th>
-                                                    <th class="py-3">Tasa de Interés</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td class="py-3">
-                                                        <strong class="text-primary">Plan Básico</strong>
-                                                    </td>
-                                                    <td class="py-3">40%</td>
-                                                    <td class="py-3">24 meses</td>
-                                                    <td class="py-3">12% anual</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="py-3">
-                                                        <strong class="text-primary">Plan Intermedio</strong>
-                                                    </td>
-                                                    <td class="py-3">50%</td>
-                                                    <td class="py-3">18 meses</td>
-                                                    <td class="py-3">10% anual</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="py-3">
-                                                        <strong class="text-primary">Plan Premium</strong>
-                                                    </td>
-                                                    <td class="py-3">60%</td>
-                                                    <td class="py-3">12 meses</td>
-                                                    <td class="py-3">8% anual</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
+                    </div>
 
-                            <!-- Beneficios -->
-                            <div class="credit-benefits mt-4">
-                                <h5 class="mb-3">Beneficios del Crédito Inmediato</h5>
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item px-0 d-flex align-items-center">
-                                        <i class="fas fa-check-circle text-success me-3"></i>
-                                        <span>Disponibilidad inmediata del vehículo</span>
+                    <!-- Beneficios -->
+                    <div class="credit-benefits mt-4">
+                        <h5 class="mb-3">Ventajas de CrediLlevo Inmediato</h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item px-0 d-flex align-items-center">
+                                <i class="fas fa-coins text-warning me-3"></i>
+                                <span>Precios transparentes en LLEVO</span>
+                            </li>
+                            <li class="list-group-item px-0 d-flex align-items-center">
+                                <i class="fas fa-bolt text-success me-3"></i>
+                                <span>Entrega inmediata del vehículo</span>
+                            </li>
+                            <li class="list-group-item px-0 d-flex align-items-center">
+                                <i class="fas fa-clock text-primary me-3"></i>
+                                <span>Aprobación rápida (24-48 horas)</span>
+                            </li>
+                            <li class="list-group-item px-0 d-flex align-items-center">
+                                <i class="fas fa-handshake text-success me-3"></i>
+                                <span>Cancelación anticipada sin penalidades</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Requisitos -->
+            <div class="requirements my-5 py-4 px-4 bg-light rounded">
+                <h3 class="mb-4 text-center">Requisitos para CrediLlevo</h3>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body p-4">
+                                <h5 class="card-title mb-3">Documentos Personales</h5>
+                                <ul class="list-unstyled mb-0">
+                                    <li class="mb-2 d-flex align-items-center">
+                                        <i class="fas fa-id-card text-primary me-3"></i>
+                                        <span>Cédula de identidad vigente</span>
                                     </li>
-                                    <li class="list-group-item px-0 d-flex align-items-center">
-                                        <i class="fas fa-check-circle text-success me-3"></i>
-                                        <span>Proceso rápido de aprobación (24-48 horas)</span>
+                                    <li class="mb-2 d-flex align-items-center">
+                                        <i class="fas fa-file-invoice text-primary me-3"></i>
+                                        <span>RIF vigente</span>
                                     </li>
-                                    <li class="list-group-item px-0 d-flex align-items-center">
-                                        <i class="fas fa-check-circle text-success me-3"></i>
-                                        <span>Tasas de interés competitivas</span>
+                                    <li class="mb-2 d-flex align-items-center">
+                                        <i class="fas fa-file-signature text-primary me-3"></i>
+                                        <span>Constancia de trabajo (si aplica)</span>
                                     </li>
-                                    <li class="list-group-item px-0 d-flex align-items-center">
-                                        <i class="fas fa-check-circle text-success me-3"></i>
-                                        <span>Protección mediante seguros (opcional)</span>
+                                    <li class="mb-2 d-flex align-items-center">
+                                        <i class="fas fa-id-badge text-primary me-3"></i>
+                                        <span>Licencia de conducir vigente</span>
                                     </li>
-                                    <li class="list-group-item px-0 d-flex align-items-center">
-                                        <i class="fas fa-check-circle text-success me-3"></i>
-                                        <span>Posibilidad de cancelación anticipada sin penalidades</span>
+                                    <li class="d-flex align-items-center">
+                                        <i class="fas fa-file-alt text-primary me-3"></i>
+                                        <span>Referencias bancarias</span>
                                     </li>
                                 </ul>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Requisitos -->
-                    <div class="requirements my-5 py-4 px-4 bg-light rounded">
-                        <h3 class="mb-4 text-center">Requisitos para Aplicar</h3>
-                        <div class="row g-4">
-                            <div class="col-md-6">
-                                <div class="card h-100 border-0 shadow-sm">
-                                    <div class="card-body p-4">
-                                        <h5 class="card-title mb-3">Documentos Personales</h5>
-                                        <ul class="list-unstyled mb-0">
-                                            <li class="mb-2 d-flex align-items-center">
-                                                <i class="fas fa-id-card text-primary me-3"></i>
-                                                <span>Cédula de identidad vigente</span>
-                                            </li>
-                                            <li class="mb-2 d-flex align-items-center">
-                                                <i class="fas fa-file-invoice text-primary me-3"></i>
-                                                <span>RIF vigente</span>
-                                            </li>
-                                            <li class="mb-2 d-flex align-items-center">
-                                                <i class="fas fa-file-signature text-primary me-3"></i>
-                                                <span>Constancia de trabajo (si aplica)</span>
-                                            </li>
-                                            <li class="d-flex align-items-center">
-                                                <i class="fas fa-file-alt text-primary me-3"></i>
-                                                <span>Referencias bancarias</span>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="card h-100 border-0 shadow-sm">
-                                    <div class="card-body p-4">
-                                        <h5 class="card-title mb-3">Requisitos Financieros</h5>
-                                        <ul class="list-unstyled mb-0">
-                                            <li class="mb-2 d-flex align-items-center">
-                                                <i class="fas fa-money-bill-wave text-primary me-3"></i>
-                                                <span>Capacidad de pago demostrable</span>
-                                            </li>
-                                            <li class="mb-2 d-flex align-items-center">
-                                                <i class="fas fa-chart-line text-primary me-3"></i>
-                                                <span>Ingresos mínimos mensuales de $800</span>
-                                            </li>
-                                            <li class="mb-2 d-flex align-items-center">
-                                                <i class="fas fa-university text-primary me-3"></i>
-                                                <span>Cuenta bancaria activa</span>
-                                            </li>
-                                            <li class="d-flex align-items-center">
-                                                <i class="fas fa-history text-primary me-3"></i>
-                                                <span>Buen historial crediticio (si aplica)</span>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
+                    <div class="col-md-6">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body p-4">
+                                <h5 class="card-title mb-3">Requisitos Financieros</h5>
+                                <ul class="list-unstyled mb-0">
+                                    <li class="mb-2 d-flex align-items-center">
+                                        <i class="fas fa-money-bill-wave text-primary me-3"></i>
+                                        <span>Capacidad de pago demostrable</span>
+                                    </li>
+                                    <li class="mb-2 d-flex align-items-center">
+                                        <i class="fas fa-chart-line text-primary me-3"></i>
+                                        <span>Ingresos demostrables</span>
+                                    </li>
+                                    <li class="mb-2 d-flex align-items-center">
+                                        <i class="fas fa-university text-primary me-3"></i>
+                                        <span>Cuenta bancaria activa</span>
+                                    </li>
+                                    <li class="d-flex align-items-center">
+                                        <i class="fas fa-history text-primary me-3"></i>
+                                        <span>Buen historial crediticio (preferible)</span>
+                                    </li>
+                                </ul>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Call to Action -->
-                    <div class="text-center mt-5">
-                        <a href="calculadora.html?plan=credito" class="btn btn-primary btn-lg px-5">Simular Plan de Crédito Inmediato</a>
-                    </div>
                 </div>
+            </div>
+
+            <!-- Call to Action -->
+            <div class="text-center mt-5">
+                <a href="calculadora.html" class="btn btn-primary btn-lg px-5">
+                    <i class="fas fa-calculator me-2"></i>Simular CrediLlevo Inmediato
+                </a>
             </div>
         </div>
     </section>
 
-    <!-- Compare Plans -->
-    <section class="compare-plans py-5 bg-light">
+    <!-- Características CrediLlevo -->
+    <section class="credillevo-features py-5 bg-light">
         <div class="container">
-            <h2 class="text-center mb-5">Comparativa de Planes</h2>
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover">
-                    <thead class="table-primary">
-                        <tr>
-                            <th class="text-center" style="width: 25%;">Características</th>
-                            <th class="text-center" style="width: 37.5%;">Compra Programada</th>
-                            <th class="text-center" style="width: 37.5%;">Crédito Inmediato</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <th scope="row">Entrega del vehículo</th>
-                            <td>Al completar el 45% del valor total</td>
-                            <td>Inmediata (tras aprobación)</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Aporte inicial</th>
-                            <td>5% inscripción + 10-15% aporte inicial</td>
-                            <td>40% a 60% según plan elegido</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Tiempo de aprobación</th>
-                            <td>5-10 días hábiles</td>
-                            <td>24-48 horas</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Plazo de financiamiento</th>
-                            <td>Hasta 36 meses para el saldo restante</td>
-                            <td>12 a 24 meses según plan elegido</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Ideal para</th>
-                            <td>Personas con capacidad de ahorro mensual que pueden esperar a la adjudicación</td>
-                            <td>Personas que necesitan el vehículo de inmediato y tienen capital disponible</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Ventaja principal</th>
-                            <td>Adjudicación con menos del 50% del valor</td>
-                            <td>Disponibilidad inmediata del vehículo</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <h2 class="text-center mb-5">Características de CrediLlevo Inmediato</h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="feature-card text-center p-4 bg-white rounded shadow-sm h-100">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-coins fa-3x text-warning"></i>
+                        </div>
+                        <h5 class="mb-3">Precios en LLEVO</h5>
+                        <p class="mb-0">Todos nuestros vehículos tienen precios transparentes y estables en tokens LLEVO, protegiendo tu inversión de la volatilidad.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card text-center p-4 bg-white rounded shadow-sm h-100">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-bolt fa-3x text-primary"></i>
+                        </div>
+                        <h5 class="mb-3">Entrega Inmediata</h5>
+                        <p class="mb-0">Una vez aprobada tu solicitud, recibes tu vehículo de inmediato. Sin esperas, sin sorteos, sin complicaciones.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card text-center p-4 bg-white rounded shadow-sm h-100">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-chart-line fa-3x text-success"></i>
+                        </div>
+                        <h5 class="mb-3">Flexibilidad de Pago</h5>
+                        <p class="mb-0">Elige entre 3 planes diferentes según tu capacidad de pago, con cuotas mensuales en bolívares venezolanos.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -425,7 +363,7 @@
                     </h2>
                     <div id="faqCollapse1" class="accordion-collapse collapse show" aria-labelledby="faqHeading1" data-bs-parent="#financingFaq">
                         <div class="accordion-body">
-                            Sí, todos los vehículos, motocicletas y maquinaria agrícola disponibles en nuestro catálogo pueden ser financiados mediante cualquiera de nuestros planes. Sin embargo, algunos modelos específicos o de alta gama pueden requerir condiciones especiales que serán informadas al momento de la solicitud.
+                            Sí, todos los vehículos, motocicletas y maquinaria agrícola disponibles en nuestro catálogo pueden ser financiados con CrediLlevo Inmediato. Algunos modelos específicos o de alta gama pueden requerir condiciones especiales que serán informadas al momento de la solicitud.
                         </div>
                     </div>
                 </div>
@@ -437,7 +375,7 @@
                     </h2>
                     <div id="faqCollapse2" class="accordion-collapse collapse" aria-labelledby="faqHeading2" data-bs-parent="#financingFaq">
                         <div class="accordion-body">
-                            En caso de retraso en los pagos, se aplicará un interés de mora del 1% mensual sobre el monto vencido. Para el plan de Compra Programada, los retrasos afectarán la acumulación de puntos y podrían retrasar la fecha de adjudicación. En ambos planes, retrasos significativos podrían afectar la aprobación del financiamiento. Recomendamos comunicarse con nuestro departamento de atención al cliente ante cualquier dificultad.
+                            En caso de retraso en los pagos, se aplicarán intereses de mora sobre el monto vencido. Los retrasos significativos podrían afectar futuras aprobaciones de financiamiento. Recomendamos comunicarse con nuestro departamento de atención al cliente ante cualquier dificultad de pago.
                         </div>
                     </div>
                 </div>
@@ -449,7 +387,7 @@
                     </h2>
                     <div id="faqCollapse3" class="accordion-collapse collapse" aria-labelledby="faqHeading3" data-bs-parent="#financingFaq">
                         <div class="accordion-body">
-                            Sí, en ambos planes puedes realizar la cancelación anticipada del saldo pendiente sin penalidades. Para el plan de Compra Programada, acelerar los pagos puede adelantar la fecha de adjudicación. Para el Crédito de Adjudicación Inmediata, la cancelación anticipada te permitirá ahorrar en intereses. En ambos casos, necesitarás comunicarte con nuestro departamento financiero para coordinar la liquidación total.
+                            Sí, puedes realizar la cancelación anticipada del saldo pendiente sin penalidades en CrediLlevo Inmediato. La cancelación anticipada te permitirá liquidar completamente tu financiamiento. Necesitarás comunicarte con nuestro departamento financiero para coordinar la liquidación total.
                         </div>
                     </div>
                 </div>
@@ -461,7 +399,7 @@
                     </h2>
                     <div id="faqCollapse4" class="accordion-collapse collapse" aria-labelledby="faqHeading4" data-bs-parent="#financingFaq">
                         <div class="accordion-body">
-                            Los documentos básicos requeridos son: cédula de identidad vigente, RIF actualizado, comprobantes de ingresos (recibos de pago, declaración de ISLR o constancia de trabajo), referencias bancarias y estados de cuenta de los últimos 3 meses. Dependiendo del monto a financiar y el plan elegido, podrían solicitarse documentos adicionales durante el proceso de evaluación.
+                            Los documentos básicos requeridos son: cédula de identidad vigente, RIF actualizado, licencia de conducir vigente, comprobantes de ingresos (recibos de pago, declaración de ISLR o constancia de trabajo), referencias bancarias y estados de cuenta de los últimos 3 meses. Dependiendo del monto a financiar y el plan elegido, podrían solicitarse documentos adicionales durante el proceso de evaluación.
                         </div>
                     </div>
                 </div>
@@ -550,6 +488,44 @@
     <script src="js/api-fixed.js?v=20250630"></script>
     <script src="js/auth.js?v=20250630"></script>
     <script src="js/main.js"></script>
+    
+    <!-- Script para ticker financiero -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        loadFinancialTicker();
+        
+        // Actualizar cada 30 segundos
+        setInterval(loadFinancialTicker, 30000);
+    });
+
+    async function loadFinancialTicker() {
+        try {
+            const response = await fetch('/api/financing/llevo/current-rate/');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    // Actualizar LLEVO/VES
+                    const tickerLlevoRate = document.getElementById('ticker-llevo-rate');
+                    if (tickerLlevoRate) {
+                        tickerLlevoRate.innerHTML = `${data.data.llevo_value.toLocaleString('es-VE', {maximumFractionDigits: 2})}`;
+                    }
+                    
+                    // Actualizar timestamp
+                    const tickerTime = document.getElementById('ticker-time');
+                    if (tickerTime) {
+                        const now = new Date();
+                        tickerTime.innerHTML = now.toLocaleTimeString('es-VE', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error cargando ticker financiero:', error);
+        }
+    }
+    </script>
 
 <!-- Botón flotante oficial de WhatsApp -->
 <a href="https://api.whatsapp.com/send?phone=5804128701585&text=¡Hola!%20Necesito%20información%20sobre%20financiamiento%20de%20vehículos%20en%20LlévateloExpress.%20¿Pueden%20ayudarme?" 
@@ -578,5 +554,24 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 
+<!-- Barra de navegación inferior móvil -->
+<div class="mobile-bottom-nav">
+    <div class="nav-container">
+        <div class="auth-section" id="mobile-auth-buttons">
+            <a href="registro.html" class="btn btn-outline-primary">Registrarse</a>
+            <a href="login.html" class="btn btn-primary">Iniciar Sesión</a>
+        </div>
+        <a href="https://api.whatsapp.com/send?phone=5804128701585&text=¡Hola!%20Necesito%20información%20sobre%20financiamiento%20de%20vehículos%20en%20LlévateloExpress.%20¿Pueden%20ayudarme?" 
+           class="whatsapp-btn" 
+           target="_blank"
+           rel="noopener noreferrer"
+           aria-label="Contactar por WhatsApp"
+           title="¿Necesitas ayuda? ¡Escríbenos por WhatsApp!">
+            <svg class="whatsapp-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.465 3.085"/>
+            </svg>
+        </a>
+    </div>
+</div>
 </body>
 </html> 

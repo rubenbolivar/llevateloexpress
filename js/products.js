@@ -204,6 +204,8 @@ function transformProductFromAPI(apiProduct) {
         category: apiProduct.category_name || apiProduct.category || 'motocicletas',
         brand: apiProduct.brand,
         price: parseFloat(apiProduct.price) || 0,
+        price_llevo: parseInt(apiProduct.price_llevo) || 0,
+        price_ves: parseFloat(apiProduct.price_ves) || 0,
         image: imageUrl,
         description: apiProduct.description || '',
         features: features,
@@ -306,6 +308,16 @@ function getProductById(productId) {
 
 // Crear tarjeta de producto (manteniendo funcionalidad original)
 function createProductCard(product) {
+    // Debug: verificar si hay texto problemático en product
+    if (product.name && typeof product.name === 'string' && product.name.includes('console.log')) {
+        console.warn('🚨 DEBUG TEXT DETECTED in product.name:', product.name);
+        product.name = product.name.replace(/console\.log.*?;?/g, '').trim();
+    }
+    if (product.description && typeof product.description === 'string' && product.description.includes('console.log')) {
+        console.warn('🚨 DEBUG TEXT DETECTED in product.description:', product.description);
+        product.description = product.description.replace(/console\.log.*?;?/g, '').trim();
+    }
+    
     const card = document.createElement('div');
     card.className = 'col-md-6 col-lg-4 mb-4';
     card.style.opacity = '0';
@@ -328,8 +340,6 @@ function createProductCard(product) {
                      style="height: 200px; object-fit: cover; background-color: #f8f9fa;"
                      onerror="this.src='img/products/default.jpg'; this.onerror=null;">
                 ${product.featured ? '<span class="badge bg-primary position-absolute top-0 end-0 m-2">Destacado</span>' : ''}
-                ${product.stock <= 3 && product.stock > 0 ? '<span class="badge bg-warning position-absolute top-0 start-0 m-2">Pocas unidades</span>' : ''}
-                ${product.stock === 0 ? '<span class="badge bg-danger position-absolute top-0 start-0 m-2">Agotado</span>' : ''}
             </div>
             
             <div class="card-body d-flex flex-column">
@@ -340,20 +350,25 @@ function createProductCard(product) {
                 
                 <p class="card-text text-muted flex-grow-1">${product.description.substring(0, 100)}${product.description.length > 100 ? '...' : ''}</p>
                 
+                <!-- SECCIÓN DE CARACTERÍSTICAS COMENTADA - DISPONIBLE EN "VER DETALLES"
                 <div class="product-features mb-3">
                     ${product.features && product.features.length > 0 ? 
-                        product.features.slice(0, 3).map(feature => 
-                            `<small class="d-block text-success">• ${feature}</small>`
-                        ).join('') :
+                        product.features.slice(0, 3).map(feature => {
+                            // Limpiar cualquier texto de debug en las características
+                            const cleanFeature = typeof feature === 'string' ? 
+                                feature.replace(/console\.log.*?;?/g, '').trim() : feature;
+                            return `<small class="d-block text-success">• ${cleanFeature}</small>`;
+                        }).join('') :
                         '<small class="text-muted">Características no disponibles</small>'
                     }
                 </div>
+                -->
                 
                 <div class="mt-auto">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <div>
-                            <h4 class="text-primary mb-0">$${product.price.toLocaleString()}</h4>
-                            <small class="text-muted">Stock: ${product.stock} unidades</small>
+                            <h4 class="text-primary mb-0">${product.price_llevo ? product.price_llevo.toLocaleString() + ' LLEVO' : '$' + product.price.toLocaleString()}</h4>
+                            <!-- <small class="text-muted">Stock: ${product.stock} unidades</small> -->
                         </div>
                         <span class="badge bg-secondary">${getCategoryName(product.category)}</span>
                     </div>
@@ -362,9 +377,7 @@ function createProductCard(product) {
                         <a href="detalle-producto.html?id=${product.id}" class="btn btn-outline-primary">
                             <i class="fas fa-eye"></i> Ver detalles
                         </a>
-                        <button class="btn btn-primary" onclick="addToCart(${product.id})" ${product.stock === 0 ? 'disabled' : ''}>
-                            <i class="fas fa-cart-plus"></i> ${product.stock === 0 ? 'Agotado' : 'Agregar'}
-                        </button>
+                        <a href="calculadora.html?modelo=${product.id}" class="btn btn-primary"><i class="fas fa-calculator me-1"></i>Financiar</a>
                     </div>
                 </div>
             </div>
@@ -570,12 +583,6 @@ function clearAllFilters() {
     displayProducts(window.products);
 }
 
-// Agregar al carrito (mantener funcionalidad existente)
-function addToCart(productId) {
-    console.log('[products-dynamic.js] Agregando al carrito:', productId);
-    // Aquí iría la lógica del carrito
-    alert(`Producto ${productId} agregado al carrito`);
-}
 
 // === INICIALIZACIÓN ===
 
@@ -656,7 +663,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                         <p class="mb-3">No se pudieron cargar los productos desde el servidor</p>
                         <button class="btn btn-primary" onclick="location.reload()">
                             <i class="fas fa-refresh me-2"></i>Recargar página
-                        </button>
+        </button>
+                        <a href="calculadora.html?modelo=${product.id}" class="btn btn-primary"><i class="fas fa-calculator me-1"></i>Financiar</a>
                     </div>
                 </div>
             `;

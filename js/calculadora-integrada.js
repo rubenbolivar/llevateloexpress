@@ -5,7 +5,7 @@
 
 const CalculadoraIntegrada = {
     // Estado actual
-    currentMode: 'programada',
+    currentMode: 'credito',
     currentProduct: null,
     currentCalculation: null,
     configuration: null,

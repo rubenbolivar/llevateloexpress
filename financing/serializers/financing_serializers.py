@@ -6,6 +6,7 @@ from financing.models import (
 )
 from products.serializers.product_serializers import ProductListSerializer
 from users.models import Customer
+from products.llevo_models import LlevoRate
 
 
 class FinancingPlanSerializer(serializers.ModelSerializer):
@@ -22,11 +23,13 @@ class FinancingPlanSerializer(serializers.ModelSerializer):
 class PaymentScheduleSerializer(serializers.ModelSerializer):
     """Serializer para el calendario de pagos"""
     status = serializers.SerializerMethodField()
+    amount_llevo = serializers.SerializerMethodField()
+    amount_ves = serializers.SerializerMethodField()
     
     class Meta:
         model = PaymentSchedule
         fields = [
-            'id', 'payment_number', 'due_date', 'amount',
+            'id', 'payment_number', 'due_date', 'amount', 'amount_llevo', 'amount_ves',
             'is_paid', 'paid_date', 'paid_amount',
             'days_late', 'late_fee', 'status'
         ]
@@ -38,6 +41,28 @@ class PaymentScheduleSerializer(serializers.ModelSerializer):
             return 'overdue'
         else:
             return 'pending'
+    
+    def get_amount_llevo(self, obj):
+        """Convertir monto USD a LLEVO para mostrar al usuario"""
+        # Asumimos que amount está en USD, convertir a LLEVO
+        current_rate = LlevoRate.get_current_rate()
+        if current_rate and obj.amount:
+            # USD a LLEVO: redondeo estándar
+            conversion_factor = current_rate.llevo_value / current_rate.usdt_ves_rate
+            return round(obj.amount / conversion_factor)
+        return int(obj.amount) if obj.amount else 0
+    
+    def get_amount_ves(self, obj):
+        """Convertir LLEVO a VES para pagos R4"""
+        from decimal import Decimal
+        current_rate = LlevoRate.get_current_rate()
+        if current_rate and obj.amount:
+            # Primero USD a LLEVO, luego LLEVO a VES
+            conversion_factor = current_rate.usdt_ves_rate / (15 * Decimal('1.18'))
+            amount_llevo = obj.amount * conversion_factor
+            amount_ves = Decimal(str(amount_llevo)) * current_rate.llevo_value
+            return float(amount_ves)
+        return 0.0
 
 
 class PaymentSerializer(serializers.ModelSerializer):
@@ -80,15 +105,44 @@ class FinancingRequestListSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.name', read_only=True)
     product_image = serializers.ImageField(source='product.image', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    product_price_llevo = serializers.SerializerMethodField()
+    payment_amount_llevo = serializers.SerializerMethodField()
+    payment_amount_ves = serializers.SerializerMethodField()
     
     class Meta:
         model = FinancingRequest
         fields = [
             'id', 'application_number', 'customer_name',
-            'product_name', 'product_image', 'product_price',
-            'status', 'status_display', 'payment_amount',
+            'product_name', 'product_image', 'product_price', 'product_price_llevo',
+            'status', 'status_display', 'payment_amount', 'payment_amount_llevo', 'payment_amount_ves',
             'payment_frequency', 'created_at'
         ]
+    
+    def get_product_price_llevo(self, obj):
+        """Convertir precio USD a LLEVO para mostrar al usuario"""
+        current_rate = LlevoRate.get_current_rate()
+        if current_rate and obj.product_price:
+            # USD a LLEVO: redondeo estándar
+            conversion_factor = current_rate.llevo_value / current_rate.usdt_ves_rate
+            return round(obj.product_price / conversion_factor)
+        return int(obj.product_price) if obj.product_price else 0
+    
+    def get_payment_amount_llevo(self, obj):
+        """Retornar el valor LLEVO directo de la base de datos"""
+        # Usar el valor LLEVO almacenado directamente, sin conversiones
+        return obj.payment_amount_llevos if obj.payment_amount_llevos else 0
+    
+    def get_payment_amount_ves(self, obj):
+        """Convertir LLEVO a VES para pagos R4"""
+        from decimal import Decimal
+        current_rate = LlevoRate.get_current_rate()
+        if current_rate and obj.payment_amount:
+            # USD a LLEVO, luego LLEVO a VES
+            conversion_factor = current_rate.usdt_ves_rate / (15 * Decimal('1.18'))
+            amount_llevo = obj.payment_amount * conversion_factor
+            amount_ves = Decimal(str(amount_llevo)) * current_rate.llevo_value
+            return float(amount_ves)
+        return 0.0
 
 
 class FinancingRequestDetailSerializer(serializers.ModelSerializer):
@@ -161,7 +215,13 @@ class FinancingRequestCreateSerializer(serializers.ModelSerializer):
         """Crear la solicitud y registrar el estado inicial"""
         # Obtener el cliente del usuario autenticado
         request = self.context.get('request')
-        customer = request.user.customer
+        
+        try:
+            customer = request.user.customer
+        except:
+            raise serializers.ValidationError({
+                'customer': 'El usuario no tiene un perfil de cliente asociado'
+            })
         
         # Crear la solicitud
         application = FinancingRequest.objects.create(

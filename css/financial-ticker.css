@@ -1,0 +1,147 @@
+/* Ticker Financiero Estilo Casa de Bolsa */
+.financial-ticker {
+    overflow: hidden;
+    position: relative;
+    border-top: 2px solid #ffc107;
+    border-bottom: 2px solid #ffc107;
+    background: linear-gradient(45deg, #1a1a1a, #2d2d2d);
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+}
+
+.ticker-wrapper {
+    width: 100%;
+    overflow: hidden;
+}
+
+.ticker-content {
+    display: flex;
+    animation: scroll-left 60s linear infinite;
+    white-space: nowrap;
+    align-items: center;
+    gap: 2.5rem;
+    padding: 0.5rem 0;
+}
+
+.ticker-item {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 2rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    font-weight: 500;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.ticker-item strong {
+    font-weight: 600;
+    margin-right: 0.8rem;
+}
+
+.ticker-separator {
+    color: #6c757d;
+    margin: 0 1rem;
+    font-weight: bold;
+    opacity: 0.7;
+}
+
+/* Animación principal */
+@keyframes scroll-left {
+    0% { 
+        transform: translateX(100%); 
+    }
+    100% { 
+        transform: translateX(-100%); 
+    }
+}
+
+/* Efecto hover para pausar */
+.ticker-content:hover {
+    animation-play-state: paused;
+}
+
+/* Efectos visuales adicionales */
+.ticker-item:hover {
+    text-shadow: 0 0 8px currentColor;
+}
+
+/* Colores específicos para diferentes tipos de datos */
+.ticker-llevo-rate {
+    color: #ffc107 !important;
+    font-weight: bold;
+}
+
+
+.ticker-positive {
+    color: #28a745 !important;
+}
+
+.ticker-info {
+    color: #17a2b8 !important;
+}
+
+.ticker-warning {
+    color: #ffc107 !important;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .ticker-item {
+        font-size: 0.8rem;
+        margin-right: 1rem;
+    }
+    
+    .ticker-content {
+        animation-duration: 45s;
+        gap: 1rem;
+    }
+    
+    .ticker-separator {
+        margin: 0 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .ticker-item {
+        font-size: 0.75rem;
+        margin-right: 0.8rem;
+    }
+    
+    .ticker-content {
+        animation-duration: 40s;
+        gap: 0.8rem;
+    }
+    
+    .financial-ticker {
+        border-top: 1px solid #ffc107;
+        border-bottom: 1px solid #ffc107;
+    }
+}
+
+/* Efectos de parpadeo para datos dinámicos */
+@keyframes blink-update {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.ticker-updating {
+    animation: blink-update 0.5s ease-in-out;
+}
+
+/* SVG Icon styling */
+.ticker-item .llevo-icon {
+    width: 16px;
+    height: 16px;
+    fill: #ffc107;
+    margin-right: 0.5rem;
+}
+
+/* Loading states */
+.ticker-loading {
+    color: #6c757d;
+    font-style: italic;
+}
+
+.ticker-error {
+    color: #dc3545;
+    font-weight: bold;
+}

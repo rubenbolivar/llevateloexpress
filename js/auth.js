@@ -213,6 +213,9 @@ async function loginUser(email, password) {
             localStorage.setItem('user_email', email);
             
             console.log('Inicio de sesión exitoso');
+n            // Actualizar UI después del login
+            updateAuthUI().catch(console.error);
+            updateMobileBottomNav();
             return { success: true };
         } else {
             console.error('Error en inicio de sesión:', data);
@@ -291,9 +294,13 @@ function logoutUser() {
     document.cookie = "csrftoken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     
     console.log('Sesión cerrada correctamente');
+n    // Actualizar UI
+    updateAuthUI().catch(console.error);
+    updateMobileBottomNav();
     
     // Actualizar la UI inmediatamente antes de redireccionar
     updateAuthUI().catch(console.error);
+    updateMobileBottomNav();
     
     // Redireccionar a la página principal con un parámetro para mostrar mensaje
     window.location.href = 'index.html?logout=true';
@@ -393,6 +400,8 @@ async function updateAuthUI() {
             element.textContent = userEmail || 'Usuario';
         });
     }
+    // Actualizar barra inferior móvil
+    updateMobileBottomNav();
 }
 
 // Inicializar sistema de autenticación al cargar la página
@@ -401,6 +410,7 @@ document.addEventListener('DOMContentLoaded', function() {
     fetchCsrfToken().then(() => {
         // Actualizar UI según estado de autenticación
         updateAuthUI().catch(console.error);
+    updateMobileBottomNav();
         
         // Solo redirigir si el usuario ya ha iniciado sesión anteriormente
         // y está intentando acceder a páginas de login/registro
@@ -432,6 +442,7 @@ window.Auth = {
     fetchCsrfToken: fetchCsrfToken,
     getCsrfToken: getCsrfToken,
     updateAuthUI: updateAuthUI,
+    updateMobileBottomNav: updateMobileBottomNav,
     refreshAccessToken: refreshAccessToken
 };
 
@@ -440,4 +451,47 @@ window.Auth = {
 // Actualizar UI automáticamente cuando se carga la página
 document.addEventListener("DOMContentLoaded", function() {
     updateAuthUI().catch(console.error);
+    updateMobileBottomNav();
 });
+
+/**
+ * Actualiza la barra de navegación inferior móvil según el estado de autenticación
+ */
+function updateMobileBottomNav() {
+    const mobileAuthSection = document.getElementById('mobile-auth-buttons');
+    if (!mobileAuthSection) return;
+    
+    const token = localStorage.getItem('access_token');
+    
+    if (token) {
+        // Usuario autenticado
+        mobileAuthSection.innerHTML = `
+            <a href="dashboard.html" class="btn btn-success">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a href="perfil.html" class="btn btn-info">
+                <i class="fas fa-user"></i> Mi Cuenta
+            </a>
+        `;
+    } else {
+        // Usuario no autenticado
+        mobileAuthSection.innerHTML = `
+            <a href=registro.html class=btn btn-outline-primary>Registrarse</a>
+            <a href=login.html class=btn btn-primary>Iniciar Sesión</a>
+        `;
+    }
+}
+
+// Función de debug para verificar estado de autenticación
+function debugAuthState() {
+    const token = localStorage.getItem('access_token');
+    const email = localStorage.getItem('user_email');
+    console.log('=== DEBUG AUTH STATE ===');
+    console.log('Token exists:', !!token);
+    console.log('Email:', email);
+    console.log('Mobile auth section exists:', !!document.getElementById('mobile-auth-buttons'));
+    console.log('========================');
+}
+
+// Exponer función de debug globalmente
+window.debugAuthState = debugAuthState;

@@ -10,4 +10,5 @@ urlpatterns = [
     path('', include(router.urls)),
     path('featured-products/', views.FeaturedProductsView.as_view()),
     path('products-by-category/<slug:category_slug>/', views.ProductsByCategoryView.as_view()),
+    path('calculadora-products/', views.CalculadoraProductsView.as_view()),
 ] 

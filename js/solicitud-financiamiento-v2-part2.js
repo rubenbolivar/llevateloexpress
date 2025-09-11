@@ -504,11 +504,14 @@ class FinancingRequestV2 {
                 this.state.calculationData = JSON.parse(savedData);
                 this.log('info', 'Datos de cálculo cargados desde localStorage');
                 this.renderCalculationSummary();
+                this.validateProductData();
                 return;
             }
             
             // Método 2: CORREGIDO - Desde parámetros URL
             const urlParams = new URLSearchParams(window.location.search);
+            // Obtener product_id directamente del URL
+            const directProductId = urlParams.get("product_id");
             if (urlParams.has('calculation')) {
                 this.log('info', 'Detectado parámetro calculation en URL');
                 
@@ -519,26 +522,32 @@ class FinancingRequestV2 {
                     
                     this.log('info', 'Datos de calculation parseados', calculationData);
                     
+                    // DEBUG: Ver qué valores específicos tenemos disponibles
+                    console.log('🔍 DEBUG - calculationData.product_id:', calculationData.product_id);
+                    console.log('🔍 DEBUG - calculationData.product?.id:', calculationData.product?.id);
+                    console.log('🔍 DEBUG - directProductId:', directProductId);
+                    
                     // Mapear datos de la calculadora al formato V2
                     this.state.calculationData = {
                         product: {
-                            id: calculationData.product?.id || '1',
-                            name: calculationData.product?.name || 'Producto Seleccionado'
+                            id: calculationData.product_id || calculationData.product?.id || directProductId || null,
+                            name: calculationData.productName || calculationData.product?.name || 'Producto Seleccionado'
                         },
                         calculation: {
-                            // Usar vehicle_value como product_price
-                            product_price: calculationData.calculation?.vehicle_value || calculationData.calculation?.product_price || 0,
-                            down_payment_percentage: calculationData.calculation?.down_payment_percentage || 35,
-                            down_payment_amount: calculationData.calculation?.down_payment_amount || 0,
-                            financed_amount: calculationData.calculation?.financed_amount || 0,
-                            payment_frequency: calculationData.calculation?.payment_frequency_display || 'quincenal',
-                            number_of_payments: calculationData.calculation?.number_of_payments || calculationData.calculation?.term_months || 24,
-                            payment_amount: calculationData.calculation?.payment_amount || calculationData.calculation?.monthly_payment || 0
+                            // Datos en LLEVO desde la nueva calculadora CrediLlevo
+                            product_price: calculationData.priceLlevo || calculationData.calculation?.priceLlevo || 0,
+                            down_payment_percentage: 0, // No usado en CrediLlevo (inicial fija)
+                            down_payment_amount: calculationData.inicialLlevo || calculationData.calculation?.inicialLlevo || 0,
+                            financed_amount: calculationData.montoFinanciar || calculationData.calculation?.montoFinanciar || 0,
+                            payment_frequency: 'mensual', // Fijo en CrediLlevo
+                            number_of_payments: calculationData.plazoMeses || calculationData.calculation?.plazoMeses || 24,
+                            payment_amount: calculationData.cuotaMensual || calculationData.calculation?.cuotaMensual || 0
                         }
                     };
                     
                     this.log('info', 'Datos de cálculo mapeados correctamente', this.state.calculationData);
                     this.renderCalculationSummary();
+                    this.validateProductData();
                     return;
                     
                 } catch (parseError) {
@@ -552,13 +561,13 @@ class FinancingRequestV2 {
                 
                 this.state.calculationData = {
                     product: {
-                        id: urlParams.get('product') || '1',
+                        id: urlParams.get('product') || null,
                         name: urlParams.get('name') || 'Producto Seleccionado'
                     },
                     calculation: {
                         product_price: parseFloat(urlParams.get('price') || '19399'),
                         down_payment_percentage: parseInt(urlParams.get('down_payment') || '35'),
-                        payment_frequency: 'quincenal',
+                        payment_frequency: 'monthly',
                         number_of_payments: parseInt(urlParams.get('plazo') || '24'),
                         payment_amount: parseFloat(urlParams.get('cuota') || '0')
                     }
@@ -572,6 +581,7 @@ class FinancingRequestV2 {
                 
                 this.log('info', 'Datos de cálculo reconstruidos desde URL', this.state.calculationData);
                 this.renderCalculationSummary();
+                this.validateProductData();
                 return;
             }
             
@@ -581,29 +591,78 @@ class FinancingRequestV2 {
                 this.state.calculationData = JSON.parse(sessionData);
                 this.log('info', 'Datos de cálculo cargados desde sessionStorage');
                 this.renderCalculationSummary();
+                this.validateProductData();
                 return;
             }
             
-            // Método 5: Valores por defecto
-            this.log('warning', 'No se encontraron datos de cálculo - usando valores por defecto');
+            // Método 5: Valores por defecto CrediLlevo
+            this.log('warning', 'No se encontraron datos de cálculo - usando valores por defecto CrediLlevo');
             this.state.calculationData = {
-                product: { id: '1', name: 'Producto' },
+                product: { id: null, name: 'Selecciona un producto en la calculadora' },
                 calculation: {
-                    product_price: 19399,
-                    down_payment_percentage: 35,
-                    down_payment_amount: 6789.65,
-                    financed_amount: 12609.35,
-                    payment_frequency: 'quincenal',
+                    product_price: 0,
+                    down_payment_percentage: 0,
+                    down_payment_amount: 0,
+                    financed_amount: 0,
+                    payment_frequency: 'mensual',
                     number_of_payments: 24,
-                    payment_amount: 242.49
+                    payment_amount: 0
                 }
             };
-            this.renderCalculationSummary();
+            
+            // VALIDACIÓN CRÍTICA: Si no hay product_id válido, redirigir a calculadora
+            this.validateProductData();
             
         } catch (error) {
             this.log('error', 'Error cargando datos de cálculo: ' + error.message);
             this.state.calculationData = null;
         }
+    }
+    
+    /**
+     * NUEVO: Validar que los datos del producto sean válidos
+     */
+    validateProductData() {
+        const productId = this.state.calculationData?.product?.id;
+        
+        // Logging para debug
+        console.log('🔍 VALIDACIÓN - product_id encontrado:', productId);
+        console.log('🔍 VALIDACIÓN - datos completos:', this.state.calculationData);
+        
+        if (!productId || productId === null || productId === 'null') {
+            this.log('error', 'VALIDACIÓN FALLIDA: No hay product_id válido. Redirigiendo a calculadora.');
+            
+            // Mostrar mensaje de error al usuario
+            this.showError('Error: Datos de producto no válidos. Redirigiendo a la calculadora para seleccionar un producto...');
+            
+            // Redirigir después de 3 segundos
+            setTimeout(() => {
+                window.location.href = '/calculadora.html';
+            }, 3000);
+            
+            return false;
+        }
+        
+        // Convertir a número si es string
+        const numericId = parseInt(productId);
+        if (isNaN(numericId)) {
+            this.log('error', `VALIDACIÓN FALLIDA: product_id no es un número válido: ${productId}`);
+            this.showError('Error: ID de producto inválido. Redirigiendo a la calculadora...');
+            
+            setTimeout(() => {
+                window.location.href = '/calculadora.html';
+            }, 3000);
+            
+            return false;
+        }
+        
+        // Actualizar el product_id con el valor numérico correcto
+        this.state.calculationData.product.id = numericId;
+        this.log('info', `✅ VALIDACIÓN EXITOSA: product_id válido: ${numericId}`);
+        
+        // Continuar con renderización
+        this.renderCalculationSummary();
+        return true;
     }
     
     /**
@@ -635,20 +694,20 @@ class FinancingRequestV2 {
         this.elements.calculationSummary.innerHTML = `
             <div class="row text-center">
                 <div class="col-md-3">
-                    <h3>$${this.formatNumber(productPrice)}</h3>
+                    <h3>${this.formatNumber(productPrice)} LLEVO</h3>
                     <small>Precio del Producto</small>
                 </div>
                 <div class="col-md-3">
-                    <h3>$${this.formatNumber(downPaymentAmount)}</h3>
-                    <small>Inicial (${downPaymentPercentage}%)</small>
+                    <h3>${this.formatNumber(downPaymentAmount)} LLEVO</h3>
+                    <small>Inicial Fija</small>
                 </div>
                 <div class="col-md-3">
-                    <h3>$${this.formatNumber(financedAmount)}</h3>
+                    <h3>${this.formatNumber(financedAmount)} LLEVO</h3>
                     <small>Monto a Financiar</small>
                 </div>
                 <div class="col-md-3">
-                    <h3>$${this.formatNumber(paymentAmount)}</h3>
-                    <small>Cuota ${calc.payment_frequency || 'Quincenal'}</small>
+                    <h3>${this.formatNumber(paymentAmount)} LLEVO</h3>
+                    <small>Cuota Mensual</small>
                 </div>
             </div>
         `;
@@ -657,9 +716,9 @@ class FinancingRequestV2 {
         if (this.elements.productDetails) {
             this.elements.productDetails.innerHTML = `
                 <p><strong>Producto:</strong> ${product.name || 'Producto Seleccionado'}</p>
-                <p><strong>Precio:</strong> $${this.formatNumber(productPrice)}</p>
-                <p><strong>Plan:</strong> Crédito Inmediato ${downPaymentPercentage}%</p>
-                <p><strong>Plazo:</strong> ${calc.number_of_payments || 24} pagos</p>
+                <p><strong>Precio:</strong> ${this.formatNumber(productPrice)} LLEVO</p>
+                <p><strong>Plan:</strong> CrediLlevo Inmediato</p>
+                <p><strong>Plazo:</strong> ${calc.number_of_payments || 24} meses fijos</p>
             `;
         }
         
@@ -731,6 +790,17 @@ class FinancingRequestV2 {
         const calc = this.state.calculationData?.calculation || {};
         const product = this.state.calculationData?.product || {};
         
+        // DEBUG: Ver datos antes de validación
+        console.log('🔍 DEBUG - product object completo:', product);
+        console.log('🔍 DEBUG - product.id final:', product.id);
+        
+        // VALIDACIÓN CRÍTICA: Verificar que tenemos un producto válido
+        if (!product.id) {
+            console.error('❌ DEBUG - No hay product.id válido. Estado completo:', this.state.calculationData);
+            this.showError("Error: No se ha seleccionado un producto válido. Por favor, inicia desde la calculadora.");
+            throw new Error("Missing product_id");
+        }
+        
         // Obtener valores numéricos
         const productPrice = parseFloat(calc.product_price || 0);
         const downPaymentPercentage = parseInt(calc.down_payment_percentage || 35);
@@ -747,8 +817,8 @@ class FinancingRequestV2 {
         // Preparar datos en el formato EXACTO que espera el serializer
         const data = {
             // Campos obligatorios del serializer
-            product: parseInt(product.id || 1),
-            financing_plan: this.getFinancingPlanByDownPayment(downPaymentPercentage),
+            product: product.id ? parseInt(product.id) : null,
+            financing_plan: this.getFinancingPlanByDownPayment(),
             
             // Montos (como números, no strings)
             product_price: parseFloat(productPrice.toFixed(2)),
@@ -762,7 +832,7 @@ class FinancingRequestV2 {
             total_amount: parseFloat(totalAmount.toFixed(2)),
             
             // Plan de pagos
-            payment_frequency: "biweekly", // Quincenal en formato del backend
+            payment_frequency: "monthly", // CrediLlevo usa pagos mensuales
             number_of_payments: numberOfPayments,
             payment_amount: parseFloat(paymentAmount.toFixed(2)),
             
@@ -988,9 +1058,9 @@ class FinancingRequestV2 {
             <div class="row">
                 <div class="col-md-6">
                     <h6>Información del Financiamiento</h6>
-                    <p><strong>Plan:</strong> Crédito Inmediato</p>
+                    <p><strong>Plan:</strong> CrediLlevo Inmediato</p>
                     <p><strong>Tipo de Empleo:</strong> ${this.getEmploymentTypeText(this.state.formData.employment_type)}</p>
-                    <p><strong>Ingreso Mensual:</strong> $${this.formatNumber(this.state.formData.monthly_income || 0)}</p>
+                    <p><strong>Capacidad de Pago:</strong> ${this.formatNumber(this.state.formData.monthly_income || 0)} (demostrable)</p>
                 </div>
                 <div class="col-md-6">
                     <h6>Documentos</h6>
@@ -1006,9 +1076,10 @@ class FinancingRequestV2 {
     }
     
     // Métodos de utilidad
-    getFinancingPlanByDownPayment(percentage) {
-        const planMap = { 35: 5, 45: 6, 55: 7, 60: 8 };
-        return planMap[percentage] || 5;
+    getFinancingPlanByDownPayment() {
+        // CORREGIDO: En CrediLlevo solo hay un plan: "CrediLlevo Inmediato" con ID 10
+        // La inicial es fija por producto, no variable por porcentaje
+        return 10;
     }
     
     getEmploymentTypeText(type) {
