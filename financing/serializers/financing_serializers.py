@@ -115,21 +115,28 @@ class FinancingRequestListSerializer(serializers.ModelSerializer):
             'id', 'application_number', 'customer_name',
             'product_name', 'product_image', 'product_price', 'product_price_llevo',
             'status', 'status_display', 'payment_amount', 'payment_amount_llevo', 'payment_amount_ves',
+            "down_payment_llevos",
             'payment_frequency', 'created_at'
         ]
     
     def get_product_price_llevo(self, obj):
-        """Convertir precio USD a LLEVO para mostrar al usuario"""
+        """Usar el valor LLEVO predefinido del producto (misma lógica que solicitud)"""
+        # Usar el valor LLEVO predefinido del producto, no conversiones
+        if obj.product and hasattr(obj.product, 'price_llevo'):
+            return obj.product.price_llevo or 0
+        # Fallback a conversión si no existe valor predefinido
         current_rate = LlevoRate.get_current_rate()
         if current_rate and obj.product_price:
-            # USD a LLEVO: redondeo estándar
             conversion_factor = current_rate.llevo_value / current_rate.usdt_ves_rate
             return round(obj.product_price / conversion_factor)
         return int(obj.product_price) if obj.product_price else 0
     
     def get_payment_amount_llevo(self, obj):
-        """Retornar el valor LLEVO directo de la base de datos"""
-        # Usar el valor LLEVO almacenado directamente, sin conversiones
+        """Usar el valor LLEVO predefinido del producto (misma lógica que solicitud)"""
+        # Usar el valor LLEVO predefinido del producto, no conversiones
+        if obj.product and hasattr(obj.product, 'cuota_mensual_llevos'):
+            return obj.product.cuota_mensual_llevos or 0
+        # Fallback al valor almacenado si existe
         return obj.payment_amount_llevos if obj.payment_amount_llevos else 0
     
     def get_payment_amount_ves(self, obj):
@@ -186,7 +193,10 @@ class FinancingRequestCreateSerializer(serializers.ModelSerializer):
             'product_price', 'down_payment_percentage', 'down_payment_amount',
             'financed_amount', 'interest_rate', 'total_interest', 'total_amount',
             'payment_frequency', 'number_of_payments', 'payment_amount',
-            'employment_type', 'monthly_income'
+            'employment_type', 'monthly_income',
+            # Campos LLEVO (sistema principal)
+            'product_price_llevos', 'down_payment_llevos',
+            'financed_amount_llevos', 'payment_amount_llevos',
         ]
     
     def validate(self, data):

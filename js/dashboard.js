@@ -185,7 +185,7 @@ const Dashboard = {
                 <tr>
                     <td>${request.application_number || request.id}</td>
                     <td>${request.product_name || 'N/A'}</td>
-                    <td>${this.formatNumber(request.product_price_llevo || 0)} LLEVO</td>
+                    <td>${this.formatNumber(request.product_price || 0)} LLEVO</td>
                     <td>${statusBadge}</td>
                     <td>${this.formatDate(request.created_at)}</td>
                     <td>${actions}</td>
@@ -348,7 +348,7 @@ const Dashboard = {
                 // Botón R4 como método principal para pagos - destacado visualmente
                 buttons.push(`
                     <span class="r4-primary-indicator">PRINCIPAL</span>
-                    <button class="btn btn-sm r4-payment-button" onclick="console.log(\u0027🔍 Datos R4:\u0027, {id: ${request.id}, llevos: ${request.payment_amount_llevo || 0}, rate: ${currentLlevoRate}, total: ${(request.payment_amount_llevo || 0) * currentLlevoRate}}); showR4Modal(${request.id}, \u0027${request.product_name}\u0027, ${(request.payment_amount_llevo || 0) * currentLlevoRate})">
+                    <button class="btn btn-sm r4-payment-button" onclick="console.log(\u0027🔍 Datos R4:\u0027, {id: ${request.id}, llevos: ${request.payment_amount || 0}, rate: ${currentLlevoRate}, total: ${(request.payment_amount || 0) * currentLlevoRate}}); showR4Modal(${request.id}, \u0027${request.product_name}\u0027, ${(request.payment_amount || 0) * currentLlevoRate})">
                         <i class="fas fa-mobile-alt"></i> R4 Pago
                     </button>
                 `);
@@ -375,21 +375,64 @@ const Dashboard = {
     showDetailsModal(request) {
         const content = document.getElementById('detailsContent');
         
+        
         content.innerHTML = `
             <div class="row">
                 <div class="col-md-6">
                     <h6>Información del Producto</h6>
                     <p><strong>N° Solicitud:</strong> ${request.application_number || request.id}</p>
-                    <p><strong>Producto:</strong> ${request.product_name || 'N/A'}</p>
-                    <p><strong>Precio:</strong> ${this.formatNumber(request.product_price_llevo || 0)} LLEVO</p>
+                    <p><!-- <strong>Producto:</strong> ${request.product_name || 'N/A'} --></p>
+                    <p><strong>Precio:</strong> ${this.formatNumber(request.product_price || 0)} LLEVO</p>
                 </div>
                 <div class="col-md-6">
                     <h6>Información del Financiamiento</h6>
                     <p><strong>Estado:</strong> ${request.status_display || request.status}</p>
-                    <p><strong>Frecuencia de Pago:</strong> ${request.payment_frequency || 'N/A'}</p>
-                    <p><strong>Monto de Cuota:</strong> ${this.formatNumber(request.payment_amount_llevo || 0)} LLEVO</p>
+                    <p><strong>Frecuencia de Pago:</strong> ${request.payment_frequency === 'monthly' ? 'Mensual' : (request.payment_frequency || 'N/A')}</p>
+                    <p><strong>Monto de Cuota:</strong> ${this.formatNumber(request.payment_amount || 0)} LLEVO</p>
                 </div>
             </div>
+            
+            ${request.status === 'approved' ? `
+            <hr>
+            <div class="row">
+                <div class="col-12">
+                    <h6 class="text-success"><i class="fas fa-credit-card me-2"></i>Opciones de Pago</h6>
+                    
+                    <!-- Pago Inicial -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0"><i class="fas fa-play me-2"></i>Pago Inicial</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <p class="mb-1"><strong>Monto:</strong> ${this.formatNumber((request.down_payment_amount || request.product_price * 0.2))} LLEVO</p>
+                                    <p class="mb-1"><strong>Equivalente:</strong> ${this.formatNumber((request.down_payment_amount || request.product_price * 0.2) * currentLlevoRate)} VES</p>
+                                    <small class="text-muted">Tasa actual: ${this.formatNumber(currentLlevoRate)} VES/LLEVO</small>
+                                </div>
+                                <div class="col-md-4 d-flex align-items-center">
+                                    <button class="btn btn-success btn-sm w-100" onclick="showR4Modal(${request.id}, 'Inicial-${request.id}', ${(request.down_payment_amount || request.product_price * 0.2) * currentLlevoRate})">
+                                        <i class="fas fa-mobile-alt me-1"></i> Pagar Inicial R4
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cuotas Mensuales -->
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Cuotas Mensuales</h6>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Monto por cuota:</strong> ${this.formatNumber(request.payment_amount || 0)} LLEVO (${this.formatNumber((request.payment_amount || 0) * currentLlevoRate)} VES)</p>
+                            <p class="text-info"><i class="fas fa-info-circle me-1"></i>Las cuotas mensuales se activan después del pago inicial</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            ` : ''}
+            
             <hr>
             <div class="row">
                 <div class="col-md-6">
@@ -590,7 +633,7 @@ const Dashboard = {
                                 <div class="text-center mb-3">
                                     <h6>Solicitud: ${request.application_number || request.id}</h6>
                                     <p class="text-muted">${request.product_name}</p>
-                                    <h4 class="text-success">${this.formatNumber(request.payment_amount_llevo || 0)} LLEVO</h4>
+                                    <h4 class="text-success">${this.formatNumber(request.payment_amount || 0)} LLEVO</h4>
                                     <small class="text-muted">Pago R4: ${this.formatNumber(request.payment_amount_ves || 0)} VES</small>
                                 </div>
                                 <div id="quickR4ButtonContainer" class="text-center">
@@ -727,3 +770,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Exportar para uso global
 window.Dashboard = Dashboard; 
+    // === PUNTO DE INSERCION PARA FUNCIONES DE PAGO ===
