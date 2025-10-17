@@ -40,8 +40,12 @@ class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
         fields = ['id', 'user', 'phone', 'address', 'identity_document', 
-                 'date_of_birth', 'occupation', 'monthly_income', 'verified']
+                 'date_of_birth', 'occupation', 'monthly_income', 'verified', 'is_profile_complete']
         read_only_fields = ['id', 'verified']
+    def update(self, instance, validated_data):
+        instance = super().update(instance, validated_data)
+        instance.update_profile_completeness()
+        return instance
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})

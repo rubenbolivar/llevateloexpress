@@ -101,41 +101,65 @@ const CalculadoraCrediLlevo = {
      */
     async loadProducts() {
         try {
-            // Intentar desde el endpoint específico de calculadora
+            let allProducts = [];
+            let page = 1;
+            let hasMore = true;
+
+            // Intentar desde el endpoint específico de calculadora (sin paginación)
             let response = await fetch(`${this.API_BASE}/products/calculadora-products/`);
-            if (!response.ok) {
-                // Fallback a endpoint general de productos
-                response = await fetch(`${this.API_BASE}/products/products/`);
+
+            if (response.ok) {
+                // Endpoint de calculadora devuelve todos los productos sin paginación
+                const data = await response.json();
+                allProducts = Array.isArray(data) ? data : (data.results || data.products || []);
+                console.log(`Endpoint calculadora: ${allProducts.length} productos cargados`);
+            } else {
+                // Fallback: cargar todas las páginas del endpoint general
+                console.log('Usando endpoint general con paginación');
+
+                while (hasMore) {
+                    const paginatedResponse = await fetch(`${this.API_BASE}/products/products/?page=${page}&page_size=100`);
+
+                    if (!paginatedResponse.ok) {
+                        throw new Error('Error al cargar productos');
+                    }
+
+                    const data = await paginatedResponse.json();
+                    const products = data.results || [];
+
+                    if (products.length > 0) {
+                        allProducts = allProducts.concat(products);
+                        hasMore = data.next !== null && data.next !== undefined;
+                        page++;
+                        console.log(`Página ${page - 1}: ${products.length} productos, total acumulado: ${allProducts.length}`);
+                    } else {
+                        hasMore = false;
+                    }
+                }
             }
-            
-            if (!response.ok) {
-                throw new Error('Error al cargar productos');
-            }
-            
-            const data = await response.json();
-            const products = data.results || data.products || data;
-            
-            if (Array.isArray(products) && products.length > 0) {
+
+            if (allProducts.length > 0) {
                 // Filtrar solo productos con price_llevo e inicial_llevos
-                const validProducts = products.filter(product => 
+                const validProducts = allProducts.filter(product =>
                     product.price_llevo && product.price_llevo > 0 &&
                     product.inicial_llevos && product.inicial_llevos > 0
                 );
-                
+
                 if (validProducts.length > 0) {
-                    console.log(`${validProducts.length} productos válidos cargados para calculadora`);
+                    console.log(`✅ ${validProducts.length} productos válidos cargados para calculadora (de ${allProducts.length} totales)`);
                     this.populateProductSelectors(validProducts);
                 } else {
-                    console.log('No se encontraron productos con price_llevo e inicial_llevos configurados');
+                    console.log('⚠️ No se encontraron productos con price_llevo e inicial_llevos configurados');
                     this.loadSampleProducts();
                 }
             } else {
                 // Usar productos de ejemplo si no hay datos
+                console.log('⚠️ No se encontraron productos, usando ejemplos');
                 this.loadSampleProducts();
             }
-            
+
         } catch (error) {
-            console.error('Error cargando productos:', error);
+            console.error('❌ Error cargando productos:', error);
             // Cargar productos de ejemplo en caso de error
             this.loadSampleProducts();
         }
@@ -193,6 +217,10 @@ const CalculadoraCrediLlevo = {
         
         if (!vehicleTypeSelect || !vehicleModelSelect) return;
         
+        // Verificar si hay un producto preseleccionado en la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const preselectedModelId = urlParams.get('modelo');
+        
         // Agrupar productos por categoría
         const categories = {};
         products.forEach(product => {
@@ -211,8 +239,33 @@ const CalculadoraCrediLlevo = {
             vehicleTypeSelect.appendChild(option);
         });
         
-        // Seleccionar primera categoría y cargar productos
-        if (Object.keys(categories).length > 0) {
+        // Buscar producto preseleccionado si hay parámetro en URL
+        let preselectedProduct = null;
+        if (preselectedModelId) {
+            for (const categoryProducts of Object.values(categories)) {
+                preselectedProduct = categoryProducts.find(p => p.id.toString() === preselectedModelId);
+                if (preselectedProduct) break;
+            }
+        }
+        
+        // Seleccionar categoría apropiada
+        if (preselectedProduct) {
+            // Seleccionar categoría del producto preseleccionado
+            vehicleTypeSelect.value = preselectedProduct.category_name.toLowerCase();
+            this.updateProductModels(categories);
+            
+            // Preseleccionar el modelo después de un pequeño delay
+            setTimeout(() => {
+                const vehicleModelSelect = document.getElementById('vehicleModel');
+                if (vehicleModelSelect) {
+                    vehicleModelSelect.value = preselectedProduct.id.toString();
+                    // Disparar evento change para actualizar cálculos
+                    vehicleModelSelect.dispatchEvent(new Event('change'));
+                    console.log(`Producto preseleccionado: ${preselectedProduct.name} (ID: ${preselectedProduct.id})`);
+                }
+            }, 100);
+        } else if (Object.keys(categories).length > 0) {
+            // Seleccionar primera categoría si no hay preselección
             vehicleTypeSelect.value = Object.keys(categories)[0].toLowerCase();
             this.updateProductModels(categories);
         }

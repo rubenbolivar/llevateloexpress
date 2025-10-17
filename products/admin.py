@@ -175,6 +175,26 @@ class LlevoRateAdmin(admin.ModelAdmin):
         }),
     )
     
+    def has_module_permission(self, request):
+        """Solo superadministradores pueden ver el módulo de tasas LLEVO"""
+        return request.user.is_superuser
+    
+    def has_view_permission(self, request, obj=None):
+        """Solo superadministradores pueden ver tasas LLEVO"""
+        return request.user.is_superuser
+    
+    def has_add_permission(self, request):
+        """Solo superadministradores pueden agregar tasas LLEVO"""
+        return request.user.is_superuser
+    
+    def has_change_permission(self, request, obj=None):
+        """Solo superadministradores pueden modificar tasas LLEVO"""
+        return request.user.is_superuser
+    
+    def has_delete_permission(self, request, obj=None):
+        """Solo superadministradores pueden eliminar tasas LLEVO"""
+        return request.user.is_superuser
+    
     def llevo_value_formatted(self, obj):
         if obj.llevo_value:
             return format_html(

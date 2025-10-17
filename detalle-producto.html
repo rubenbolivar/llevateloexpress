@@ -269,8 +269,8 @@
                     <h5 class="mb-3">Contacto</h5>
                     <ul class="list-unstyled">
                         <li class="mb-2"><i class="fas fa-map-marker-alt me-2"></i> Caracas, Venezuela</li>
-                        <li class="mb-2"><i class="fas fa-phone me-2"></i> (0212) 555-1234</li>
-                        <li><i class="fas fa-envelope me-2"></i> info@llevateloexpress.com</li>
+                        <li class="mb-2"><i class="fas fa-phone me-2"></i> +58 412 8701585</li>
+                        <li><i class="fab fa-whatsapp me-2"></i> <a href="https://api.whatsapp.com/send?phone=5804128701585" target="_blank" class="text-white text-decoration-none">WhatsApp</a></li>
                     </ul>
                 </div>
                 <div class="col-md-3">
@@ -326,23 +326,7 @@
                         </a>
                     </div>
                 </div>
-                
-                <div class="product-meta mt-4 pt-3 border-top">
-                    <div class="row">
-                        <div class="col-6 mb-2">
-                            <strong>Marca:</strong> <span class="product-brand"></span>
-                        </div>
-                        <div class="col-6 mb-2">
-                            <strong>Modelo:</strong> <span class="product-model"></span>
-                        </div>
-                        <div class="col-6 mb-2">
-                            <strong>Año:</strong> <span class="product-year">2023</span>
-                        </div>
-                        <div class="col-6">
-                            <strong>Stock:</strong> <span class="product-stock"></span>
-                        </div>
-                    </div>
-                </div>
+
             </div>
         </div>
         
@@ -576,9 +560,9 @@
             };
             
             content.querySelector('.product-price').textContent = formatPriceLLEVO(product);
-            content.querySelector('.product-brand').textContent = product.brand;
-            content.querySelector('.product-model').textContent = product.name;
-            content.querySelector('.product-stock').textContent = product.stock ? `${product.stock} disponibles` : 'Consultar disponibilidad';
+            // Eliminado: product-brand (sección eliminada del HTML)
+            // Eliminado: product-model (sección eliminada del HTML)
+            // Eliminado: product-stock (sección eliminada del HTML)
             content.querySelector('.product-finance-btn').href = `calculadora.html?modelo=${product.id}`;
             
             // Actualizar breadcrumb

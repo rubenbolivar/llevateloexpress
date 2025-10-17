@@ -32,7 +32,7 @@ class R4PaymentModal {
 
     createModalHTML(paymentData) {
         const { applicationId, amount, productName } = paymentData;
-        const phoneFormatted = this.config.commercePhone || '0412 1193126';
+        const phoneFormatted = this.config.commercePhone || '0412 8701585';
         
         return `
             <div class="modal fade" id="r4PaymentModal" tabindex="-1" aria-hidden="true">

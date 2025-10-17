@@ -178,19 +178,19 @@ renderCalculationSummary() {
     // Renderizar resumen principal
     this.elements.calculationSummary.innerHTML = `
         <div class="row text-center">
-            <div class="col-md-3">
-                <h3>$${this.formatNumber(productPrice)}</h3>
-                <small>Precio del Producto</small>
+            //             <div class="col-md-4">
+            //                 <h3>${this.formatNumber(downPaymentAmount)} LLEVO</h3>
+            //                 <small>Inicial Fija</small>
+            //             </div>
+            <div class="col-md-4">
+                <h3>${this.formatNumber(downPaymentAmount)} LLEVO</h3>
+                <small>Inicial Fija</small>
             </div>
-            <div class="col-md-3">
-                <h3>$${this.formatNumber(downPaymentAmount)}</h3>
-                <small>Inicial (${downPaymentPercentage}%)</small>
+            <div class="col-md-4">
+                <h3>${this.formatNumber(paymentAmount)} LLEVO</h3>
+                <small>Cuota Mensual</small>
             </div>
-            <div class="col-md-3">
-                <h3>$${this.formatNumber(paymentAmount)}</h3>
-                <small>Cuota ${this.getFrequencyText(paymentFrequency)}</small>
-            </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <h3>${numberOfPayments}</h3>
                 <small>Número de Cuotas</small>
             </div>
@@ -202,8 +202,7 @@ renderCalculationSummary() {
         this.elements.productDetails.innerHTML = `
             <p><strong>Producto:</strong> ${product.name || 'Producto Seleccionado'}</p>
             <p><strong>Categoría:</strong> ${product.category_name || 'N/A'}</p>
-            <p><strong>Precio:</strong> $${this.formatNumber(productPrice)}</p>
-            <p><strong>Monto a Financiar:</strong> $${this.formatNumber(calc.financed_amount || 0)}</p>
+            <p><strong>Monto a Financiar:</strong> ${this.formatNumber(calc.financed_amount || 0)} LLEVO</p>
         `;
     }
     

@@ -503,35 +503,10 @@ class PaymentAdmin(admin.ModelAdmin):
         )
     
     def save_model(self, request, obj, form, change):
-        """Establece automaticamente el usuario que registra el pago y valores por defecto"""
+        """Establece automaticamente el usuario que registra el pago"""
         if not change:
             obj.recorded_by = request.user
             obj.submitted_by = request.user
-            
-            # Establecer valores por defecto para campos con constraint NOT NULL
-            if not obj.reference_number:
-                obj.reference_number = f"ADMIN-{obj.payment_type.upper()}-{request.user.id}"
-            
-            # Campos de texto que requieren valores por defecto
-            if not obj.sender_bank:
-                obj.sender_bank = ""
-            if not obj.sender_account:
-                obj.sender_account = ""
-            if not obj.sender_name:
-                obj.sender_name = ""
-            if not obj.sender_identification:
-                obj.sender_identification = ""
-            if not obj.notes:
-                obj.notes = ""
-            if not obj.customer_notes:
-                obj.customer_notes = ""
-            if not obj.admin_notes:
-                obj.admin_notes = ""
-            if not obj.rejection_reason:
-                obj.rejection_reason = ""
-            if not obj.user_agent:
-                obj.user_agent = f"Django Admin - User {request.user.username}"
-        
         super().save_model(request, obj, form, change)
 
 # PaymentAttachment admin comentado temporalmente hasta crear la migración correspondiente

@@ -916,7 +916,11 @@ prepareRequestData() {
         payment_frequency: this.normalizePaymentFrequency(calc.payment_frequency || 'monthly'),
         number_of_payments: parseInt(calc.number_of_payments || 0),
         payment_amount: parseFloat(calc.payment_amount || 0).toFixed(2),
-        payment_amount_llevos: parseInt(this.state.calculationData.cuotaMensual || 0),
+        payment_amount_llevos: parseInt(product.cuota_mensual_llevos || 0),
+        // Otros campos LLEVO del producto
+        product_price_llevos: parseInt(product.price_llevo || 0),
+        down_payment_llevos: parseInt(product.inicial_llevos || 0),
+        financed_amount_llevos: parseInt((product.price_llevo || 0) - (product.inicial_llevos || 0)),
         
         // Datos personales
         employment_type: this.state.formData.employment_type || '',

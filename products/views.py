@@ -39,9 +39,11 @@ class CalculadoraProductsView(generics.ListAPIView):
     Vista específica para la calculadora CrediLlevo
     Devuelve solo productos que tienen precio_llevo e inicial_llevos configurados
     y que NO estén marcados como sin stock
+    SIN PAGINACIÓN para garantizar que todos los productos estén disponibles
     """
     serializer_class = ProductListSerializer
-    
+    pagination_class = None  # Deshabilitar paginación para calculadora
+
     def get_queryset(self):
         return Product.objects.filter(
             price_llevo__isnull=False,

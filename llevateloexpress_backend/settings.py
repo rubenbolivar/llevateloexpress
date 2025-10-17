@@ -105,7 +105,7 @@ DATABASES = {
         'PASSWORD': os.environ.get('DB_PASSWORD', 'llevateloexpress_pass'),
         'HOST': os.environ.get('DB_HOST', 'localhost'),
         'PORT': os.environ.get('DB_PORT', '5432'),
-        'CONN_MAX_AGE': 600,
+        'CONN_MAX_AGE': 30,
     }
 }
 

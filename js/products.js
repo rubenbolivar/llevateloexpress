@@ -367,7 +367,7 @@ function createProductCard(product) {
                 <div class="mt-auto">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <div>
-                            <h4 class="text-primary mb-0">${product.price_llevo ? product.price_llevo.toLocaleString() + ' LLEVO' : '$' + product.price.toLocaleString()}</h4>
+                            <h4 class="text-primary mb-0">${product.price_llevo ? product.price_llevo.toLocaleString() + ' <img src="img/icons/llevo/Llevo (40 x 40 px).svg" alt="LLEVO" width="36" height="36" style="vertical-align: middle;">' : '$' + product.price.toLocaleString()}</h4>
                             <!-- <small class="text-muted">Stock: ${product.stock} unidades</small> -->
                         </div>
                         <span class="badge bg-secondary">${getCategoryName(product.category)}</span>

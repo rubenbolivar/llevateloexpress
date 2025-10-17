@@ -31,12 +31,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (idNumberInput) {
             idNumberInput.addEventListener('input', function() {
                 const value = this.value.trim();
-                const pattern = /^[VvEe]-\d{7,10}$/;
+                const pattern = /^\d{7,10}$/;
                 
                 if (pattern.test(value)) {
                     this.setCustomValidity('');
                 } else {
-                    this.setCustomValidity('Formato inválido. Ejemplo: V-12345678');
+                    this.setCustomValidity('Ingrese solo números (7-10 dígitos)');
                 }
             });
         }
@@ -333,7 +333,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 first_name: document.getElementById('firstName').value,
                 last_name: document.getElementById('lastName').value,
                 phone: document.getElementById('phone').value,
-                identity_document: document.getElementById('idNumber').value
+                identity_document: document.getElementById('idType').value + '-' + document.getElementById('idNumber').value
             };
             
             // Realizar registro

@@ -112,7 +112,12 @@
                         <div class="card-body text-center">
                             <i class="fas fa-map-marker-alt contact-icon"></i>
                             <h4 class="card-title">Ubicación</h4>
-                            <p class="card-text">Av. Principal de El Cafetal<br>Al lado de Distribuidora Mototap, C.A.<br>El Cafetal, Caracas, Venezuela</p>
+                            <p class="card-text">10°29'11.0"N 66°51'15.6"W<br>Caracas, Venezuela</p>
+                            <a href="https://www.google.com/maps/dir/?api=1&destination=10.486383,-66.854333"
+                               target="_blank"
+                               class="btn btn-outline-primary btn-sm mt-2">
+                                <i class="fas fa-directions me-1"></i> Cómo llegar
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -120,17 +125,32 @@
                     <div class="card contact-card border-0 shadow-sm p-4 h-100">
                         <div class="card-body text-center">
                             <i class="fas fa-phone contact-icon"></i>
-                            <h4 class="card-title">Teléfonos</h4>
-                            <p class="card-text">(0212) 555-1234<br>(0414) 555-5678<br>0800-LLEVATE (0800-553-8283)</p>
+                            <h4 class="card-title">Teléfono</h4>
+                            <p class="card-text mb-2">
+                                <a href="tel:+584128701585" class="text-decoration-none text-dark">
+                                    <strong>+58 412 8701585</strong>
+                                </a>
+                            </p>
+                            <a href="tel:+584128701585" class="btn btn-outline-primary btn-sm mt-2">
+                                <i class="fas fa-phone-alt me-1"></i> Llamar ahora
+                            </a>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="card contact-card border-0 shadow-sm p-4 h-100">
                         <div class="card-body text-center">
-                            <i class="fas fa-envelope contact-icon"></i>
-                            <h4 class="card-title">Correo Electrónico</h4>
-                            <p class="card-text">info@llevateloexpress.com<br>ventas@llevateloexpress.com<br>soporte@llevateloexpress.com</p>
+                            <i class="fab fa-whatsapp contact-icon" style="color: #25D366;"></i>
+                            <h4 class="card-title">WhatsApp</h4>
+                            <p class="card-text mb-2">
+                                <strong>Chatea con nosotros</strong><br>
+                                <small class="text-muted">Respuesta inmediata</small>
+                            </p>
+                            <a href="https://api.whatsapp.com/send?phone=5804128701585&text=¡Hola!%20Necesito%20información%20sobre%20financiamiento%20de%20vehículos%20en%20LlévateloExpress.%20¿Pueden%20ayudarme?"
+                               target="_blank"
+                               class="btn btn-success btn-sm mt-2">
+                                <i class="fab fa-whatsapp me-1"></i> Abrir WhatsApp
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -218,7 +238,7 @@
                 <div class="col-lg-6">
                     <h2 class="mb-4">Nuestra Ubicación</h2>
                     <div class="map-container">
-                        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3923.048642657682!2d-66.8199729!3d10.4927444!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8c2a59d2fe3fffff%3A0xe0f6f48533823d69!2sDistribuidora%20Mototap%2C%20C.A.!5e0!3m2!1ses!2sve!4v1689351515693!5m2!1ses!2sve" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                        <div id="map" style="width: 100%; height: 100%; border-radius: 10px;"></div>
                     </div>
                     
                     <div class="mt-4">
@@ -353,9 +373,9 @@
                 <div class="col-md-3 mb-4 mb-md-0">
                     <h5 class="mb-3">Contacto</h5>
                     <ul class="list-unstyled">
-                        <li class="mb-2"><i class="fas fa-map-marker-alt me-2"></i> El Cafetal, Caracas, Venezuela</li>
-                        <li class="mb-2"><i class="fas fa-phone me-2"></i> (0212) 555-1234</li>
-                        <li><i class="fas fa-envelope me-2"></i> info@llevateloexpress.com</li>
+                        <li class="mb-2"><i class="fas fa-map-marker-alt me-2"></i> Caracas, Venezuela</li>
+                        <li class="mb-2"><i class="fas fa-phone me-2"></i> +58 412 8701585</li>
+                        <li><i class="fab fa-whatsapp me-2"></i> <a href="https://api.whatsapp.com/send?phone=5804128701585" target="_blank" class="text-white text-decoration-none">WhatsApp</a></li>
                     </ul>
                 </div>
                 <div class="col-md-3">
@@ -415,7 +435,7 @@
                             `*Mensaje:*%0A${mensaje}`;
                         
                         // Crear el enlace de WhatsApp
-                        const whatsappLink = `https://api.whatsapp.com/send?phone=584121010744&text=${mensajeWhatsApp}`;
+                        const whatsappLink = `https://api.whatsapp.com/send?phone=5804128701585&text=${mensajeWhatsApp}`;
                         
                         // Mostrar mensaje de confirmación
                         if(confirm('¿Deseas enviar este mensaje por WhatsApp?')) {
@@ -446,7 +466,82 @@
     </svg>
 </a>
 
+<!-- Google Maps JavaScript API -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAdab6wLyhoVPyvz5qeKv3W2kAonXWb7PM&callback=initMap" async defer></script>
+
 <script>
+// Inicializar el mapa de Google Maps con marcador personalizado LLEVO
+function initMap() {
+    // Coordenadas de LlévateloExpress
+    const llevateloLocation = { lat: 10.486383, lng: -66.854333 };
+
+    // Crear el mapa
+    const map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 16,
+        center: llevateloLocation,
+        mapTypeId: 'roadmap',
+        styles: [
+            {
+                featureType: 'poi',
+                elementType: 'labels',
+                stylers: [{ visibility: 'on' }]
+            }
+        ]
+    });
+
+    // Crear el marcador con icono personalizado LLEVO
+    const marker = new google.maps.Marker({
+        position: llevateloLocation,
+        map: map,
+        title: 'LlévateloExpress',
+        icon: {
+            url: 'img/icons/llevo/Llevo (100 x 100 px).svg',
+            scaledSize: new google.maps.Size(50, 50), // Tamaño del icono
+            anchor: new google.maps.Point(25, 50) // Punto de anclaje (centro inferior)
+        },
+        animation: google.maps.Animation.DROP
+    });
+
+    // Ventana de información al hacer clic en el marcador
+    const infoWindow = new google.maps.InfoWindow({
+        content: `
+            <div style="padding: 10px; font-family: Arial, sans-serif;">
+                <h5 style="margin: 0 0 10px 0; color: #0d6efd;">
+                    <img src="img/icons/llevo/Llevo (40 x 40 px).svg" style="width: 25px; height: 25px; vertical-align: middle; margin-right: 5px;">
+                    LlévateloExpress
+                </h5>
+                <p style="margin: 5px 0; font-size: 14px;">
+                    <strong>Financiamiento de Vehículos</strong>
+                </p>
+                <p style="margin: 5px 0; font-size: 13px;">
+                    <i class="fas fa-map-marker-alt" style="color: #0d6efd;"></i>
+                    Caracas, Venezuela
+                </p>
+                <p style="margin: 5px 0; font-size: 13px;">
+                    <i class="fas fa-phone" style="color: #0d6efd;"></i>
+                    +58 412 8701585
+                </p>
+                <a href="https://www.google.com/maps/dir/?api=1&destination=10.486383,-66.854333"
+                   target="_blank"
+                   style="display: inline-block; margin-top: 10px; padding: 5px 15px; background-color: #0d6efd; color: white; text-decoration: none; border-radius: 5px; font-size: 12px;">
+                    Cómo llegar
+                </a>
+            </div>
+        `
+    });
+
+    // Abrir ventana de información al hacer clic
+    marker.addListener('click', function() {
+        infoWindow.open(map, marker);
+    });
+
+    // Abrir automáticamente la ventana de información
+    setTimeout(function() {
+        infoWindow.open(map, marker);
+    }, 1000);
+}
+
+// WhatsApp button animation
 document.addEventListener('DOMContentLoaded', function() {
     const whatsappButton = document.querySelector('.whatsapp-float');
     if (whatsappButton) {

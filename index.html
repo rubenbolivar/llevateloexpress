@@ -158,10 +158,9 @@
                     <p class="lead mb-4">CrediLlevo Inmediato: financiamiento con precios transparentes en LLEVO y entrega inmediata.</p>
                     <div class="d-flex flex-wrap">
                         <div class="finance-option p-4 mb-3 bg-light rounded shadow-sm text-center">
-                            <i class="fas fa-coins text-warning fa-2x mb-3"></i>
+                            <img src="img/icons/llevo/Llevo (100 x 100 px).svg" alt="LLEVO Icon" width="64" height="64" class="mb-3">
                             <h3 class="h5">CrediLlevo Inmediato</h3>
                             <p class="mb-0 small">24 meses fijos - Entrega inmediata</p>
-                            <a href="planes.html" class="stretched-link"></a>
                         </div>
                     </div>
                     <div class="mt-4">
@@ -216,50 +215,86 @@
     </section>
 
     <!-- Categorías -->
-    <section class="categories py-5 bg-light">
+    <!-- Sección Explicativa LLEVO -->
+    <section class="llevo-explanation py-5" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
         <div class="container">
-            <h2 class="text-center mb-5">Categorías de Productos</h2>
-            <div class="row g-4 mb-4">
-                <div class="col-md-6">
-                    <div class="category-card text-center bg-white rounded shadow-sm p-4 h-100">
-                        <i class="fas fa-motorcycle fa-3x mb-3 text-primary"></i>
-                        <h3 class="h4">Motocicletas</h3>
-                        <p>Desde modelos económicos hasta deportivos de alta gama.</p>
-                        <a href="catalogo.html?categoria=motocicletas" class="btn btn-outline-primary mt-auto">Ver Motocicletas</a>
+            <div class="row align-items-center">
+                <div class="col-lg-4 text-center mb-4 mb-lg-0">
+                    <div class="llevo-icon-container p-4">
+                        <img src="img/icons/llevo/Llevo (200 x 200 px).svg" alt="LLEVO Token" class="img-fluid mb-3" style="max-width: 180px;">
+                        <div class="llevo-rate-card bg-white rounded shadow-sm p-3">
+                            <h5 class="text-primary mb-2">Cotización Actual</h5>
+                            <div class="rate-display">
+                                <span class="h4 text-success">1 LLEVO =</span>
+                                <div class="rate-value mt-2">
+                                    <span id="current-llevo-rate" class="h3 text-dark fw-bold">4,186.05</span>
+                                    <small class="text-muted d-block">VES (Bolívares)</small>
+                                </div>
+                            </div>
+                            <small class="text-muted">Actualizado en tiempo real</small>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="category-card text-center bg-white rounded shadow-sm p-4 h-100">
-                        <i class="fas fa-car fa-3x mb-3 text-primary"></i>
-                        <h3 class="h4">Vehículos</h3>
-                        <p>Autos, camionetas y vehículos comerciales de las mejores marcas.</p>
-                        <a href="catalogo.html?categoria=vehiculos" class="btn btn-outline-primary mt-auto">Ver Vehículos</a>
-                    </div>
-                </div>
-            </div>
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="category-card text-center bg-white rounded shadow-sm p-4 h-100">
-                        <i class="fas fa-tractor fa-3x mb-3 text-primary"></i>
-                        <h3 class="h4">Maquinaria Agrícola</h3>
-                        <p>Tractores y equipos para optimizar tu producción agrícola.</p>
-                        <a href="catalogo.html?categoria=maquinaria" class="btn btn-outline-primary mt-auto">Ver Maquinaria Agrícola</a>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="category-card text-center bg-white rounded shadow-sm p-4 h-100">
-                        <i class="fas fa-truck fa-3x mb-3 text-primary"></i>
-                        <h3 class="h4">Camiones</h3>
-                        <p>Camiones de carga, transporte y distribución de distintas capacidades.</p>
-                        <a href="catalogo.html?categoria=camiones" class="btn btn-outline-primary mt-auto">Ver Camiones</a>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="category-card text-center bg-white rounded shadow-sm p-4 h-100">
-                        <i class="fas fa-industry fa-3x mb-3 text-primary"></i>
-                        <h3 class="h4">Maquinaria y Equipos</h3>
-                        <p>Equipamiento especializado para la industria y el comercio.</p>
-                        <a href="catalogo.html?categoria=equipos" class="btn btn-outline-primary mt-auto">Ver Equipos</a>
+                <div class="col-lg-8">
+                    <div class="llevo-content">
+                        <h2 class="display-5 fw-bold text-primary mb-4">¿Qué es LLEVO?</h2>
+                        <p class="lead mb-4">LLEVO es nuestro token de pago estable, diseñado para facilitar el financiamiento de vehículos y productos en Venezuela.</p>
+                        
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-6">
+                                <div class="feature-item d-flex align-items-start">
+                                    <div class="feature-icon me-3">
+                                        <i class="fas fa-shield-alt text-primary fs-3"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold">Estabilidad</h5>
+                                        <p class="mb-0 small">Con valor estable y confiable</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="feature-item d-flex align-items-start">
+                                    <div class="feature-icon me-3">
+                                        <i class="fas fa-bolt text-warning fs-3"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold">Rapidez</h5>
+                                        <p class="mb-0 small">Transacciones instantáneas sin complicaciones</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="feature-item d-flex align-items-start">
+                                    <div class="feature-icon me-3">
+                                        <i class="fas fa-calculator text-success fs-3"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold">Transparencia</h5>
+                                        <p class="mb-0 small">Precios claros sin sorpresas ocultas</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="feature-item d-flex align-items-start">
+                                    <div class="feature-icon me-3">
+                                        <i class="fas fa-handshake text-info fs-3"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold">Confianza</h5>
+                                        <p class="mb-0 small">Respaldo sólido y seguridad garantizada</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="cta-buttons d-flex flex-wrap gap-3">
+                            <a href="calculadora.html" class="btn btn-primary btn-lg px-4">
+                                <i class="fas fa-calculator me-2"></i>Calcular Financiamiento
+                            </a>
+                            <a href="planes.html" class="btn btn-outline-primary btn-lg px-4">
+                                <i class="fas fa-info-circle me-2"></i>Ver Planes
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -304,9 +339,9 @@
                             <li><a class="dropdown-item" href="#">Todos</a></li>
                             <li><a class="dropdown-item" href="#">Motocicletas</a></li>
                             <li><a class="dropdown-item" href="#">Vehículos</a></li>
-                            <li><a class="dropdown-item" href="#">Maquinaria Agrícola</a></li>
-                            <li><a class="dropdown-item" href="#">Camiones</a></li>
-                            <li><a class="dropdown-item" href="#">Maquinaria y Equipos</a></li>
+<!--                             <li><a class="dropdown-item" href="#">Maquinaria Agrícola</a></li> -->
+<!--                             <li><a class="dropdown-item" href="#">Camiones</a></li> -->
+<!--                             <li><a class="dropdown-item" href="#">Maquinaria y Equipos</a></li> -->
                         </ul>
                     </div>
                     <div class="dropdown me-2">
@@ -348,6 +383,55 @@
     </section>
 
     <!-- Sección de Aliados -->
+    <section class="categories py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5">Categorías de Productos</h2>
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <div class="category-card text-center bg-white rounded shadow-sm p-4 h-100">
+                        <i class="fas fa-motorcycle fa-3x mb-3 text-primary"></i>
+                        <h3 class="h4">Motocicletas</h3>
+                        <p>Desde modelos económicos hasta deportivos de alta gama.</p>
+                        <a href="catalogo.html?categoria=motocicletas" class="btn btn-outline-primary mt-auto">Ver Motocicletas</a>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="category-card text-center bg-white rounded shadow-sm p-4 h-100">
+                        <i class="fas fa-car fa-3x mb-3 text-primary"></i>
+                        <h3 class="h4">Vehículos</h3>
+                        <p>Autos, camionetas y vehículos comerciales de las mejores marcas.</p>
+                        <a href="catalogo.html?categoria=vehiculos" class="btn btn-outline-primary mt-auto">Ver Vehículos</a>
+                    </div>
+                </div>
+            </div>
+            <div class="row g-4">
+<!--                 <div class="col-md-4"> -->
+<!--                     <div class="category-card text-center bg-white rounded shadow-sm p-4 h-100"> -->
+<!--                         <i class="fas fa-tractor fa-3x mb-3 text-primary"></i> -->
+<!--                         <h3 class="h4">Maquinaria Agrícola</h3> -->
+<!--                         <p>Tractores y equipos para optimizar tu producción agrícola.</p> -->
+<!--                         <a href="catalogo.html?categoria=maquinaria" class="btn btn-outline-primary mt-auto">Ver Maquinaria Agrícola</a> -->
+<!--                     </div> -->
+<!--                 </div> -->
+<!--                 <div class="col-md-4"> -->
+<!--                     <div class="category-card text-center bg-white rounded shadow-sm p-4 h-100"> -->
+<!--                         <i class="fas fa-truck fa-3x mb-3 text-primary"></i> -->
+<!--                         <h3 class="h4">Camiones</h3> -->
+<!--                         <p>Camiones de carga, transporte y distribución de distintas capacidades.</p> -->
+<!--                         <a href="catalogo.html?categoria=camiones" class="btn btn-outline-primary mt-auto">Ver Camiones</a> -->
+<!--                     </div> -->
+<!--                 </div> -->
+<!--                 <div class="col-md-4"> -->
+<!--                     <div class="category-card text-center bg-white rounded shadow-sm p-4 h-100"> -->
+<!--                         <i class="fas fa-industry fa-3x mb-3 text-primary"></i> -->
+<!--                         <h3 class="h4">Maquinaria y Equipos</h3> -->
+<!--                         <p>Equipamiento especializado para la industria y el comercio.</p> -->
+<!--                         <a href="catalogo.html?categoria=equipos" class="btn btn-outline-primary mt-auto">Ver Equipos</a> -->
+<!--                     </div> -->
+<!--                 </div> -->
+            </div>
+        </div>
+    </section>
     <section class="partners-section py-5 bg-light">
         <div class="container">
             <h2 class="text-center mb-5">Nuestros Aliados</h2>
@@ -390,8 +474,8 @@
                     <h5 class="mb-3">Contacto</h5>
                     <ul class="list-unstyled">
                         <li class="mb-2"><i class="fas fa-map-marker-alt me-2"></i> Caracas, Venezuela</li>
-                        <li class="mb-2"><i class="fas fa-phone me-2"></i> (0212) 555-1234</li>
-                        <li><i class="fas fa-envelope me-2"></i> info@llevateloexpress.com</li>
+                        <li class="mb-2"><i class="fas fa-phone me-2"></i> +58 412 8701585</li>
+                        <li><i class="fab fa-whatsapp me-2"></i> <a href="https://api.whatsapp.com/send?phone=5804128701585" target="_blank" class="text-white text-decoration-none">WhatsApp</a></li>
                     </ul>
                 </div>
                 <div class="col-md-3 col-xl-2">
@@ -494,5 +578,34 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </div>
 
+    <script>
+        // Actualizar cotización LLEVO en tiempo real
+        async function updateLlevoRate() {
+            try {
+                const response = await fetch('/api/financing/llevo/current-rate/');
+                const data = await response.json();
+                
+                const rateElement = document.getElementById('current-llevo-rate');
+                if (rateElement && data.success && data.data && data.data.llevo_value) {
+                    // Formatear el número con separadores de miles
+                    const formattedRate = parseFloat(data.data.llevo_value).toLocaleString('es-VE', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                    rateElement.textContent = formattedRate;
+                }
+            } catch (error) {
+                console.log('Error actualizando cotización LLEVO:', error);
+                // Mantener valor por defecto si hay error
+            }
+        }
+        
+        // Actualizar al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            updateLlevoRate();
+            // Actualizar cada 30 segundos
+            setInterval(updateLlevoRate, 30000);
+        });
+    </script>
 </body>
 </html> 

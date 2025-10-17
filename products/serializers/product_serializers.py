@@ -53,7 +53,8 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['id', 'name', 'category', 'category_name', 'brand', 'price', 'price_llevo', 'price_ves',
-                 'image', 'description', 'features', 'specs_general', 'specs_engine', 
+                 'inicial_llevos', 'cuota_mensual_llevos',
+                 'image', 'description', 'features', 'specs_general', 'specs_engine',
                  'specs_comfort', 'specs_safety', 'stock', 'featured']
     
     def get_features(self, obj):

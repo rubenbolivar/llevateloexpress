@@ -125,7 +125,7 @@ class FinancingRequestViewSet(viewsets.ModelViewSet):
                 context={
                     'application_number': application.application_number,
                     'product_name': application.product.name if application.product else 'N/A',
-                    'amount': str(application.product_price_llevos) if application.product_price_llevos else 'N/A',
+                    'amount': str(application.product_price) if application.product_price else 'N/A',
                     'plan': application.financing_plan.name if application.financing_plan else 'N/A'
                 }
             )
@@ -244,7 +244,7 @@ class FinancingRequestViewSet(viewsets.ModelViewSet):
                     context={
                         'application_number': application.application_number,
                         'product_name': application.product.name if application.product else 'N/A',
-                        'amount': str(application.product_price_llevos) if application.product_price_llevos else 'N/A',
+                        'amount': str(application.product_price) if application.product_price else 'N/A',
                         'plan': application.financing_plan.name if application.financing_plan else 'N/A'
                     }
                 )

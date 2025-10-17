@@ -3,6 +3,12 @@
  * Compatible con llamadas directas desde HTML y sistema de autenticación existente
  */
 
+// LOG INMEDIATO para verificar que el archivo se está cargando
+console.log('🔥 SCRIPT CARGADO: solicitud-financiamiento-v2-part2.js - Timestamp: ' + Date.now());
+
+// LOG antes de definir la clase
+console.log('📝 Definiendo clase FinancingRequestV2...');
+
 class FinancingRequestV2 {
     constructor() {
         this.state = {
@@ -141,10 +147,10 @@ class FinancingRequestV2 {
      */
     async authenticatedRequest(url, options = {}) {
         try {
-            // Verificar si API está disponible
+            // Verificar si API está disponible, si no, usar apiRequest básico
             if (typeof window.API === 'undefined' || !window.API.users) {
-                this.log('error', 'Sistema de autenticación no disponible');
-                return { success: false, status: 500, message: 'Error del sistema' };
+                this.log('warning', 'Sistema de autenticación no disponible, usando apiRequest básico');
+                return this.apiRequest(url, options);
             }
             
             // Usar el sistema de autenticación existente
@@ -173,7 +179,7 @@ class FinancingRequestV2 {
     /**
      * Inicializar aplicación
      */
-    init() {
+    async init() {
         this.log('info', 'Inicializando FinancingRequestV2 - Versión con Autenticación Integrada');
         
         // Cachear elementos del DOM
@@ -183,7 +189,7 @@ class FinancingRequestV2 {
         this.setupEventListeners();
         
         // Cargar datos de cálculo (CORREGIDO)
-        this.loadCalculationData();
+        await this.loadCalculationData();
         
         // Verificar planes disponibles
         this.loadFinancingPlans();
@@ -496,8 +502,12 @@ class FinancingRequestV2 {
     /**
      * CORREGIDO: Cargar datos de cálculo con parseo mejorado de URL
      */
-    loadCalculationData() {
+    async loadCalculationData() {
         try {
+            // Declarar variables URL una sola vez
+            const urlParams = new URLSearchParams(window.location.search);
+            const directProductId = urlParams.get("product_id");
+            
             // Método 1: Desde localStorage
             const savedData = localStorage.getItem('calculationData');
             if (savedData) {
@@ -509,9 +519,6 @@ class FinancingRequestV2 {
             }
             
             // Método 2: CORREGIDO - Desde parámetros URL
-            const urlParams = new URLSearchParams(window.location.search);
-            // Obtener product_id directamente del URL
-            const directProductId = urlParams.get("product_id");
             if (urlParams.has('calculation')) {
                 this.log('info', 'Detectado parámetro calculation en URL');
                 
@@ -595,7 +602,14 @@ class FinancingRequestV2 {
                 return;
             }
             
-            // Método 5: Valores por defecto CrediLlevo
+            // Método 5: Cargar desde API si tenemos product_id
+            if (directProductId) {
+                this.log('info', 'Cargando datos desde API para product_id: ' + directProductId);
+                await this.loadCalculationDataFromAPI(directProductId);
+                return;
+            }
+            
+            // Método 6: Valores por defecto CrediLlevo
             this.log('warning', 'No se encontraron datos de cálculo - usando valores por defecto CrediLlevo');
             this.state.calculationData = {
                 product: { id: null, name: 'Selecciona un producto en la calculadora' },
@@ -616,6 +630,77 @@ class FinancingRequestV2 {
         } catch (error) {
             this.log('error', 'Error cargando datos de cálculo: ' + error.message);
             this.state.calculationData = null;
+        }
+    }
+    
+    /**
+     * NUEVA: Cargar datos desde API cuando fallan otros métodos
+     */
+    async loadCalculationDataFromAPI(productId) {
+        try {
+            this.log('info', 'Cargando datos del producto desde API: ' + productId);
+            
+            // Mostrar indicador de carga
+            this.showLoading('Cargando datos del producto...');
+            
+            const response = await fetch('/api/products/calculadora-products/');
+            if (!response.ok) {
+                throw new Error('Error al cargar datos del API: ' + response.status);
+            }
+            
+            const data = await response.json();
+            const product = data.results.find(p => p.id == productId);
+            
+            if (!product) {
+                throw new Error('Producto no encontrado en API');
+            }
+            
+            // Usar los datos LLEVO predefinidos del producto
+            this.state.calculationData = {
+                product: {
+                    id: parseInt(productId),
+                    name: product.name
+                },
+                calculation: {
+                    product_price: product.price_llevo || 0,
+                    down_payment_percentage: 0,
+                    down_payment_amount: product.inicial_llevos || 0,
+                    financed_amount: (product.price_llevo || 0) - (product.inicial_llevos || 0),
+                    payment_frequency: 'mensual',
+                    number_of_payments: 24,
+                    payment_amount: product.cuota_mensual_llevos || 0
+                }
+            };
+            
+            this.log('info', 'Datos cargados desde API correctamente', this.state.calculationData);
+            
+            // Ocultar indicador de carga
+            this.hideLoading();
+            
+            this.renderCalculationSummary();
+            this.validateProductData();
+            
+        } catch (error) {
+            this.log('error', 'Error cargando desde API: ' + error.message);
+            
+            // Ocultar indicador de carga
+            this.hideLoading();
+            
+            // Fallback a valores por defecto
+            this.state.calculationData = {
+                product: { id: productId, name: 'Producto Seleccionado' },
+                calculation: {
+                    product_price: 0,
+                    down_payment_percentage: 0,
+                    down_payment_amount: 0,
+                    financed_amount: 0,
+                    payment_frequency: 'mensual',
+                    number_of_payments: 24,
+                    payment_amount: 0
+                }
+            };
+            
+            this.validateProductData();
         }
     }
     
@@ -669,8 +754,18 @@ class FinancingRequestV2 {
      * CORREGIDO: Renderizar resumen de cálculo
      */
     renderCalculationSummary() {
-        if (!this.state.calculationData || !this.elements.calculationSummary) {
-            this.log('warning', 'No hay datos para renderizar o elemento no encontrado');
+        console.log('🚀 DEBUG renderCalculationSummary - calculationData:', this.state.calculationData);
+        console.log('🚀 DEBUG renderCalculationSummary - element:', this.elements.calculationSummary);
+        
+        if (!this.state.calculationData) {
+            console.log('❌ No hay calculationData');
+            this.log('warning', 'No hay datos de cálculo para renderizar');
+            return;
+        }
+        
+        if (!this.elements.calculationSummary) {
+            console.log('❌ No hay elemento calculationSummary');
+            this.log('warning', 'Elemento calculationSummary no encontrado');
             return;
         }
         
@@ -693,19 +788,15 @@ class FinancingRequestV2 {
         
         this.elements.calculationSummary.innerHTML = `
             <div class="row text-center">
-                <div class="col-md-3">
-                    <h3>${this.formatNumber(productPrice)} LLEVO</h3>
-                    <small>Precio del Producto</small>
-                </div>
-                <div class="col-md-3">
+                <div class="col-md-6">
                     <h3>${this.formatNumber(downPaymentAmount)} LLEVO</h3>
                     <small>Inicial Fija</small>
                 </div>
-                <div class="col-md-3">
+                <!-- <div class="col-md-6">
                     <h3>${this.formatNumber(financedAmount)} LLEVO</h3>
                     <small>Monto a Financiar</small>
-                </div>
-                <div class="col-md-3">
+                </div> -->
+                <div class="col-md-6">
                     <h3>${this.formatNumber(paymentAmount)} LLEVO</h3>
                     <small>Cuota Mensual</small>
                 </div>
@@ -716,12 +807,12 @@ class FinancingRequestV2 {
         if (this.elements.productDetails) {
             this.elements.productDetails.innerHTML = `
                 <p><strong>Producto:</strong> ${product.name || 'Producto Seleccionado'}</p>
-                <p><strong>Precio:</strong> ${this.formatNumber(productPrice)} LLEVO</p>
                 <p><strong>Plan:</strong> CrediLlevo Inmediato</p>
                 <p><strong>Plazo:</strong> ${calc.number_of_payments || 24} meses fijos</p>
             `;
         }
         
+        console.log('✅ Resumen renderizado exitosamente');
         this.log('info', 'Resumen de cálculo renderizado correctamente');
     }
     
@@ -1314,18 +1405,17 @@ class FinancingRequestV2 {
     }
 }
 
-// Función para inicializar cuando el DOM esté listo y API esté disponible
+// Función para inicializar cuando el DOM esté listo
 function initializeFinancingRequestV2() {
-    // Verificar que API esté disponible
-    if (typeof window.API === 'undefined') {
-        console.warn('⏳ API no disponible aún, reintentando en 100ms...');
-        setTimeout(initializeFinancingRequestV2, 100);
-        return;
-    }
+    console.log('🚀 Iniciando FinancingRequestV2...');
     
-    // Crear instancia global
-    window.FinancingRequestV2 = new FinancingRequestV2();
-    console.info('🎯 FinancingRequestV2 - Versión con Autenticación Integrada inicializada correctamente');
+    try {
+        // Crear instancia global SIEMPRE (sin depender de window.API)
+        window.FinancingRequestV2 = new FinancingRequestV2();
+        console.info('✅ FinancingRequestV2 inicializada correctamente');
+    } catch (error) {
+        console.error('❌ Error inicializando FinancingRequestV2:', error);
+    }
 }
 
 // Inicializar cuando el DOM esté listo
