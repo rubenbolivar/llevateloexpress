@@ -6,6 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 LlévateloExpress is a comprehensive web platform for vehicle financing in Venezuela, built with Django backend and vanilla JavaScript frontend. The platform allows users to browse vehicles, calculate financing plans, and submit financing applications.
 
+### Financing Plans Available
+- **CrediLlevo Inmediato**: 24-month financing plan with fixed initial payment and monthly installments
+- **CrediLlevo X 4**: 4-month express financing plan with fixed initial payment and 4 monthly installments
+- Both plans: 0% interest, immediate delivery, prices in LLEVO tokens
+
 ## Essential Commands
 
 ### Development Setup
