@@ -472,6 +472,7 @@ class Payment(models.Model):
     sender_account = models.CharField(max_length=50, null=True, blank=True, verbose_name="Cuenta Emisora")
     sender_name = models.CharField(max_length=200, null=True, blank=True, verbose_name="Nombre del Emisor")
     sender_identification = models.CharField(max_length=50, null=True, blank=True, verbose_name="Cédula/RIF Emisor")
+    sender_phone = models.CharField(max_length=20, null=True, blank=True, verbose_name="Teléfono Emisor")
     
     # Comprobante (archivo)
     receipt_file = models.FileField(

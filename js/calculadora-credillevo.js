@@ -306,7 +306,7 @@ const CalculadoraCrediLlevo = {
         const option = document.createElement('option');
         option.value = product.id;
         option.textContent = `${product.brand || ''} ${product.name}`.trim();
-        
+
         // Guardar datos del producto
         option.dataset.productId = product.id;
         option.dataset.productName = product.name;
@@ -314,7 +314,12 @@ const CalculadoraCrediLlevo = {
         option.dataset.priceLlevo = product.price_llevo || 0;
         option.dataset.inicialLlevos = product.inicial_llevos || 0;
         option.dataset.cuotaMensualLlevos = product.cuota_mensual_llevos || 0;
-        
+
+        // Guardar datos del plan de financiamiento
+        option.dataset.financingPlanName = product.financing_plan_name || 'CrediLlevo Inmediato';
+        option.dataset.financingPlanSlug = product.financing_plan_slug || 'credillevo-inmediato';
+        option.dataset.termMonths = product.financing_term_months || 24;
+
         select.appendChild(option);
     },
     
@@ -382,7 +387,7 @@ const CalculadoraCrediLlevo = {
             this.currentProduct = null;
             return;
         }
-        
+
         const selectedOption = vehicleModelSelect.options[vehicleModelSelect.selectedIndex];
         this.currentProduct = {
             id: parseInt(selectedOption.dataset.productId),
@@ -390,13 +395,44 @@ const CalculadoraCrediLlevo = {
             brand: selectedOption.dataset.brand,
             price_llevo: parseInt(selectedOption.dataset.priceLlevo) || 0,
             inicial_llevos: parseInt(selectedOption.dataset.inicialLlevos) || 0,
-            cuota_mensual_llevos: parseInt(selectedOption.dataset.cuotaMensualLlevos) || 0
+            cuota_mensual_llevos: parseInt(selectedOption.dataset.cuotaMensualLlevos) || 0,
+            financing_details: {
+                plan_name: selectedOption.dataset.financingPlanName || 'CrediLlevo Inmediato',
+                plan_slug: selectedOption.dataset.financingPlanSlug || 'credillevo-inmediato',
+                term_months: parseInt(selectedOption.dataset.termMonths) || 24
+            }
         };
-        
+
         console.log('Producto seleccionado:', this.currentProduct);
+
+        // Actualizar textos del plan en la interfaz
+        this.updatePlanTexts(this.currentProduct.financing_details);
     },
-    
-    
+
+
+    /**
+     * Actualizar textos del plan en la interfaz
+     */
+    updatePlanTexts(financingDetails) {
+        const planName = financingDetails.plan_name || 'CrediLlevo Inmediato';
+        const termMonths = financingDetails.term_months || 24;
+
+        // Actualizar título del plan en el header izquierdo
+        this.updateElementText('selectedPlanTitle', planName);
+
+        // Actualizar texto informativo
+        this.updateElementText('planInfoText', `${termMonths} meses • Inicial fija por producto • Pagos en LLEVO`);
+
+        // Actualizar título del plan en el header derecho
+        this.updateElementText('planTitleHeader', planName);
+
+        // Actualizar plazo en características del plan
+        this.updateElementText('planTermText', `${termMonths} meses`);
+
+        console.log('✨ Textos del plan actualizados:', { planName, termMonths });
+    },
+
+
     /**
      * Calcular automáticamente cuando se selecciona un producto
      */
@@ -440,27 +476,37 @@ const CalculadoraCrediLlevo = {
             this.showError('Este producto no tiene inicial configurada. Contacta al administrador.');
             return;
         }
-        
+
+        // Obtener plan de financiamiento (plazo dinámico)
+        const termMonths = product.financing_details?.term_months || 24;
+        const planName = product.financing_details?.plan_name || 'CrediLlevo Inmediato';
+
+        console.log('📋 Plan de financiamiento:', {
+            planName,
+            termMonths,
+            financing_details: product.financing_details
+        });
+
         // Calcular datos CrediLlevo
         const priceLlevo = product.price_llevo;
         const inicialLlevo = product.inicial_llevos;
         const montoFinanciar = priceLlevo - inicialLlevo;
-        
+
         // Usar cuota manual si está configurada, sino calcular automáticamente
         let cuotaMensual;
         if (product.cuota_mensual_llevos && product.cuota_mensual_llevos > 0) {
             cuotaMensual = product.cuota_mensual_llevos;
             console.log('Usando cuota mensual manual:', cuotaMensual, 'LLEVO');
         } else {
-            cuotaMensual = Math.round(montoFinanciar / 24); // 24 meses fijo - cálculo automático
-            console.log('Calculando cuota mensual automáticamente:', cuotaMensual, 'LLEVO');
+            cuotaMensual = Math.round(montoFinanciar / termMonths); // Plazo dinámico según plan
+            console.log(`Calculando cuota mensual automáticamente para ${termMonths} meses:`, cuotaMensual, 'LLEVO');
         }
-        
+
         // Calcular fechas
         const hoy = new Date();
         const primeraCuota = new Date(hoy);
         primeraCuota.setMonth(primeraCuota.getMonth() + 1);
-        
+
         this.currentCalculation = {
             product_id: product.id, // AGREGADO: ID del producto para solicitud
             productName: `${product.brand} ${product.name}`.trim(),
@@ -468,7 +514,8 @@ const CalculadoraCrediLlevo = {
             inicialLlevo: inicialLlevo,
             montoFinanciar: montoFinanciar,
             cuotaMensual: cuotaMensual,
-            plazoMeses: 24,
+            plazoMeses: termMonths, // Plazo dinámico
+            planName: planName, // Nombre del plan
             primeraCuota: this.formatDate(primeraCuota),
             llevoRate: this.llevoRate
         };
@@ -482,12 +529,12 @@ const CalculadoraCrediLlevo = {
      */
     displayResults() {
         if (!this.currentCalculation) return;
-        
+
         const calc = this.currentCalculation;
         const resultsDiv = document.getElementById('credilleloResults');
-        
+
         if (!resultsDiv) return;
-        
+
         // Actualizar valores
         this.updateElementText('productName', calc.productName);
         this.updateElementText('productPriceLlevo', `${this.formatNumber(calc.priceLlevo)} LLEVO`);
@@ -495,7 +542,11 @@ const CalculadoraCrediLlevo = {
         this.updateElementText('montoFinanciar', `${this.formatNumber(calc.montoFinanciar)} LLEVO`);
         this.updateElementText('cuotaMensual', `${this.formatNumber(calc.cuotaMensual)} LLEVO`);
         this.updateElementText('primeraCuota', calc.primeraCuota);
-        
+
+        // Actualizar nombre del plan y plazo
+        this.updateElementText('planName', calc.planName || 'CrediLlevo Inmediato');
+        this.updateElementText('plazoMeses', `${calc.plazoMeses} meses`);
+
         // Mostrar resultados
         resultsDiv.style.display = 'block';
     },

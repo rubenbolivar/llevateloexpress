@@ -19,12 +19,8 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = (
-        'name', 'category', 'brand', 'price_llevo_formatted',
-        'financing_plan_display', 'inicial_llevos_formatted',
-        'cuota_mensual_formatted', 'stock', 'out_of_stock', 'featured', 'thumbnail'
-    )
-    list_filter = ('category', 'brand', 'featured', 'financing_plan')
+    list_display = ('name', 'category', 'brand', 'price_llevo_formatted', 'inicial_llevos_formatted', 'cuota_mensual_formatted', 'stock', 'out_of_stock', 'featured', 'thumbnail')
+    list_filter = ('category', 'brand', 'featured')
     search_fields = ('name', 'description')
     list_editable = ('stock', 'out_of_stock', 'featured')
     readonly_fields = ('thumbnail_preview', 'price_conversion_preview', 'financing_preview')
@@ -32,9 +28,9 @@ class ProductAdmin(admin.ModelAdmin):
         ('Información Básica', {
             'fields': ('name', 'category', 'brand', 'image', 'thumbnail_preview', 'description')
         }),
-        ('Plan de Financiamiento', {
-            'fields': ('financing_plan', 'price_llevo', 'inicial_llevos', 'cuota_mensual_llevos', 'price', 'price_conversion_preview', 'financing_preview'),
-            'description': 'Selecciona el plan de financiamiento y configura inicial y cuota mensual.'
+        ('Precios y Financiamiento', {
+            'fields': ('price_llevo', 'inicial_llevos', 'cuota_mensual_llevos', 'price', 'price_conversion_preview', 'financing_preview'),
+            'description': 'Precio principal en LLEVO y monto de inicial fijo definido por el admin.'
         }),
         ('Características', {
             'fields': ('features',),
@@ -86,23 +82,7 @@ class ProductAdmin(admin.ModelAdmin):
             )
         return format_html('<span style="color: #dc3545;">No definida</span>')
     inicial_llevos_formatted.short_description = 'Inicial'
-
-    def financing_plan_display(self, obj):
-        """Muestra el plan asignado con badge de color"""
-        if obj.financing_plan:
-            colors = {
-                'credillevo-inmediato': '#007bff',  # Azul
-                'credillevo-x4': '#28a745',  # Verde
-            }
-            color = colors.get(obj.financing_plan.slug, '#6c757d')
-            return format_html(
-                '<span style="background: {}; color: white; padding: 3px 8px; border-radius: 3px; font-size: 11px;">{}</span>',
-                color,
-                obj.financing_plan.name
-            )
-        return format_html('<span style="color: #dc3545;">Sin plan</span>')
-    financing_plan_display.short_description = 'Plan Asignado'
-
+    
     def cuota_mensual_formatted(self, obj):
         if obj.cuota_mensual_llevos:
             return format_html(
@@ -147,57 +127,33 @@ class ProductAdmin(admin.ModelAdmin):
     price_conversion_preview.short_description = 'Vista previa de conversión'
     
     def financing_preview(self, obj):
-        """Vista previa del plan de financiamiento asignado"""
-        if not obj.financing_plan:
-            return format_html(
-                '<div style="background: #fff3cd; padding: 10px; border-radius: 5px; border-left: 4px solid #ffc107;">'
-                '<strong>⚠️ Sin plan asignado</strong><br>'
-                '<small>Selecciona un plan de financiamiento para este producto</small>'
-                '</div>'
-            )
-
         if not obj.price_llevo or not obj.inicial_llevos:
-            return format_html(
-                '<div style="background: #f8d7da; padding: 10px; border-radius: 5px; border-left: 4px solid #dc3545;">'
-                '<strong>❌ Configuración incompleta</strong><br>'
-                '<small>Configura precio e inicial en LLEVO</small>'
-                '</div>'
-            )
-
-        # Calcular financiamiento
+            return format_html('<span class="text-muted">Configure precio e inicial en LLEVO</span>')
+        
+        # Calcular financiamiento CrediLlevo
         monto_financiado = obj.price_llevo - obj.inicial_llevos
-        term_months = obj.financing_plan.max_term_months
-
-        # Usar cuota manual o calcular
+        
+        # Usar cuota manual si está configurada, sino calcular automáticamente
         if obj.cuota_mensual_llevos and obj.cuota_mensual_llevos > 0:
             cuota_mensual = obj.cuota_mensual_llevos
             cuota_type = "Manual"
+            color = "#17a2b8"  # Azul para manual
         else:
-            cuota_mensual = monto_financiado / term_months
+            cuota_mensual = monto_financiado / 24  # 24 meses fijos - cálculo automático
             cuota_type = "Automática"
-
-        total_cuotas = cuota_mensual * term_months
-        total_pagar = obj.inicial_llevos + total_cuotas
-
-        # Color según plan
-        plan_colors = {
-            'credillevo-inmediato': '#007bff',
-            'credillevo-x4': '#28a745',
-        }
-        plan_color = plan_colors.get(obj.financing_plan.slug, '#6c757d')
-
-        content = f'<div style="background: #e3f2fd; padding: 12px; border-radius: 5px; border-left: 4px solid {plan_color};">'
-        content += f'<strong style="color: {plan_color};">📋 {obj.financing_plan.name}</strong><br><br>'
+            color = "#2196f3"  # Azul estándar para automático
+        
+        content = f'<div style="background: #e3f2fd; padding: 10px; border-radius: 5px; border-left: 4px solid {color};">'
+        content += '<strong>Plan CrediLlevo Inmediato:</strong><br>'
         content += f'<strong>Precio:</strong> {obj.price_llevo} LLEVO<br>'
         content += f'<strong>Inicial:</strong> {obj.inicial_llevos} LLEVO<br>'
         content += f'<strong>A financiar:</strong> {monto_financiado} LLEVO<br>'
-        content += f'<strong>Cuota mensual:</strong> {cuota_mensual:.0f} LLEVO x {term_months} meses<br>'
-        content += f'<strong>Total a pagar:</strong> {total_pagar:.0f} LLEVO<br>'
-        content += f'<small class="text-muted">Sin intereses • Plazo fijo {term_months} meses • Cuota {cuota_type}</small>'
+        content += f'<strong>Cuota mensual:</strong> {cuota_mensual:.0f} LLEVO x 24 meses<br>'
+        content += f'<small class="text-muted">Sin intereses • Plazo fijo 24 meses • Cuota {cuota_type}</small>'
         content += '</div>'
-
+        
         return format_html(content)
-    financing_preview.short_description = 'Vista previa del Plan'
+    financing_preview.short_description = 'Vista previa CrediLlevo'
 
 @admin.register(LlevoRate)
 class LlevoRateAdmin(admin.ModelAdmin):

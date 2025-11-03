@@ -3,7 +3,11 @@ const PaymentFlow = {
     currentStep: 1,
     selectedApplication: null,
     selectedPaymentMethod: null,
+    selectedPaymentMethodData: null,  // Datos completos del método
     selectedFile: null,
+    selectedApplicationData: null,  // Datos completos de la solicitud seleccionada
+    llevoRate: null,  // Tasa de conversion LLEVO a VES
+    amountInLlevo: null,  // Monto original en LLEVO de la solicitud
     
     // Inicializar la aplicación
     init() {
@@ -16,20 +20,119 @@ const PaymentFlow = {
         }
         
         this.setupEventListeners();
+        this.loadLlevoRate();  // Cargar tasa de conversion
         this.loadApplications();
         this.setCurrentDate();
     },
+
+    // Cargar tasa de conversion LLEVO to VES
+    async loadLlevoRate() {
+        try {
+            const response = await fetch('/api/financing/llevo/current-rate/');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.data && data.data.llevo_value) {
+                    this.llevoRate = parseFloat(data.data.llevo_value);
+                    console.log(`Tasa LLEVO cargada: 1 LLEVO = ${this.llevoRate} Bs.`);
+                } else {
+                    this.llevoRate = 5752.50;
+                }
+            } else {
+                this.llevoRate = 5752.50;
+            }
+        } catch (error) {
+            console.error("Error al cargar tasa LLEVO:", error);
+            this.llevoRate = 5752.50;
+        }
+    },
     
+
+    // ====================================================================
+    // MEJORA 3: Funciones de upload de comprobante
+    // ====================================================================
+    setupFileUpload() {
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('receiptFile');
+        const removeBtn = document.getElementById('removeFile');
+        
+        if (!uploadArea || !fileInput) return;
+        
+        // Click en upload area
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#007bff';
+            uploadArea.style.backgroundColor = '#f8f9ff';
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.borderColor = '#dee2e6';
+            uploadArea.style.backgroundColor = '';
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#dee2e6';
+            uploadArea.style.backgroundColor = '';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                this.handleFileSelect({ target: fileInput });
+            }
+        });
+        
+        // Selección de archivo
+        fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
+        
+        // Remover archivo
+        if (removeBtn) {
+            removeBtn.addEventListener('click', () => this.removeFile());
+        }
+    },
+    
+    handleFileSelect(event) {
+        const file = event.target.files[0];
+        
+        if (!file) return;
+        
+        // Validar tipo
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+        if (!validTypes.includes(file.type)) {
+            alert('Formato no válido. Solo JPG, PNG o PDF');
+            return;
+        }
+        
+        // Validar tamaño (5MB)
+        const maxSize = 5 * 1024 * 1024;
+        if (file.size > maxSize) {
+            alert('Archivo muy grande. Máximo 5MB');
+            return;
+        }
+        
+        this.selectedFile = file;
+        this.showFilePreview(file);
+    },
+    
+    removeFile() {
+        this.selectedFile = null;
+        document.getElementById('receiptFile').value = '';
+        document.getElementById('filePreview').classList.add('d-none');
+        document.getElementById('uploadArea').classList.remove('d-none');
+        console.log('Archivo removido');
+    },
+
     // Configurar event listeners
     setupEventListeners() {
         // Navegación entre pasos
         document.getElementById('nextStep1').addEventListener('click', () => this.goToStep(2));
         document.getElementById('nextStep2').addEventListener('click', () => this.goToStep(3));
-        document.getElementById('nextStep3').addEventListener('click', () => this.validateAndGoToStep(4));
+        document.getElementById('nextStep3').addEventListener('click', () => this.validateAndSubmitPayment());
         
         document.getElementById('prevStep2').addEventListener('click', () => this.goToStep(1));
         document.getElementById('prevStep3').addEventListener('click', () => this.goToStep(2));
-        document.getElementById('prevStep4').addEventListener('click', () => this.goToStep(3));
         
         // Upload de archivos
         const uploadArea = document.getElementById('uploadArea');
@@ -40,14 +143,9 @@ const PaymentFlow = {
         uploadArea.addEventListener('dragleave', this.handleDragLeave);
         uploadArea.addEventListener('drop', this.handleDrop.bind(this));
         
-        fileInput.addEventListener('change', this.handleFileSelect.bind(this));
-        document.getElementById('removeFile').addEventListener('click', this.removeFile.bind(this));
-        
-        // Envío del formulario
-        document.getElementById('submitPayment').addEventListener('click', this.submitPayment.bind(this));
-        
         // Actualizar resumen en tiempo real
         document.getElementById('paymentAmount').addEventListener('input', this.updateSummary.bind(this));
+        document.getElementById('paymentAmount').addEventListener('input', this.updateConversionDisplay.bind(this));
         document.getElementById('paymentDate').addEventListener('change', this.updateSummary.bind(this));
     },
     
@@ -67,6 +165,7 @@ const PaymentFlow = {
                 const applications = response.data.results || response.data;
                 const approvedApps = applications.filter(app => app.status === 'approved' || app.status === 'active');
                 this.renderApplications(approvedApps);
+                sessionStorage.setItem("applications", JSON.stringify(approvedApps));
             } else {
                 this.showError('Error al cargar solicitudes: ' + response.message);
             }
@@ -133,13 +232,19 @@ const PaymentFlow = {
         radio.checked = true;
         
         this.selectedApplication = appId;
+        
+        // Guardar datos completos de la solicitud
+        const applications = JSON.parse(sessionStorage.getItem('applications') || '[]');
+        this.selectedApplicationData = applications.find(app => app.id === appId);
+        
         document.getElementById('nextStep1').disabled = false;
         
         // Actualizar resumen
         this.updateSummary();
         
-        console.log('✅ Solicitud seleccionada:', appId);
+        console.log('✅ Solicitud seleccionada:', appId, this.selectedApplicationData);
     },
+
     
     // Cargar métodos de pago
     async loadPaymentMethods() {
@@ -150,9 +255,10 @@ const PaymentFlow = {
             if (response.success) {
                 console.log("🔍 Response payment-methods:", response);
                 const methods = response.data.data || response.data.results || response.data;
-                const activeMethods = Array.isArray(methods) ? methods : [];
+                const activeMethods = Array.isArray(methods) ? methods.filter(m => m.id !== 6) : [];
                 console.log("🔍 Methods data:", methods);
                 console.log("🔍 Active methods:", activeMethods);
+                this.paymentMethods = activeMethods;  // Guardar para uso posterior
                 this.renderPaymentMethods(activeMethods);
             } else {
                 this.showError('Error al cargar métodos de pago: ' + response.message);
@@ -207,14 +313,190 @@ const PaymentFlow = {
         radio.checked = true;
         
         this.selectedPaymentMethod = methodId;
+        
+        // ===== MEJORA 1: Guardar datos completos del método =====
+        // Buscar el método en el array de métodos cargados
+        this.selectedPaymentMethodData = this.paymentMethods.find(m => m.id === methodId);
+        
         document.getElementById('nextStep2').disabled = false;
         
         // Actualizar resumen
         this.updateSummary();
         
-        console.log('✅ Método de pago seleccionado:', methodId);
+        console.log('✅ Método de pago seleccionado:', methodId, this.selectedPaymentMethodData);
     },
     
+
+    // ====================================================================
+    // MEJORA 1: Renderizar instrucciones de pago según método seleccionado
+    // ====================================================================
+    renderPaymentInstructions(method) {
+        const instructionsDiv = document.getElementById('paymentInstructions');
+        const contentDiv = document.getElementById('paymentInstructionsContent');
+        
+        if (!method || !method.accounts || method.accounts.length === 0) {
+            instructionsDiv.style.display = 'none';
+            return;
+        }
+        
+        const account = method.accounts[0];  // Usar primera cuenta
+        let html = '';
+        
+        // Renderizar según tipo de método
+        if (method.payment_type === 'mobile_payment') {
+            html = `
+                <h6 class="mb-3">📱 Realiza tu Pago Móvil a:</h6>
+                <ul class="list-unstyled">
+                    <li><strong>Banco:</strong> R4 Mi Banco</li>
+                    <li><strong>Teléfono:</strong> 0412 8701585</li>
+                    <li><strong>RIF:</strong> J-506654547</li>
+                    <li><strong>Titular:</strong> LlévateloExpress</li>
+                </ul>
+                <div class="alert alert-warning mt-3">
+                    <small>
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Importante:</strong> Después de realizar el pago móvil, debes ingresar 
+                        el número de referencia y subir la captura de pantalla del comprobante.
+                    </small>
+                </div>
+            `;
+        } else if (method.payment_type === 'bank_transfer') {
+            html = `
+                <h6 class="mb-3">🏦 Realiza tu Transferencia Bancaria a:</h6>
+                <ul class="list-unstyled">
+                    <li><strong>Banco:</strong> ${account.bank_name}</li>
+                    <li><strong>Tipo de cuenta:</strong> ${account.account_type}</li>
+                    <li><strong>Número de cuenta:</strong> ${account.account_number}</li>
+                    <li><strong>Titular:</strong> ${account.account_holder}</li>
+                    <li><strong>Moneda:</strong> ${account.currency}</li>
+                </ul>
+                <div class="alert alert-warning mt-3">
+                    <small>
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Importante:</strong> Guarda el comprobante de la transferencia para subirlo más abajo.
+                    </small>
+                </div>
+            `;
+        } else if (method.payment_type === 'zelle') {
+            html = `
+                <h6 class="mb-3">💵 Envía tu Zelle a:</h6>
+                <ul class="list-unstyled">
+                    <li><strong>Email:</strong> ${account.account_number}</li>
+                    <li><strong>Nombre del beneficiario:</strong> ${account.account_holder}</li>
+                </ul>
+                <div class="alert alert-warning mt-3">
+                    <small>
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Importante:</strong> El pago debe realizarse desde tu cuenta personal registrada.
+                    </small>
+                </div>
+            `;
+        } else if (method.payment_type === 'cash') {
+            html = `
+                <h6 class="mb-3">💵 Pago en Efectivo</h6>
+                <div class="alert alert-info">
+                    <p><strong>Oficina principal:</strong></p>
+                    <p>Dirección: [Por definir]</p>
+                    <p>Horario: Lunes a Viernes 9:00 AM - 5:00 PM</p>
+                </div>
+                <div class="alert alert-warning mt-3">
+                    <small>
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Importante:</strong> Solicita tu recibo al momento del pago.
+                    </small>
+                </div>
+            `;
+        }
+        
+        contentDiv.innerHTML = html;
+        instructionsDiv.style.display = 'block';
+        
+        console.log('✅ Instrucciones de pago renderizadas para:', method.name);
+    },
+
+
+    // ====================================================================
+    // MEJORA 2: Renderizar campos dinámicos según método seleccionado
+    // ====================================================================
+    renderDynamicFields(method) {
+        const container = document.getElementById('dynamicFieldsContainer');
+        
+        if (!method) {
+            container.innerHTML = '';
+            return;
+        }
+        
+        let html = '<div class="row">';
+        
+        // Campos según tipo de método
+        if (method.payment_type === 'mobile_payment') {
+            html += `
+                <div class="col-md-6 mb-3">
+                    <label for="referenceNumber" class="form-label">
+                        Número de Referencia *
+                    </label>
+                    <input type="text" class="form-control" id="referenceNumber" 
+                           name="reference_number" placeholder="Ej: 123456" required>
+                    <small class="text-muted">Número de referencia del pago móvil</small>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="senderPhone" class="form-label">
+                        Teléfono Emisor *
+                    </label>
+                    <input type="text" class="form-control" id="senderPhone" 
+                           name="sender_phone" placeholder="Ej: 0412-1010744 o +58 412-1010744" 
+                           minlength="10" maxlength="20" required>
+                </div>
+            `;
+        } else if (method.payment_type === 'bank_transfer') {
+            html += `
+                <div class="col-md-6 mb-3">
+                    <label for="referenceNumber" class="form-label">
+                        Número de Referencia *
+                    </label>
+                    <input type="text" class="form-control" id="referenceNumber" 
+                           name="reference_number" placeholder="Referencia bancaria" required>
+                    <small class="text-muted">Referencia de la transferencia</small>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="senderBank" class="form-label">
+                        Banco Emisor *
+                    </label>
+                    <input type="text" class="form-control" id="senderBank" 
+                           name="sender_bank" placeholder="Ej: Banesco" required>
+                    <small class="text-muted">Banco desde donde transferiste</small>
+                </div>
+            `;
+        } else if (method.payment_type === 'zelle') {
+            html += `
+                <div class="col-md-12 mb-3">
+                    <label for="senderEmail" class="form-label">
+                        Email del Emisor *
+                    </label>
+                    <input type="email" class="form-control" id="senderEmail" 
+                           name="sender_email" placeholder="tu@email.com" required>
+                    <small class="text-muted">Email asociado a tu cuenta Zelle</small>
+                </div>
+            `;
+        } else if (method.payment_type === 'cash') {
+            html += `
+                <div class="col-md-12 mb-3">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        El pago en efectivo no requiere campos adicionales.
+                        Un recibo será generado al momento del pago en nuestras oficinas.
+                    </div>
+                </div>
+            `;
+        }
+        
+        html += '</div>';
+        
+        container.innerHTML = html;
+        
+        console.log('✅ Campos dinámicos renderizados para:', method.payment_type);
+    },
+
     // Navegar a paso específico
     async goToStep(step) {
         // Ocultar paso actual
@@ -236,20 +518,45 @@ const PaymentFlow = {
         // Cargar datos específicos del paso
         if (step === 2) {
             await this.loadPaymentMethods();
+        } else if (step === 3) {
+            // ===== MEJORA 1, 2 y 3: Instrucciones, campos y upload =====
+            if (this.selectedPaymentMethodData) {
+                this.renderPaymentInstructions(this.selectedPaymentMethodData);
+                this.renderDynamicFields(this.selectedPaymentMethodData);
+                this.setupFileUpload();
+            }
+
+            // Pre-cargar monto en Bs. basado en la solicitud
+            if (this.selectedApplicationData && this.llevoRate) {
+                const amountLLEVO = parseFloat(this.selectedApplicationData.payment_amount || 0);
+                const amountVES = amountLLEVO * this.llevoRate;
+                this.amountInLlevo = amountLLEVO;  // Guardar monto original en LLEVO
+                document.getElementById("paymentAmount").value = amountVES.toFixed(2);
+                this.updateConversionDisplay();
+                console.log(`💰 Monto pre-cargado: ${amountLLEVO} LLEVO = ${amountVES.toFixed(2)} Bs.`);
+            }
         }
         
         console.log('📍 Navegando al paso:', step);
     },
-    
-    // Validar y ir al paso 4
-    validateAndGoToStep(step) {
-        const form = document.getElementById('paymentForm');
+    // Validar y enviar pago
+    validateAndSubmitPayment() {
+        const form = document.getElementById("paymentForm");
+        
+        // Validar campos del formulario
         if (!form.checkValidity()) {
             form.reportValidity();
             return;
         }
         
-        this.goToStep(step);
+        // Validar que el comprobante esté seleccionado
+        if (!this.selectedFile) {
+            alert("Por favor selecciona un comprobante de pago");
+            return;
+        }
+        
+        // Enviar pago directamente
+        this.submitPayment();
     },
     
     // Manejar drag over
@@ -299,7 +606,7 @@ const PaymentFlow = {
         
         this.selectedFile = file;
         this.showFilePreview(file);
-        document.getElementById('submitPayment').disabled = false;
+        document.getElementById('nextStep3').disabled = false;
         
         console.log('✅ Archivo seleccionado:', file.name);
     },
@@ -328,15 +635,6 @@ const PaymentFlow = {
         }
     },
     
-    // Remover archivo
-    removeFile() {
-        this.selectedFile = null;
-        document.getElementById('filePreview').classList.add('d-none');
-        document.getElementById('receiptFile').value = '';
-        document.getElementById('submitPayment').disabled = true;
-        
-        console.log('🗑️ Archivo removido');
-    },
     
     // Enviar pago
     async submitPayment() {
@@ -344,25 +642,37 @@ const PaymentFlow = {
             console.log('📤 Enviando pago...');
             
             // Mostrar loading
-            const submitBtn = document.getElementById('submitPayment');
+            const submitBtn = document.getElementById("nextStep3");
             const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Enviando...';
+            submitBtn.innerHTML = "<i class=\"fas fa-spinner fa-spin me-1\"></i> Enviando...";
             submitBtn.disabled = true;
             
             // Preparar FormData
             const formData = new FormData();
             formData.append('application_id', this.selectedApplication);
             formData.append('payment_method_id', this.selectedPaymentMethod);
-            formData.append('amount', document.getElementById('paymentAmount').value);
+            formData.append("amount", this.amountInLlevo || document.getElementById("paymentAmount").value);
             formData.append('payment_date', document.getElementById('paymentDate').value);
-            formData.append('reference_number', document.getElementById('referenceNumber').value);
-            formData.append('transaction_id', document.getElementById('transactionId').value);
-            formData.append('sender_bank', document.getElementById('senderBank').value);
-            formData.append('sender_name', document.getElementById('senderName').value);
-            formData.append('customer_notes', document.getElementById('customerNotes').value);
             formData.append('receipt_file', this.selectedFile);
             
-            // Enviar al servidor
+            
+            // Agregar campos opcionales solo si existen
+            const optionalFields = {
+                'referenceNumber': 'reference_number',
+                'transactionId': 'transaction_id',
+                'senderBank': 'sender_bank',
+                'senderName': 'sender_name',
+                'senderPhone': 'sender_phone',
+                'customerNotes': 'customer_notes'
+            };
+            
+            for (const [fieldId, backendName] of Object.entries(optionalFields)) {
+                const element = document.getElementById(fieldId);
+                if (element && element.value) {
+                    formData.append(backendName, element.value);
+                }
+            }
+            
             const result = await Auth.fetch("/api/financing/submit-payment/", {
                 method: "POST",
                 body: formData
@@ -377,10 +687,10 @@ const PaymentFlow = {
         } catch (error) {
             console.error("❌ Error enviando pago:", error);
             this.showError("Error al enviar el pago: " + error.message);
-            
-            const submitBtn = document.getElementById("submitPayment");
-            submitBtn.innerHTML = "🔄 Enviar Pago";
             // Restaurar botón
+            
+            const submitBtn = document.getElementById("nextStep3");
+            submitBtn.innerHTML = "🔄 Enviar Pago";
             submitBtn.disabled = false;
         }
     },
@@ -406,16 +716,45 @@ const PaymentFlow = {
             document.getElementById('summaryMethod').textContent = methodName;
         }
         
+        const amount = document.getElementById("paymentAmount").value;
         // Monto
-        const amount = document.getElementById('paymentAmount').value;
-        if (amount) {
-            document.getElementById('summaryAmount').textContent = `$${this.formatNumber(amount)}`;
+        if (amount && this.amountInLlevo) {
+            const amountVES = parseFloat(amount);
+            const formattedVES = this.formatNumber(amountVES);
+            const formattedLLEVO = this.formatNumber(this.amountInLlevo);
+            document.getElementById('summaryAmount').textContent = `${formattedLLEVO} LLEVO (≈ ${formattedVES} Bs.)`;
+        } else if (amount) {
+            document.getElementById('summaryAmount').textContent = `${this.formatNumber(amount)} Bs.`;
         }
         
         // Fecha
         const date = document.getElementById('paymentDate').value;
         if (date) {
             document.getElementById('summaryDate').textContent = new Date(date).toLocaleDateString('es-ES');
+        }
+    },
+    // ===== MEJORA 4: Conversion LLEVO to VES Display =====
+    updateConversionDisplay() {
+        const amountInput = document.getElementById("paymentAmount");
+        const conversionDiv = document.getElementById("conversionDisplay");
+        
+        if (!amountInput || !conversionDiv) return;
+        
+        const amountVES = parseFloat(amountInput.value || 0);
+        
+        // Mostrar el monto original en LLEVO si está disponible
+        if (this.amountInLlevo && this.llevoRate && amountVES > 0) {
+            conversionDiv.innerHTML = `
+                <div class="alert alert-success py-2 px-3 mb-0">
+                    <i class="fas fa-info-circle"></i> 
+                    <strong>${this.formatNumber(this.amountInLlevo)} LLEVO = ${this.formatNumber(amountVES)} Bs.</strong>
+                    <small class="text-muted d-block mt-1">
+                        (Tasa: 1 LLEVO = ${this.formatNumber(this.llevoRate)} Bs.)
+                    </small>
+                </div>
+            `;
+        } else {
+            conversionDiv.innerHTML = "";
         }
     },
     
@@ -487,4 +826,4 @@ const PaymentFlow = {
 // Inicializar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', () => {
     PaymentFlow.init();
-}); 
+}); /* Cache busting: 1761163160 */

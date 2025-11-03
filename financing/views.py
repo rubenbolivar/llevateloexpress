@@ -1068,6 +1068,29 @@ class PaymentSubmissionView(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             
+            # Crear el pago
+            payment = Payment.objects.create(
+                application=application,
+                payment_method=payment_method.payment_type,
+                payment_type=request.data.get('payment_type', 'installment'),
+                amount=amount,
+                currency="USD",  # LLEVO representado como USD
+                payment_date=payment_date,
+                reference_number=reference_number,
+                transaction_id=request.data.get('transaction_id', ''),
+                sender_bank=request.data.get('sender_bank', ''),
+                sender_account=request.data.get('sender_account', ''),
+                sender_name=request.data.get('sender_name', ''),
+                sender_identification=request.data.get('sender_identification', ''),
+                sender_phone=request.data.get("sender_phone", ""),
+                customer_notes=request.data.get('customer_notes', ''),
+                submitted_by=request.user,
+                recorded_by=request.user,
+                ip_address=self.get_client_ip(request),
+                user_agent=request.META.get("HTTP_USER_AGENT", "")[:200],
+                receipt_file=receipt_file  # Incluir comprobante en la creación
+            )
+            
             # Crear respuesta
             payment_data = {
                 'id': payment.id,

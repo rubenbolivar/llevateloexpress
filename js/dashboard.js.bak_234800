@@ -345,27 +345,11 @@ const Dashboard = {
                 break;
             case 'approved':
             case 'active':
-                // ====================================================================
-                // MODIFICACIÓN: Habilitar pagos manuales (2025-10-21)
-                // Se agrega botón principal para pagos con comprobante
-                // R4 queda deshabilitado temporalmente hasta completar integración
-                // ====================================================================
-                
-                // Botón PRINCIPAL: Pagar con comprobante (métodos manuales)
+                // Botón R4 como método principal para pagos - destacado visualmente
                 buttons.push(`
-                    <button class="btn btn-sm btn-success" 
-                            onclick="window.location.href='realizar-pago.html?request=${request.id}'" 
-                            title="Pagar con transferencia, pago móvil, zelle u otros métodos">
-                        <i class="fas fa-file-invoice-dollar"></i> Pagar
-                    </button>
-                `);
-                
-                // Botón SECUNDARIO: R4 (deshabilitado temporalmente)
-                buttons.push(`
-                    <button class="btn btn-sm btn-outline-secondary" 
-                            disabled 
-                            title="Pago automático R4 - Próximamente">
-                        <i class="fas fa-mobile-alt"></i> R4
+                    <span class="r4-primary-indicator">PRINCIPAL</span>
+                    <button class="btn btn-sm r4-payment-button" onclick="console.log(\u0027🔍 Datos R4:\u0027, {id: ${request.id}, llevos: ${request.payment_amount || 0}, rate: ${currentLlevoRate}, total: ${(request.payment_amount || 0) * currentLlevoRate}}); showR4Modal(${request.id}, \u0027${request.product_name}\u0027, ${(request.payment_amount || 0) * currentLlevoRate})">
+                        <i class="fas fa-mobile-alt"></i> R4 Pago
                     </button>
                 `);
                 break;
