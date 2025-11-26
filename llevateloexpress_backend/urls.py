@@ -19,6 +19,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
+from payments.webhooks import r4_webhooks
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -27,6 +28,9 @@ urlpatterns = [
     path('api/financing/', include('financing.urls')),
     path('api/users/', include('users.urls')),
     path('api/payments/', include('payments.urls')),
+    # R4 Webhooks - URLs directas requeridas por el banco
+    path('R4consulta', r4_webhooks.r4_client_validation_webhook, name='r4_consulta'),
+    path('R4notifica', r4_webhooks.r4_notification_webhook, name='r4_notifica'),
     # Servir archivos HTML estáticos
     path('', TemplateView.as_view(template_name='index.html')),
     path('catalogo.html', TemplateView.as_view(template_name='catalogo.html')),

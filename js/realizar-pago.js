@@ -128,7 +128,7 @@ const PaymentFlow = {
     setupEventListeners() {
         // Navegación entre pasos
         document.getElementById('nextStep1').addEventListener('click', () => this.goToStep(2));
-        document.getElementById('nextStep2').addEventListener('click', () => this.goToStep(3));
+        document.getElementById('nextStep2').addEventListener('click', () => this.handleNextStep2());
         document.getElementById('nextStep3').addEventListener('click', () => this.validateAndSubmitPayment());
         
         document.getElementById('prevStep2').addEventListener('click', () => this.goToStep(1));
@@ -348,7 +348,7 @@ const PaymentFlow = {
                 <h6 class="mb-3">📱 Realiza tu Pago Móvil a:</h6>
                 <ul class="list-unstyled">
                     <li><strong>Banco:</strong> R4 Mi Banco</li>
-                    <li><strong>Teléfono:</strong> 0412 8701585</li>
+                    <li><strong>Teléfono:</strong> 0422 1002379</li>
                     <li><strong>RIF:</strong> J-506654547</li>
                     <li><strong>Titular:</strong> LlévateloExpress</li>
                 </ul>
@@ -498,23 +498,80 @@ const PaymentFlow = {
     },
 
     // Navegar a paso específico
+    // ====================================================================
+    // OPCIÓN 3: Interceptar flujo R4 automático antes de ir al paso 3
+    // ====================================================================
+    handleNextStep2() {
+        console.log('🔍 Verificando tipo de método de pago seleccionado...');
+
+        // Verificar si hay método seleccionado
+        if (!this.selectedPaymentMethodData) {
+            alert('Por favor selecciona un método de pago');
+            return;
+        }
+
+        const paymentType = this.selectedPaymentMethodData.payment_type;
+        console.log(`📋 payment_type: ${paymentType}`);
+
+        // ===== DETECCIÓN R4 AUTOMÁTICO POR PAYMENT_TYPE =====
+        if (paymentType === 'r4_mobile') {
+            console.log('💰 R4 Pago Móvil Automático detectado - Abriendo modal R4');
+            this.handleR4AutomaticPayment();
+            return;  // No avanzar al paso 3
+        }
+
+        // ===== FLUJO NORMAL PARA TODOS LOS DEMÁS MÉTODOS =====
+        // Incluye: mobile_payment (manual), bank_transfer, zelle, etc.
+        console.log('📝 Método manual detectado - Continuar al paso 3');
+        this.goToStep(3);
+    },
+
+    // Manejar pago R4 automático
+    handleR4AutomaticPayment() {
+        console.log('🏦 Iniciando flujo R4 Conecta automático...');
+
+        // Verificar que R4PaymentModal esté disponible
+        if (typeof R4PaymentModal === 'undefined') {
+            console.error('❌ R4PaymentModal no está cargado');
+            alert('Error: Sistema R4 no disponible. Por favor recarga la página.');
+            return;
+        }
+
+        // Preparar datos para el modal R4
+        const paymentData = {
+            applicationId: this.selectedApplication,
+            applicationNumber: this.selectedApplicationData?.application_number,
+            amount: this.selectedApplicationData?.payment_amount || 0,
+            productName: this.selectedApplicationData?.product?.name || 'Producto',
+            customerName: this.selectedApplicationData?.customer?.full_name || 'Cliente'
+        };
+
+        console.log('📦 Datos para R4:', paymentData);
+
+        // Crear y mostrar modal R4
+        const r4Modal = new R4PaymentModal();
+        r4Modal.showPaymentModal(paymentData);
+
+        console.log('✅ Modal R4 mostrado');
+    },
+
     async goToStep(step) {
         // Ocultar paso actual
         document.getElementById(`step-${this.currentStep}`).classList.add('d-none');
-        
+
         // Actualizar indicadores
         document.getElementById(`step${this.currentStep}`).classList.remove('active');
         document.getElementById(`step${this.currentStep}`).classList.add('completed');
-        
+
         if (this.currentStep < step) {
             document.getElementById(`line${this.currentStep}`).classList.add('completed');
         }
-        
+
         // Mostrar nuevo paso
         this.currentStep = step;
         document.getElementById(`step-${step}`).classList.remove('d-none');
         document.getElementById(`step${step}`).classList.add('active');
-        
+
         // Cargar datos específicos del paso
         if (step === 2) {
             await this.loadPaymentMethods();
@@ -536,7 +593,7 @@ const PaymentFlow = {
                 console.log(`💰 Monto pre-cargado: ${amountLLEVO} LLEVO = ${amountVES.toFixed(2)} Bs.`);
             }
         }
-        
+
         console.log('📍 Navegando al paso:', step);
     },
     // Validar y enviar pago

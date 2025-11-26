@@ -293,7 +293,8 @@ class PaymentMethod(models.Model):
     """Métodos de pago disponibles"""
     TYPES = [
         ('bank_transfer', 'Transferencia Bancaria'),
-        ('mobile_payment', 'Pago Móvil'),
+        ('mobile_payment', 'Pago Móvil Manual'),
+        ('r4_mobile', 'R4 Pago Móvil Automático'),
         ('zelle', 'Zelle'),
         ('binance', 'Binance Pay'),
         ('cash', 'Efectivo'),

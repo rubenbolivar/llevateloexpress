@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba R4 Pago Móvil - LlévateloExpress</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 0;
+        }
+        .test-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .test-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .btn-r4 {
+            background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+            border: none;
+            color: white;
+            padding: 20px 40px;
+            font-size: 1.3rem;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,114,255,0.3);
+        }
+        .btn-r4:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,114,255,0.4);
+        }
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #0072ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .modal-r4 .modal-content {
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .modal-r4 .modal-header {
+            background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+            color: white;
+            border-radius: 20px 20px 0 0;
+            border: none;
+        }
+        .payment-info {
+            background: #f0f8ff;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+        .payment-info .label {
+            font-weight: bold;
+            color: #0072ff;
+            margin-bottom: 5px;
+        }
+        .payment-info .value {
+            font-size: 1.2rem;
+            color: #333;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            word-break: break-all;
+        }
+        .warning-badge {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+            margin: 20px 0;
+        }
+        .test-badge {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #dc3545;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            z-index: 9999;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Test Environment Badge -->
+    <div class="test-badge">
+        <i class="fas fa-flask me-2"></i>PRUEBA R4
+    </div>
+
+    <div class="container">
+        <div class="test-card">
+            <!-- Header -->
+            <div class="test-header">
+                <h1><i class="fas fa-vial me-3"></i>Prueba R4 Pago Móvil</h1>
+                <p class="mb-0">Página de Testing - Integración R4 Conecta V3.0</p>
+            </div>
+
+            <!-- Test Info -->
+            <div class="alert alert-info">
+                <h5><i class="fas fa-info-circle me-2"></i>Información de Prueba</h5>
+                <p class="mb-0">Esta página simula el flujo completo de pago móvil automático con R4 Conecta. Úsala para coordinar pruebas con el equipo del banco.</p>
+            </div>
+
+            <!-- Test Data -->
+            <div class="info-box">
+                <h5><i class="fas fa-database me-2"></i>Datos de Prueba</h5>
+                <ul class="mb-0">
+                    <li><strong>Cliente:</strong> Juan Pérez (V-12345678)</li>
+                    <li><strong>Producto:</strong> Moto Yamaha FZ150</li>
+                    <li><strong>Monto a Pagar:</strong> Bs. 100.00</li>
+                    <li><strong>Cuota:</strong> 1/24</li>
+                </ul>
+            </div>
+
+            <!-- Test Button -->
+            <div class="text-center my-5">
+                <button class="btn btn-r4 btn-lg w-100" onclick="openR4Modal()">
+                    🏦 Iniciar Pago Móvil R4 Automático
+                </button>
+            </div>
+
+            <!-- Technical Info -->
+            <div class="accordion" id="technicalAccordion">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#technicalInfo">
+                            <i class="fas fa-code me-2"></i>Información Técnica
+                        </button>
+                    </h2>
+                    <div id="technicalInfo" class="accordion-collapse collapse" data-bs-parent="#technicalAccordion">
+                        <div class="accordion-body">
+                            <h6>Webhooks Implementados:</h6>
+                            <ul>
+                                <li><code>POST /R4consulta</code> - Validación de cliente</li>
+                                <li><code>POST /R4notifica</code> - Notificación de pago</li>
+                            </ul>
+                            <h6 class="mt-3">UUID Token:</h6>
+                            <code>39f97f26-b0cb-4527-a9a4-7d9acd1b0881</code>
+                            <h6 class="mt-3">IPs Whitelist:</h6>
+                            <ul>
+                                <li>45.175.213.98</li>
+                                <li>200.74.203.91</li>
+                                <li>204.199.249.3</li>
+                                <li>190.202.123.66</li>
+                                <li>190.6.60.35</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="mt-4">
+                <h5><i class="fas fa-clipboard-list me-2"></i>Flujo de Prueba</h5>
+                <ol>
+                    <li>Hacer clic en el botón azul arriba</li>
+                    <li>Se abre modal con datos para pago móvil</li>
+                    <li>Realizar pago móvil real desde tu banco</li>
+                    <li>R4 llama a <code>/R4consulta</code> para validar</li>
+                    <li>R4 procesa pago en red interbancaria</li>
+                    <li>R4 llama a <code>/R4notifica</code> para confirmar</li>
+                    <li>Sistema registra pago automáticamente</li>
+                </ol>
+            </div>
+
+            <!-- Warning -->
+            <div class="warning-badge mt-4">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Nota:</strong> Esta es una página de prueba temporal. Después de las pruebas con R4, el flujo estará integrado en la página de pagos principal.
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal R4 Pago Móvil -->
+    <div class="modal fade modal-r4" id="r4PaymentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">
+                        <i class="fas fa-mobile-alt me-2"></i>
+                        R4 Pago Móvil Automático
+                    </h4>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Instructions -->
+                    <div class="alert alert-info">
+                        <h5><i class="fas fa-info-circle me-2"></i>Realiza tu pago móvil</h5>
+                        <p class="mb-0">Usa los siguientes datos para realizar el pago desde tu aplicación bancaria. El sistema detectará automáticamente cuando el pago sea procesado.</p>
+                    </div>
+
+                    <!-- Cédula del Cliente (OBLIGATORIO) -->
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Dato Requerido</h6>
+                        <p class="mb-0">Por seguridad y para validar tu identidad, ingresa tu cédula antes de realizar el pago:</p>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="clienteCedula" class="form-label fw-bold">
+                            <i class="fas fa-id-card me-2"></i>Cédula de Identidad *
+                        </label>
+                        <input
+                            type="text"
+                            class="form-control form-control-lg"
+                            id="clienteCedula"
+                            placeholder="Ejemplo: V12345678 o E12345678"
+                            pattern="[VE][0-9]{6,9}"
+                            maxlength="10"
+                            required
+                            style="font-size: 1.1rem; padding: 15px;">
+                        <small class="text-muted">Formato: V o E seguido de 6-9 dígitos (sin puntos ni espacios)</small>
+                    </div>
+
+                    <!-- Payment Details -->
+                    <div class="payment-info">
+                        <div class="label">
+                            <i class="fas fa-building me-2"></i>Beneficiario
+                        </div>
+                        <div class="value">LlévateloExpress C.A.</div>
+
+                        <div class="label">
+                            <i class="fas fa-id-card me-2"></i>RIF
+                        </div>
+                        <div class="value">J-506654547</div>
+
+                        <div class="label">
+                            <i class="fas fa-university me-2"></i>Banco
+                        </div>
+                        <div class="value">R4 Mi Banco (0169)</div>
+
+                        <div class="label">
+                            <i class="fas fa-phone me-2"></i>Teléfono
+                        </div>
+                        <div class="value">0422-1002379</div>
+
+                        <div class="label">
+                            <i class="fas fa-money-bill-wave me-2"></i>Monto a Pagar
+                        </div>
+                        <div class="value text-success fw-bold">Bs. 100.00</div>
+
+                        <div class="label">
+                            <i class="fas fa-shopping-cart me-2"></i>Concepto
+                        </div>
+                        <div class="value">Cuota 1/24 - Yamaha FZ150</div>
+                    </div>
+
+                    <!-- Process Info -->
+                    <div class="alert alert-success">
+                        <h6><i class="fas fa-check-circle me-2"></i>Detección Automática</h6>
+                        <p class="mb-0">Una vez realices el pago, nuestro sistema recibirá la notificación de R4 Conecta y actualizará tu cuenta automáticamente.</p>
+                    </div>
+
+                    <!-- Technical Flow -->
+                    <div class="accordion mt-3" id="flowAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flowDetails">
+                                    <i class="fas fa-stream me-2"></i>Ver Flujo Técnico
+                                </button>
+                            </h2>
+                            <div id="flowDetails" class="accordion-collapse collapse" data-bs-parent="#flowAccordion">
+                                <div class="accordion-body">
+                                    <ol class="small">
+                                        <li><strong>Cliente realiza pago móvil</strong> desde su banco</li>
+                                        <li><strong>R4 Conecta consulta</strong> → POST /R4consulta</li>
+                                        <li><strong>Sistema valida cliente</strong> → Response: {"status": true}</li>
+                                        <li><strong>Pago procesado</strong> en red interbancaria</li>
+                                        <li><strong>R4 notifica</strong> → POST /R4notifica</li>
+                                        <li><strong>Sistema confirma</strong> → Response: {"abono": true}</li>
+                                        <li><strong>Pago registrado automáticamente</strong> ✅</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cerrar
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="simulatePaymentSuccess()">
+                        <i class="fas fa-check me-2"></i>Simular Pago Exitoso (Solo Prueba)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal fade" id="successModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-check-circle me-2"></i>¡Pago Recibido!
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                    <h4 class="mt-3">Pago Procesado Correctamente</h4>
+                    <p class="text-muted">El sistema ha registrado tu pago automáticamente a través de R4 Conecta.</p>
+                    <div class="alert alert-info mt-3">
+                        <strong>Referencia:</strong> R4-TEST-12345678
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" data-bs-dismiss="modal">Entendido</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Open R4 Payment Modal
+        function openR4Modal() {
+            console.log('🏦 Abriendo modal R4 Pago Móvil Automático');
+            const modal = new bootstrap.Modal(document.getElementById('r4PaymentModal'));
+            modal.show();
+        }
+
+        // Validar cédula en tiempo real
+        document.getElementById('clienteCedula')?.addEventListener('input', function(e) {
+            let value = e.target.value.toUpperCase();
+
+            // Solo permitir V, E y números
+            value = value.replace(/[^VE0-9]/g, '');
+
+            // Asegurar que empiece con V o E
+            if (value.length > 0 && !value.match(/^[VE]/)) {
+                value = 'V' + value.replace(/[VE]/g, '');
+            }
+
+            // Limitar longitud (V/E + máximo 9 dígitos)
+            if (value.length > 10) {
+                value = value.substring(0, 10);
+            }
+
+            e.target.value = value;
+
+            // Validar formato completo
+            if (value.length >= 7 && value.match(/^[VE][0-9]{6,9}$/)) {
+                e.target.classList.remove('is-invalid');
+                e.target.classList.add('is-valid');
+                console.log('✅ Cédula válida:', value);
+            } else if (value.length > 0) {
+                e.target.classList.remove('is-valid');
+                e.target.classList.add('is-invalid');
+            } else {
+                e.target.classList.remove('is-valid', 'is-invalid');
+            }
+        });
+
+        // Simulate Payment Success (for testing only)
+        function simulatePaymentSuccess() {
+            // Validar cédula antes de simular
+            const cedulaInput = document.getElementById('clienteCedula');
+            const cedula = cedulaInput?.value.toUpperCase();
+
+            if (!cedula || !cedula.match(/^[VE][0-9]{6,9}$/)) {
+                alert('⚠️ Por favor ingresa una cédula válida antes de continuar.\n\nFormato: V12345678 o E12345678');
+                cedulaInput?.focus();
+                return;
+            }
+
+            console.log('✅ Simulando pago exitoso...');
+            console.log('📋 Cédula del cliente:', cedula);
+
+            // Close R4 modal
+            const r4Modal = bootstrap.Modal.getInstance(document.getElementById('r4PaymentModal'));
+            r4Modal.hide();
+
+            // Wait for modal to close, then show success
+            setTimeout(() => {
+                const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+                successModal.show();
+
+                // Log technical info
+                console.log('📊 Flujo R4 simulado:');
+                console.log('1. Cliente ingresó cédula:', cedula);
+                console.log('2. Cliente realizó pago móvil');
+                console.log('3. R4 → POST /R4consulta con {"IdCliente": "' + cedula.substring(1) + '"}');
+                console.log('4. Sistema valida: cédula coincide → {"status": true}');
+                console.log('5. Pago procesado en red interbancaria');
+                console.log('6. R4 → POST /R4notifica → {"abono": true}');
+                console.log('7. Sistema registró pago automáticamente ✅');
+            }, 500);
+        }
+
+        // Log page load
+        console.log('🧪 Página de prueba R4 cargada correctamente');
+        console.log('📡 Endpoints disponibles:');
+        console.log('  - https://llevateloexpress.com/R4consulta');
+        console.log('  - https://llevateloexpress.com/R4notifica');
+        console.log('🔐 UUID Token: 39f97f26-b0cb-4527-a9a4-7d9acd1b0881');
+    </script>
+</body>
+</html>

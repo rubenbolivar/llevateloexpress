@@ -1,7 +1,7 @@
 // Configuración R4 Conecta para LlévateloExpress
 const R4Config = {
     // Datos del comercio registrado en R4
-    commercePhone: '0412 8701585',
+    commercePhone: '0422 1002379',
     commerceBank: 'Mi Banco',
     commerceName: 'LlévateloExpress',
     commerceId: 'LLEV001',

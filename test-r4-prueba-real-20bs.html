@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba Real R4 - Bs. 20.00 - LlévateloExpress</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 0;
+        }
+        .test-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .method-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 15px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .method-card:hover {
+            border-color: #0072ff;
+            box-shadow: 0 5px 20px rgba(0,114,255,0.2);
+            transform: translateY(-2px);
+        }
+        .method-card.selected {
+            border-color: #0072ff;
+            background: #f0f8ff;
+        }
+        .method-header {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #0072ff;
+            margin-bottom: 10px;
+        }
+        .method-description {
+            color: #666;
+            font-size: 0.95rem;
+        }
+        .payment-form {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 20px;
+        }
+        .form-control:focus {
+            border-color: #0072ff;
+            box-shadow: 0 0 0 0.2rem rgba(0,114,255,0.25);
+        }
+        .btn-submit {
+            background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+            border: none;
+            color: white;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        .btn-submit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,114,255,0.3);
+        }
+        .real-money-badge {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            z-index: 9999;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        .step-indicator {
+            background: #0072ff;
+            color: white;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Real Money Badge -->
+    <div class="real-money-badge">
+        <i class="fas fa-money-bill-wave me-2"></i>PRUEBA REAL Bs. 20.00
+    </div>
+
+    <div class="container">
+        <div class="test-card">
+            <!-- Header -->
+            <div class="text-center mb-4">
+                <h1><i class="fas fa-flask me-3"></i>Prueba Real R4</h1>
+                <p class="lead">Monto: <strong class="text-success">Bs. 20.00</strong></p>
+                <p class="text-muted">Selecciona el método de pago que quieres probar</p>
+            </div>
+
+            <!-- Cédula del Cliente (OBLIGATORIO para todos los métodos) -->
+            <div class="alert alert-warning">
+                <h6><i class="fas fa-exclamation-triangle me-2"></i>Dato Requerido para todos los métodos</h6>
+                <p class="mb-0">Ingresa tu cédula antes de continuar:</p>
+            </div>
+
+            <div class="mb-4">
+                <label for="cedulaCliente" class="form-label fw-bold">
+                    <i class="fas fa-id-card me-2"></i>Cédula de Identidad *
+                </label>
+                <input
+                    type="text"
+                    class="form-control form-control-lg"
+                    id="cedulaCliente"
+                    placeholder="Ejemplo: V12345678 o E12345678"
+                    pattern="[VE][0-9]{6,9}"
+                    maxlength="10"
+                    required
+                    style="font-size: 1.1rem; padding: 15px;">
+                <small class="text-muted">Formato: V o E seguido de 6-9 dígitos (sin puntos ni espacios)</small>
+            </div>
+
+            <hr class="my-4">
+
+            <!-- Método 1: Pago Móvil Conciliado -->
+            <div class="method-card" id="method-conciliado" onclick="selectMethod('conciliado')">
+                <div class="method-header">
+                    <i class="fas fa-mobile-alt me-2"></i>Método 1: Pago Móvil Conciliado (Recomendado)
+                </div>
+                <div class="method-description">
+                    ✅ Más fácil | ✅ Funciona con cualquier banco | ✅ Sin formularios complejos
+                    <br>
+                    <strong>Flujo:</strong> Ingresas cédula → Ves datos de pago → Pagas desde tu app bancaria → Sistema detecta automáticamente
+                </div>
+            </div>
+
+            <!-- Método 2: Cobro C2P -->
+            <div class="method-card" id="method-c2p" onclick="selectMethod('c2p')">
+                <div class="method-header">
+                    <i class="fas fa-wallet me-2"></i>Método 2: Cobro C2P (Express)
+                </div>
+                <div class="method-description">
+                    ⚡ Rápido | ⚠️ Requiere OTP | ⚠️ Solo cuenta en R4 Mi Banco (0169)
+                    <br>
+                    <strong>Flujo:</strong> Ingresas datos + OTP → Cobro inmediato → Confirmación instantánea
+                </div>
+            </div>
+
+            <!-- Método 3: Débito Inmediato -->
+            <div class="method-card" id="method-debito" onclick="selectMethod('debito')">
+                <div class="method-header">
+                    <i class="fas fa-credit-card me-2"></i>Método 3: Débito Inmediato (2 Pasos)
+                </div>
+                <div class="method-description">
+                    🔒 Mayor seguridad | ⚠️ Proceso de 2 pasos | ⚠️ Requiere banco compatible
+                    <br>
+                    <strong>Flujo:</strong> Solicitas OTP → Recibes SMS → Ingresas OTP → Débito procesado
+                </div>
+            </div>
+
+            <!-- Formularios dinámicos -->
+            <div id="payment-forms-container"></div>
+
+            <!-- Botón de acción -->
+            <div class="text-center mt-4" id="action-button-container"></div>
+        </div>
+    </div>
+
+    <!-- Modal de Pago Móvil Conciliado -->
+    <div class="modal fade" id="modalConciliado" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-mobile-alt me-2"></i>Datos para Pago Móvil
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <strong>Instrucciones:</strong> Usa los siguientes datos para realizar el pago desde tu aplicación bancaria. El sistema detectará automáticamente cuando el pago sea procesado.
+                    </div>
+
+                    <div class="payment-form">
+                        <div class="mb-3">
+                            <label class="fw-bold"><i class="fas fa-building me-2"></i>Beneficiario</label>
+                            <div class="form-control-plaintext">LlévateloExpress C.A.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="fw-bold"><i class="fas fa-id-card me-2"></i>RIF</label>
+                            <div class="form-control-plaintext">J-506654547</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="fw-bold"><i class="fas fa-university me-2"></i>Banco</label>
+                            <div class="form-control-plaintext">R4 Mi Banco (0169)</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="fw-bold"><i class="fas fa-phone me-2"></i>Teléfono</label>
+                            <div class="form-control-plaintext">0422-1002379</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="fw-bold"><i class="fas fa-money-bill-wave me-2"></i>Monto a Pagar</label>
+                            <div class="form-control-plaintext text-success fs-4 fw-bold">Bs. 20.00</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="fw-bold"><i class="fas fa-shopping-cart me-2"></i>Concepto</label>
+                            <div class="form-control-plaintext">Prueba Real R4 - Bs. 20.00</div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-success mt-3">
+                        <strong>✅ Detección Automática:</strong> Una vez realices el pago, nuestro sistema recibirá la notificación de R4 y actualizará tu cuenta automáticamente.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        let selectedMethod = null;
+
+        // Validar cédula en tiempo real
+        document.getElementById('cedulaCliente')?.addEventListener('input', function(e) {
+            let value = e.target.value.toUpperCase();
+            value = value.replace(/[^VE0-9]/g, '');
+
+            if (value.length > 0 && !value.match(/^[VE]/)) {
+                value = 'V' + value.replace(/[VE]/g, '');
+            }
+
+            if (value.length > 10) {
+                value = value.substring(0, 10);
+            }
+
+            e.target.value = value;
+
+            if (value.length >= 7 && value.match(/^[VE][0-9]{6,9}$/)) {
+                e.target.classList.remove('is-invalid');
+                e.target.classList.add('is-valid');
+            } else if (value.length > 0) {
+                e.target.classList.remove('is-valid');
+                e.target.classList.add('is-invalid');
+            } else {
+                e.target.classList.remove('is-valid', 'is-invalid');
+            }
+        });
+
+        function selectMethod(method) {
+            selectedMethod = method;
+
+            // Remove selected class from all
+            document.querySelectorAll('.method-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // Add selected class to chosen method
+            document.getElementById('method-' + method).classList.add('selected');
+
+            // Show appropriate form
+            showForm(method);
+        }
+
+        function showForm(method) {
+            const formsContainer = document.getElementById('payment-forms-container');
+            const buttonContainer = document.getElementById('action-button-container');
+
+            if (method === 'conciliado') {
+                formsContainer.innerHTML = '';
+                buttonContainer.innerHTML = `
+                    <button class="btn btn-submit btn-lg" onclick="processConciliado()">
+                        <i class="fas fa-mobile-alt me-2"></i>Ver Datos para Pago Móvil
+                    </button>
+                `;
+            } else if (method === 'c2p') {
+                formsContainer.innerHTML = `
+                    <div class="payment-form">
+                        <h5 class="mb-3"><span class="step-indicator">2</span>Datos para Cobro C2P</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Teléfono *</label>
+                                <input type="text" class="form-control" id="c2p-telefono" placeholder="04141234567" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Banco *</label>
+                                <select class="form-control" id="c2p-banco" required>
+                                    <option value="0169">0169 - R4 Mi Banco</option>
+                                    <option value="0102">0102 - Banco de Venezuela</option>
+                                    <option value="0105">0105 - Mercantil</option>
+                                </select>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label class="form-label">OTP (Clave de un solo uso) *</label>
+                                <input type="text" class="form-control" id="c2p-otp" placeholder="12345678" maxlength="8" required>
+                                <small class="text-muted">Debes generar el OTP desde tu app bancaria</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                buttonContainer.innerHTML = `
+                    <button class="btn btn-submit btn-lg" onclick="processC2P()">
+                        <i class="fas fa-wallet me-2"></i>Procesar Cobro C2P (Bs. 20.00)
+                    </button>
+                `;
+            } else if (method === 'debito') {
+                formsContainer.innerHTML = `
+                    <div class="payment-form">
+                        <h5 class="mb-3"><span class="step-indicator">2</span>Paso 1: Solicitar OTP</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Nombre Completo *</label>
+                                <input type="text" class="form-control" id="debito-nombre" placeholder="Juan Pérez" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Teléfono *</label>
+                                <input type="text" class="form-control" id="debito-telefono" placeholder="04141234567" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Banco *</label>
+                                <select class="form-control" id="debito-banco" required>
+                                    <option value="0169">0169 - R4 Mi Banco</option>
+                                    <option value="0102">0102 - Banco de Venezuela</option>
+                                    <option value="0105">0105 - Mercantil</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="otp-section" style="display:none;">
+                            <hr class="my-4">
+                            <h5 class="mb-3"><span class="step-indicator">3</span>Paso 2: Ingresar OTP Recibido</h5>
+                            <div class="mb-3">
+                                <label class="form-label">OTP Recibido por SMS *</label>
+                                <input type="text" class="form-control" id="debito-otp" placeholder="123456" required>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                buttonContainer.innerHTML = `
+                    <button class="btn btn-submit btn-lg" onclick="generateOTP()" id="btn-generate-otp">
+                        <i class="fas fa-key me-2"></i>Generar OTP
+                    </button>
+                    <button class="btn btn-submit btn-lg" onclick="processDebito()" id="btn-process-debito" style="display:none;">
+                        <i class="fas fa-credit-card me-2"></i>Procesar Débito (Bs. 20.00)
+                    </button>
+                `;
+            }
+        }
+
+        function processConciliado() {
+            const cedula = document.getElementById('cedulaCliente').value;
+
+            if (!cedula || !cedula.match(/^[VE][0-9]{6,9}$/)) {
+                alert('⚠️ Por favor ingresa una cédula válida antes de continuar.');
+                document.getElementById('cedulaCliente').focus();
+                return;
+            }
+
+            console.log('🏦 Procesando Pago Móvil Conciliado');
+            console.log('Cédula:', cedula);
+            console.log('Monto: Bs. 20.00');
+
+            const modal = new bootstrap.Modal(document.getElementById('modalConciliado'));
+            modal.show();
+        }
+
+        function processC2P() {
+            const cedula = document.getElementById('cedulaCliente').value;
+            const telefono = document.getElementById('c2p-telefono').value;
+            const banco = document.getElementById('c2p-banco').value;
+            const otp = document.getElementById('c2p-otp').value;
+
+            if (!cedula || !telefono || !banco || !otp) {
+                alert('⚠️ Por favor completa todos los campos.');
+                return;
+            }
+
+            console.log('💳 Procesando Cobro C2P');
+            console.log('Cédula:', cedula);
+            console.log('Teléfono:', telefono);
+            console.log('Banco:', banco);
+            console.log('OTP:', otp);
+            console.log('Monto: Bs. 20.00');
+
+            alert('🚧 Esta funcionalidad requiere integración backend.\n\nPor favor, coordina con el equipo R4 para activar este método en producción.');
+        }
+
+        function generateOTP() {
+            const cedula = document.getElementById('cedulaCliente').value;
+            const nombre = document.getElementById('debito-nombre').value;
+            const telefono = document.getElementById('debito-telefono').value;
+            const banco = document.getElementById('debito-banco').value;
+
+            if (!cedula || !nombre || !telefono || !banco) {
+                alert('⚠️ Por favor completa todos los campos.');
+                return;
+            }
+
+            console.log('🔑 Generando OTP');
+            console.log('Cédula:', cedula);
+            console.log('Nombre:', nombre);
+            console.log('Teléfono:', telefono);
+            console.log('Banco:', banco);
+
+            // Mostrar sección de OTP
+            document.getElementById('otp-section').style.display = 'block';
+            document.getElementById('btn-generate-otp').style.display = 'none';
+            document.getElementById('btn-process-debito').style.display = 'inline-block';
+
+            alert('✅ OTP generado exitosamente.\n\nEn producción, recibirías un SMS con el código.\n\nPor ahora, ingresa cualquier código para probar el flujo.');
+        }
+
+        function processDebito() {
+            const otp = document.getElementById('debito-otp').value;
+
+            if (!otp) {
+                alert('⚠️ Por favor ingresa el OTP recibido.');
+                return;
+            }
+
+            console.log('💰 Procesando Débito Inmediato');
+            console.log('OTP:', otp);
+            console.log('Monto: Bs. 20.00');
+
+            alert('🚧 Esta funcionalidad requiere integración backend.\n\nPor favor, coordina con el equipo R4 para activar este método en producción.');
+        }
+
+        // Log page load
+        console.log('🧪 Página de prueba real R4 cargada');
+        console.log('💰 Monto de prueba: Bs. 20.00');
+        console.log('📡 Webhooks disponibles:');
+        console.log('  - https://llevateloexpress.com/R4consulta');
+        console.log('  - https://llevateloexpress.com/R4notifica');
+    </script>
+</body>
+</html>
