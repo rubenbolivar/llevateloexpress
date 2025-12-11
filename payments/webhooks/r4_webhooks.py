@@ -5,9 +5,12 @@ from django.http import JsonResponse, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.conf import settings
-from financing.models import Payment, FinancingRequest
+from financing.models import Payment, FinancingRequest, PaymentSchedule
 from users.models import Customer
 import json
+from decimal import Decimal
+from django.utils import timezone
+from products.llevo_models import LlevoRate
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +66,137 @@ def validate_r4_authorization(request):
     
     logger.info(f"R4 webhook - Token UUID válido: {auth_header}")
     return True
+
+
+
+# =============================================================================
+# FUNCIONES AUXILIARES PARA AUTOMATIZACIÓN R4
+# =============================================================================
+
+def identificar_cliente_por_telefono(telefono):
+    """
+    Identifica un cliente por su número de teléfono.
+    Busca en Customer.phone y Customer.reference_phone con múltiples variantes.
+    """
+    import logging
+    logger = logging.getLogger('payments.webhooks')
+    from users.models import Customer
+    
+    logger.info(f"📞 identificar_cliente_por_telefono: Buscando teléfono '{telefono}'...")
+    
+    if not telefono:
+        logger.warning("📞 Teléfono vacío, retornando None")
+        return None
+    
+    # Limpiar teléfono
+    telefono_limpio = telefono.replace('-', '').replace(' ', '').replace('(', '').replace(')', '')
+    logger.info(f"📞 Teléfono limpio: '{telefono_limpio}'")
+    
+    # Generar variantes
+    variantes = [
+        telefono,
+        telefono_limpio,
+        telefono_limpio.lstrip('0'),
+        f"58{telefono_limpio.lstrip('0')}",
+        f"+58{telefono_limpio.lstrip('0')}"
+    ]
+    
+    logger.info(f"📞 Variantes generadas: {variantes}")
+    
+    # Buscar en Customer.phone
+    for i, var in enumerate(variantes):
+        logger.info(f"📞 Buscando variante #{i+1}: '{var}' en Customer.phone...")
+        try:
+            customer = Customer.objects.filter(phone=var).first()
+            if customer:
+                logger.info(f"✅ Cliente ENCONTRADO: Customer ID {customer.id}, phone='{customer.phone}'")
+                return customer
+            else:
+                logger.info(f"   No encontrado con '{var}'")
+        except Exception as e:
+            logger.error(f"❌ Error buscando con variante '{var}': {str(e)}")
+    
+    # Buscar en Customer.reference_phone (teléfono de referencia)
+    for i, var in enumerate(variantes):
+        logger.info(f"📞 Buscando variante #{i+1}: '{var}' en Customer.reference_phone...")
+        try:
+            customer = Customer.objects.filter(reference_phone=var).first()
+            if customer:
+                logger.info(f"✅ Cliente ENCONTRADO en reference_phone: Customer ID {customer.id}")
+                return customer
+            else:
+                logger.info(f"   No encontrado con '{var}'")
+        except Exception as e:
+            logger.error(f"❌ Error buscando con variante '{var}': {str(e)}")
+    
+    logger.warning(f"❌ Cliente NO encontrado con teléfono '{telefono}' (probadas {len(variantes)} variantes)")
+    return None
+def crear_pago_sin_asignar(data, razon, client_ip):
+    """Crea Payment sin asignar para revisión manual del admin."""
+    try:
+        payment = Payment.objects.create(
+            application=None,
+            payment_schedule=None,
+            payment_method='r4_mobile',
+            payment_type='installment',
+            status='requires_review',
+            amount=Decimal(data['Monto']),
+            currency='VES',
+            payment_date=datetime.fromisoformat(data['FechaHora'].replace('Z', '+00:00')),
+            submitted_at=timezone.now(),
+            reference_number=data.get('Referencia'),
+            sender_phone=data.get('TelefonoEmisor'),
+            sender_bank=data.get('BancoEmisor'),
+            admin_notes=f"""⚠️ PAGO R4 REQUIERE ASIGNACIÓN MANUAL
+Razón: {razon}
+Monto: Bs. {data['Monto']}
+Teléfono: {data.get('TelefonoEmisor')}
+Referencia: {data.get('Referencia')}""",
+            notes=f"Pago R4 - Ref: {data.get('Referencia')} - Pendiente asignación",
+            ip_address=client_ip
+        )
+        logger.warning(f"⚠️ Payment #{payment.id} SIN ASIGNAR - {razon}")
+        return payment
+    except Exception as e:
+        logger.error(f"❌ Error creando pago sin asignar: {str(e)}")
+        return None
+
+
+def crear_pago_con_discrepancia(data, solicitud, monto_llevos, esperado_llevos, tasa, razon, client_ip):
+    """Crea Payment con discrepancia para revisión manual."""
+    try:
+        payment = Payment.objects.create(
+            application=solicitud,
+            payment_schedule=None,
+            payment_method='r4_mobile',
+            payment_type='installment',
+            status='requires_review',
+            amount=Decimal(data['Monto']),
+            currency='VES',
+            amount_llevos=monto_llevos,
+            llevo_rate_at_payment=tasa.llevo_value,
+            llevo_rate_snapshot=tasa,
+            payment_date=datetime.fromisoformat(data['FechaHora'].replace('Z', '+00:00')),
+            submitted_at=timezone.now(),
+            reference_number=data.get('Referencia'),
+            sender_phone=data.get('TelefonoEmisor'),
+            sender_bank=data.get('BancoEmisor'),
+            admin_notes=f"""⚠️ MONTO NO COINCIDE
+{razon}
+Esperado: {esperado_llevos} LLEVOS
+Recibido: {monto_llevos} LLEVOS
+Diferencia: {abs(monto_llevos - esperado_llevos)} LLEVOS
+Tasa: {tasa.llevo_value} Bs/LLEVO""",
+            notes=f"Pago R4 - Ref: {data.get('Referencia')} - Monto no coincide",
+            ip_address=client_ip,
+            submitted_by=solicitud.customer.user if solicitud.customer and solicitud.customer.user else None
+        )
+        logger.warning(f"⚠️ Payment #{payment.id} DISCREPANCIA - Dif: {abs(monto_llevos - esperado_llevos)} LLEVOS")
+        return payment
+    except Exception as e:
+        logger.error(f"❌ Error creando pago con discrepancia: {str(e)}")
+        return None
+
 
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
@@ -128,21 +262,236 @@ def r4_notification_webhook(request):
         # 5. Extraer datos del pago
         codigo_red = data.get("CodigoRed")
         referencia = data.get("Referencia")
+        logger.warning(f"🔔 R4notifica PAYLOAD COMPLETO: {data}")
+        logger.warning("⚡ TEST: Línea inmediatamente después del payload log")
         monto = data.get("Monto")
         
         logger.info(f"R4notifica - Pago recibido: Ref:{referencia}, Monto:{monto}, Código:{codigo_red}")
 
         # 6. Procesar solo si el código es exitoso (línea 531: 00 = APROBADO)
+        logger.warning(f"🔍 DEBUGGER: codigo_red = 047{codigo_red}047, type = {type(codigo_red)}, repr = {repr(codigo_red)}")
         if codigo_red == "00":
-            # TODO: Implementar lógica de registro automático de pago
-            # 1. Buscar solicitud de financiamiento por referencia/monto
-            # 2. Crear Payment record automáticamente
-            # 3. Actualizar estado de solicitud
-            # 4. Enviar confirmación por email
+            # ============================================================
+            # AUTOMATIZACIÓN COMPLETA - R4 NOTIFICA
+            # Registro automático de pagos en sistema
+            # IMPORTANTE: Tolerancia 0, pagos deben ser 100% exactos
+            # ============================================================
+
+            # PASO 1: Identificar cliente por teléfono
+            # -----------------------------------------
+            logger.info("🔹 PASO 1: Identificando cliente por teléfono...")
+            telefono_cliente = data.get('TelefonoEmisor', '')  # Teléfono del cliente que realiza el pago
+            logger.info(f"📞 Teléfono extraído del payload: '{telefono_cliente}'")
             
+            try:
+                cliente = identificar_cliente_por_telefono(telefono_cliente)
+                logger.info(f"✅ Resultado búsqueda: {'Cliente encontrado' if cliente else 'Cliente NO encontrado'}")
+            except Exception as e:
+                logger.error(f"❌ ERROR en identificar_cliente_por_telefono: {str(e)}")
+                logger.exception(e)
+                cliente = None
+
+            if not cliente:
+                # Cliente no encontrado → Crear pago sin asignar para revisión manual
+                return crear_pago_sin_asignar(
+                    data=data,
+                    razon=f"Cliente no encontrado con teléfono {telefono_cliente}",
+                    client_ip=client_ip
+                )
+
+            # PASO 2: Buscar solicitud de financiamiento activa
+            # --------------------------------------------------
+            # Buscar solicitud en estado "approved" o "in_payment" (pagando cuotas)
+            solicitud = FinancingRequest.objects.filter(
+                customer=cliente,
+                status__in=['approved', 'in_payment']
+            ).order_by('-created_at').first()
+
+            if not solicitud:
+                # Cliente sin solicitud activa → Crear pago sin asignar
+                return crear_pago_sin_asignar(
+                    data=data,
+                    razon=f"Cliente {cliente.user.email if cliente.user else cliente.id} no tiene solicitud activa (approved/in_payment)",
+                    client_ip=client_ip
+                )
+
+            # PASO 3: Obtener tasa LLEVO vigente (actual)
+            # --------------------------------------------
+            try:
+                tasa_llevo = LlevoRate.objects.filter(is_active=True).order_by('-created_at').first()
+                if not tasa_llevo:
+                    raise ValueError("No hay tasa LLEVO activa en el sistema")
+
+                # Tasa en formato Decimal para precisión
+                tasa_bs_por_llevo = Decimal(str(tasa_llevo.rate_ves))  # Ej: 7080.00
+
+            except Exception as e:
+                logger.error(f"Error obteniendo tasa LLEVO: {str(e)}")
+                return crear_pago_sin_asignar(
+                    data=data,
+                    razon=f"Error obteniendo tasa LLEVO: {str(e)}",
+                    client_ip=client_ip
+                )
+
+            # PASO 4: Convertir Bs → LLEVOS
+            # ------------------------------
+            # Monto recibido en Bs (VES) desde R4
+            monto_bs = Decimal(str(data.get('Monto', '0')))
+
+            # Convertir a LLEVOS: monto_bs / tasa_bs_por_llevo
+            # Ejemplo: 885,000 Bs / 7,080 = 125.00 LLEVOS
+            monto_llevos = (monto_bs / tasa_bs_por_llevo).quantize(Decimal('0.01'))
+
+            # PASO 5: Determinar tipo de pago (inicial vs cuota)
+            # ---------------------------------------------------
+            # Verificar si ya se pagó el pago inicial
+            pago_inicial_realizado = Payment.objects.filter(
+                financing_request=solicitud,
+                payment_type='initial',
+                status='completed'
+            ).exists()
+
+            if not pago_inicial_realizado:
+                # Este es el PAGO INICIAL
+                tipo_pago = 'initial'
+                monto_esperado_llevos = solicitud.initial_payment  # En LLEVOS
+
+            else:
+                # Este es una CUOTA MENSUAL
+                tipo_pago = 'installment'
+
+                # Buscar la próxima cuota pendiente en el calendario
+                proxima_cuota = PaymentSchedule.objects.filter(
+                    financing_request=solicitud,
+                    is_paid=False
+                ).order_by('payment_number').first()
+
+                if not proxima_cuota:
+                    # No hay cuotas pendientes → Pago excedente o ya completado
+                    return crear_pago_sin_asignar(
+                        data=data,
+                        razon=f"Solicitud {solicitud.id} no tiene cuotas pendientes. Todas pagadas.",
+                        client_ip=client_ip
+                    )
+
+                monto_esperado_llevos = proxima_cuota.amount  # En LLEVOS
+
+            # PASO 6: Validar monto (TOLERANCIA 0)
+            # -------------------------------------
+            # DECISIÓN CLIENTE: Los LLEVOS nunca se redondean, pagos deben ser 100% exactos
+            TOLERANCIA = Decimal('0')  # CERO tolerancia
+
+            diferencia = abs(monto_llevos - monto_esperado_llevos)
+
+            if diferencia > TOLERANCIA:
+                # Monto NO coincide → Crear pago con discrepancia para revisión manual
+                razon_discrepancia = f"Monto recibido: {monto_llevos} LLEVOS ({monto_bs} Bs), esperado: {monto_esperado_llevos} LLEVOS. Diferencia: {diferencia} LLEVOS"
+
+                return crear_pago_con_discrepancia(
+                    data=data,
+                    solicitud=solicitud,
+                    monto_llevos=monto_llevos,
+                    esperado_llevos=monto_esperado_llevos,
+                    tasa=tasa_llevo,
+                    razon=razon_discrepancia,
+                    client_ip=client_ip
+                )
+
+            # PASO 7: CREAR PAYMENT AUTOMÁTICO
+            # ---------------------------------
+            # Monto exacto, proceder con registro automático
+            try:
+                pago = Payment.objects.create(
+                    financing_request=solicitud,
+
+                    # Monto en Bs (VES) recibido de R4
+                    amount=monto_bs,
+                    currency='VES',
+
+                    # Monto en LLEVOS calculado
+                    amount_llevos=monto_llevos,
+
+                    # Tasa de conversión usada
+                    llevo_rate_at_payment=tasa_bs_por_llevo,
+                    llevo_rate_snapshot=tasa_llevo,  # FK para auditoría
+
+                    # Tipo de pago
+                    payment_type=tipo_pago,
+
+                    # Método de pago
+                    payment_method='r4_pago_movil',
+
+                    # Estado
+                    status='completed',  # Aprobado automáticamente
+
+                    # Metadatos R4
+                    r4_reference=data.get('IdTransaccion', ''),
+                    r4_client_id=data.get('IdCliente', ''),
+                    r4_phone=data.get('TelefonoComercio', ''),
+                    r4_client_ip=client_ip,
+                    r4_raw_data=data,
+
+                    # Fecha
+                    payment_date=timezone.now(),
+
+                    # Notas
+                    notes=f"Pago R4 registrado automáticamente. Monto exacto: {monto_llevos} LLEVOS = {monto_bs} Bs (tasa {tasa_bs_por_llevo})"
+                )
+
+                logger.info(f"PAGO AUTOMATICO CREADO: Payment ID {pago.id} - {monto_llevos} LLEVOS ({monto_bs} Bs) - Solicitud {solicitud.id}")
+
+            except Exception as e:
+                logger.error(f"Error creando Payment automático: {str(e)}")
+                return JsonResponse({
+                    'abono': False,
+                    'message': 'Error interno creando registro de pago'
+                }, status=500)
+
+            # PASO 8: Actualizar solicitud
+            # -----------------------------
+            if tipo_pago == 'initial':
+                # Pago inicial completado → Cambiar estado a "in_payment"
+                solicitud.status = 'in_payment'
+                solicitud.initial_payment_date = timezone.now()
+                solicitud.save()
+
+                logger.info(f"Solicitud {solicitud.id} actualizada: Pago inicial completado, estado -> in_payment")
+
+            else:
+                # Cuota pagada → Verificar si es la última
+                cuotas_pendientes = PaymentSchedule.objects.filter(
+                    financing_request=solicitud,
+                    is_paid=False
+                ).exclude(id=proxima_cuota.id).count()
+
+                if cuotas_pendientes == 0:
+                    # Última cuota → Solicitud completada
+                    solicitud.status = 'completed'
+                    solicitud.save()
+                    logger.info(f"Solicitud {solicitud.id} COMPLETADA: Todas las cuotas pagadas")
+
+            # PASO 9: Actualizar calendario PaymentSchedule
+            # ----------------------------------------------
+            if tipo_pago == 'installment':
+                # Marcar la cuota como pagada
+                proxima_cuota.is_paid = True
+                proxima_cuota.paid_date = timezone.now()
+                proxima_cuota.payment = pago  # Vincular al Payment
+                proxima_cuota.save()
+
+                logger.info(f"PaymentSchedule {proxima_cuota.id} marcada como pagada (cuota #{proxima_cuota.payment_number})")
+
+            # PASO 10: Responder al banco (R4)
+            # ---------------------------------
             logger.info(f"R4notifica - Pago procesado exitosamente: {referencia}")
-            return JsonResponse({"abono": True, "message": "Pago procesado"})
+            # Formato oficial R4 Conecta V3.0 página 10: {"abono": true}
+            return JsonResponse({
+                'abono': True,
+                'message': 'Pago procesado y registrado automáticamente'
+            })
+        
         else:
+            # Código no exitoso (diferente de "00") - no procesar
             logger.warning(f"R4notifica - Pago con código no exitoso: {codigo_red}")
             return JsonResponse({"abono": False, "message": f"Código no exitoso: {codigo_red}"})
 

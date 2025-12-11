@@ -255,7 +255,7 @@ const PaymentFlow = {
             if (response.success) {
                 console.log("🔍 Response payment-methods:", response);
                 const methods = response.data.data || response.data.results || response.data;
-                const activeMethods = Array.isArray(methods) ? methods.filter(m => m.id !== 6) : [];
+                const activeMethods = Array.isArray(methods) ? methods : [];
                 console.log("🔍 Methods data:", methods);
                 console.log("🔍 Active methods:", activeMethods);
                 this.paymentMethods = activeMethods;  // Guardar para uso posterior
