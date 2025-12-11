@@ -537,6 +537,27 @@ class Payment(models.Model):
     ip_address = models.GenericIPAddressField(null=True, blank=True, verbose_name="Dirección IP")
     user_agent = models.TextField(blank=True, verbose_name="User Agent")
     
+    # Campos LLEVO para automatizacion R4
+    amount_llevos = models.DecimalField(
+        max_digits=10, decimal_places=2,
+        null=True, blank=True,
+        verbose_name="Monto en LLEVOS",
+        help_text="Equivalente del pago en tokens LLEVO"
+    )
+    llevo_rate_at_payment = models.DecimalField(
+        max_digits=12, decimal_places=6,
+        null=True, blank=True,
+        verbose_name="Tasa LLEVO al momento del pago",
+        help_text="Valor de 1 LLEVO en VES cuando se realizo el pago"
+    )
+    llevo_rate_snapshot = models.ForeignKey(
+        "products.LlevoRate",
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        verbose_name="Snapshot de tasa LLEVO",
+        help_text="Referencia a la tasa LLEVO vigente al momento del pago"
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Creación")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Última Actualización")
     
