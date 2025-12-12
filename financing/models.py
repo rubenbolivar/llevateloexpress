@@ -77,6 +77,7 @@ class FinancingRequest(models.Model):
     customer = models.ForeignKey(
         'users.Customer', 
         on_delete=models.CASCADE,
+        null=True, blank=True,
         related_name='financing_applications',
         verbose_name="Cliente"
     )
@@ -299,7 +300,8 @@ class PaymentMethod(models.Model):
         ('binance', 'Binance Pay'),
         ('cash', 'Efectivo'),
         ('check', 'Cheque'),
-        ('other', 'Otro')
+        ('other', 'Otro'),
+        ('r4_automatic', 'R4 Pago Movil Automatico')
     ]
     
     name = models.CharField(max_length=100, verbose_name="Nombre del método")
@@ -406,7 +408,8 @@ class Payment(models.Model):
     # Relaciones principales
     application = models.ForeignKey(
         FinancingRequest, 
-        on_delete=models.CASCADE, 
+        on_delete=models.CASCADE,
+        null=True, blank=True, 
         related_name='payments',
         verbose_name="Solicitud de Financiamiento"
     )
@@ -418,7 +421,8 @@ class Payment(models.Model):
         ('binance', 'Binance Pay'),
         ('cash', 'Efectivo'),
         ('check', 'Cheque'),
-        ('other', 'Otro')
+        ('other', 'Otro'),
+        ('r4_automatic', 'R4 Pago Movil Automatico')
     ]
     payment_method = models.CharField(
         max_length=20, 
@@ -583,7 +587,7 @@ class Payment(models.Model):
         if self.payment_method in ['bank_transfer', 'mobile_payment', 'zelle'] and not self.reference_number:
             raise ValidationError("Este método de pago requiere número de referencia")
         
-        if self.payment_method != 'cash' and not self.receipt_file:
+        if self.payment_method not in ['cash', 'r4_automatic'] and not self.receipt_file:
             raise ValidationError("Este método de pago requiere comprobante")
         
         # Nota: Validaciones de montos mínimos/máximos temporalmente deshabilitadas
@@ -634,6 +638,7 @@ class PaymentAttachment(models.Model):
     payment = models.ForeignKey(
         Payment,
         on_delete=models.CASCADE,
+        null=True, blank=True,
         related_name='attachments',
         verbose_name="Pago"
     )
@@ -691,7 +696,8 @@ class PaymentSchedule(models.Model):
     """Calendario de pagos"""
     application = models.ForeignKey(
         FinancingRequest, 
-        on_delete=models.CASCADE, 
+        on_delete=models.CASCADE,
+        null=True, blank=True, 
         related_name='payment_schedule',
         verbose_name="Solicitud"
     )
@@ -756,6 +762,7 @@ class ApplicationStatusHistory(models.Model):
     application = models.ForeignKey(
         FinancingRequest,
         on_delete=models.CASCADE,
+        null=True, blank=True,
         related_name='status_history',
         verbose_name="Solicitud"
     )
@@ -809,7 +816,8 @@ class FinancingConfiguration(models.Model):
 
 class DownPaymentOption(models.Model):
     """Opciones de porcentaje de inicial"""
-    configuration = models.ForeignKey(FinancingConfiguration, on_delete=models.CASCADE, related_name='down_payment_options')
+    configuration = models.ForeignKey(FinancingConfiguration, on_delete=models.CASCADE,
+        null=True, blank=True, related_name='down_payment_options')
     percentage = models.DecimalField(max_digits=5, decimal_places=2, help_text="Porcentaje de inicial (ej: 30.00)")
     is_active = models.BooleanField(default=True)
     order = models.IntegerField(default=0, help_text="Orden de aparición en el simulador")
@@ -825,7 +833,8 @@ class DownPaymentOption(models.Model):
 
 class FinancingTerm(models.Model):
     """Plazos de financiamiento disponibles"""
-    configuration = models.ForeignKey(FinancingConfiguration, on_delete=models.CASCADE, related_name='financing_terms')
+    configuration = models.ForeignKey(FinancingConfiguration, on_delete=models.CASCADE,
+        null=True, blank=True, related_name='financing_terms')
     months = models.IntegerField(help_text="Número de meses")
     is_active = models.BooleanField(default=True)
     order = models.IntegerField(default=0, help_text="Orden de aparición en el simulador")
@@ -847,7 +856,8 @@ class PaymentFrequency(models.Model):
         ('monthly', 'Mensual'),
     ]
     
-    configuration = models.ForeignKey(FinancingConfiguration, on_delete=models.CASCADE, related_name='payment_frequencies')
+    configuration = models.ForeignKey(FinancingConfiguration, on_delete=models.CASCADE,
+        null=True, blank=True, related_name='payment_frequencies')
     frequency = models.CharField(max_length=20, choices=FREQUENCY_CHOICES)
     is_active = models.BooleanField(default=True)
     order = models.IntegerField(default=0, help_text="Orden de aparición en el simulador")
@@ -892,7 +902,8 @@ class ProductCategory(models.Model):
 
 class SimulatorProduct(models.Model):
     """Productos disponibles en el simulador"""
-    category = models.ForeignKey(ProductCategory, on_delete=models.CASCADE, related_name='products')
+    category = models.ForeignKey(ProductCategory, on_delete=models.CASCADE,
+        null=True, blank=True, related_name='products')
     name = models.CharField(max_length=200)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.TextField(blank=True)

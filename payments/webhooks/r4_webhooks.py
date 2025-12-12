@@ -137,7 +137,7 @@ def crear_pago_sin_asignar(data, razon, client_ip):
         payment = Payment.objects.create(
             application=None,
             payment_schedule=None,
-            payment_method='r4_mobile',
+            payment_method='r4_automatic',
             payment_type='installment',
             status='requires_review',
             amount=Decimal(data['Monto']),
@@ -156,10 +156,10 @@ Referencia: {data.get('Referencia')}""",
             ip_address=client_ip
         )
         logger.warning(f"⚠️ Payment #{payment.id} SIN ASIGNAR - {razon}")
-        return payment
+        return JsonResponse({"abono": True, "message": "Pago registrado para revision manual"})
     except Exception as e:
         logger.error(f"❌ Error creando pago sin asignar: {str(e)}")
-        return None
+        return JsonResponse({"abono": False, "message": "Error interno"}, status=500)
 
 
 def crear_pago_con_discrepancia(data, solicitud, monto_llevos, esperado_llevos, tasa, razon, client_ip):
@@ -168,7 +168,7 @@ def crear_pago_con_discrepancia(data, solicitud, monto_llevos, esperado_llevos, 
         payment = Payment.objects.create(
             application=solicitud,
             payment_schedule=None,
-            payment_method='r4_mobile',
+            payment_method='r4_automatic',
             payment_type='installment',
             status='requires_review',
             amount=Decimal(data['Monto']),
@@ -192,10 +192,10 @@ Tasa: {tasa.llevo_value} Bs/LLEVO""",
             submitted_by=solicitud.customer.user if solicitud.customer and solicitud.customer.user else None
         )
         logger.warning(f"⚠️ Payment #{payment.id} DISCREPANCIA - Dif: {abs(monto_llevos - esperado_llevos)} LLEVOS")
-        return payment
+        return JsonResponse({"abono": True, "message": "Pago registrado para revision manual"})
     except Exception as e:
         logger.error(f"❌ Error creando pago con discrepancia: {str(e)}")
-        return None
+        return JsonResponse({"abono": False, "message": "Error interno"}, status=500)
 
 
 @csrf_exempt
@@ -323,7 +323,7 @@ def r4_notification_webhook(request):
                     raise ValueError("No hay tasa LLEVO activa en el sistema")
 
                 # Tasa en formato Decimal para precisión
-                tasa_bs_por_llevo = Decimal(str(tasa_llevo.rate_ves))  # Ej: 7080.00
+                tasa_bs_por_llevo = Decimal(str(tasa_llevo.llevo_value))  # Ej: 7080.00
 
             except Exception as e:
                 logger.error(f"Error obteniendo tasa LLEVO: {str(e)}")
@@ -346,7 +346,7 @@ def r4_notification_webhook(request):
             # ---------------------------------------------------
             # Verificar si ya se pagó el pago inicial
             pago_inicial_realizado = Payment.objects.filter(
-                application=solicitud,
+                financing_request=solicitud,
                 payment_type='initial',
                 status='completed'
             ).exists()
@@ -354,7 +354,7 @@ def r4_notification_webhook(request):
             if not pago_inicial_realizado:
                 # Este es el PAGO INICIAL
                 tipo_pago = 'initial'
-                monto_esperado_llevos = solicitud.down_payment_llevos  # En LLEVOS
+                monto_esperado_llevos = solicitud.initial_payment  # En LLEVOS
 
             else:
                 # Este es una CUOTA MENSUAL
@@ -362,7 +362,7 @@ def r4_notification_webhook(request):
 
                 # Buscar la próxima cuota pendiente en el calendario
                 proxima_cuota = PaymentSchedule.objects.filter(
-                    application=solicitud,
+                    financing_request=solicitud,
                     is_paid=False
                 ).order_by('payment_number').first()
 
@@ -402,7 +402,7 @@ def r4_notification_webhook(request):
             # Monto exacto, proceder con registro automático
             try:
                 pago = Payment.objects.create(
-                    application=solicitud,
+                    financing_request=solicitud,
 
                     # Monto en Bs (VES) recibido de R4
                     amount=monto_bs,
@@ -419,17 +419,17 @@ def r4_notification_webhook(request):
                     payment_type=tipo_pago,
 
                     # Método de pago
-                    payment_method='r4_pago_movil',
+                    payment_method='r4_automatic',
 
                     # Estado
-                    status='verified',  # Aprobado automaticamente
+                    status='completed',  # Aprobado automáticamente
 
-                    # Datos R4
-                    reference_number=data.get('Referencia', ''),
-                    sender_phone=data.get('TelefonoEmisor', ''),
-                    sender_bank=data.get('BancoEmisor', ''),
-                    ip_address=client_ip,
-
+                    # Metadatos R4
+                    r4_reference=data.get('IdTransaccion', ''),
+                    r4_client_id=data.get('IdCliente', ''),
+                    r4_phone=data.get('TelefonoComercio', ''),
+                    r4_client_ip=client_ip,
+                    r4_raw_data=data,
 
                     # Fecha
                     payment_date=timezone.now(),
@@ -452,6 +452,7 @@ def r4_notification_webhook(request):
             if tipo_pago == 'initial':
                 # Pago inicial completado → Cambiar estado a "in_payment"
                 solicitud.status = 'in_payment'
+                solicitud.initial_payment_date = timezone.now()
                 solicitud.save()
 
                 logger.info(f"Solicitud {solicitud.id} actualizada: Pago inicial completado, estado -> in_payment")
@@ -459,7 +460,7 @@ def r4_notification_webhook(request):
             else:
                 # Cuota pagada → Verificar si es la última
                 cuotas_pendientes = PaymentSchedule.objects.filter(
-                    application=solicitud,
+                    financing_request=solicitud,
                     is_paid=False
                 ).exclude(id=proxima_cuota.id).count()
 
