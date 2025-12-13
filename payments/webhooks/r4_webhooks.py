@@ -346,7 +346,7 @@ def r4_notification_webhook(request):
             # ---------------------------------------------------
             # Verificar si ya se pagó el pago inicial
             pago_inicial_realizado = Payment.objects.filter(
-                financing_request=solicitud,
+                application=solicitud,
                 payment_type='initial',
                 status='completed'
             ).exists()
@@ -354,7 +354,7 @@ def r4_notification_webhook(request):
             if not pago_inicial_realizado:
                 # Este es el PAGO INICIAL
                 tipo_pago = 'initial'
-                monto_esperado_llevos = solicitud.initial_payment  # En LLEVOS
+                monto_esperado_llevos = solicitud.down_payment_llevos  # En LLEVOS
 
             else:
                 # Este es una CUOTA MENSUAL
@@ -362,7 +362,7 @@ def r4_notification_webhook(request):
 
                 # Buscar la próxima cuota pendiente en el calendario
                 proxima_cuota = PaymentSchedule.objects.filter(
-                    financing_request=solicitud,
+                    application=solicitud,
                     is_paid=False
                 ).order_by('payment_number').first()
 
@@ -402,7 +402,7 @@ def r4_notification_webhook(request):
             # Monto exacto, proceder con registro automático
             try:
                 pago = Payment.objects.create(
-                    financing_request=solicitud,
+                    application=solicitud,
 
                     # Monto en Bs (VES) recibido de R4
                     amount=monto_bs,
@@ -422,14 +422,14 @@ def r4_notification_webhook(request):
                     payment_method='r4_automatic',
 
                     # Estado
-                    status='completed',  # Aprobado automáticamente
+                    status='verified',  # Aprobado automáticamente
 
                     # Metadatos R4
-                    r4_reference=data.get('IdTransaccion', ''),
-                    r4_client_id=data.get('IdCliente', ''),
-                    r4_phone=data.get('TelefonoComercio', ''),
-                    r4_client_ip=client_ip,
-                    r4_raw_data=data,
+                    reference_number=data.get('Referencia', ''),
+                    sender_identification=data.get('IdComercio', ''),
+                    sender_phone=data.get('TelefonoEmisor', ''),
+                    sender_bank=data.get('BancoEmisor', ''),
+                    ip_address=client_ip,
 
                     # Fecha
                     payment_date=timezone.now(),
@@ -452,7 +452,6 @@ def r4_notification_webhook(request):
             if tipo_pago == 'initial':
                 # Pago inicial completado → Cambiar estado a "in_payment"
                 solicitud.status = 'in_payment'
-                solicitud.initial_payment_date = timezone.now()
                 solicitud.save()
 
                 logger.info(f"Solicitud {solicitud.id} actualizada: Pago inicial completado, estado -> in_payment")
@@ -460,7 +459,7 @@ def r4_notification_webhook(request):
             else:
                 # Cuota pagada → Verificar si es la última
                 cuotas_pendientes = PaymentSchedule.objects.filter(
-                    financing_request=solicitud,
+                    application=solicitud,
                     is_paid=False
                 ).exclude(id=proxima_cuota.id).count()
 
