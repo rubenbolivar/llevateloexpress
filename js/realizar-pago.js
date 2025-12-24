@@ -6,6 +6,8 @@ const PaymentFlow = {
     selectedPaymentMethodData: null,  // Datos completos del método
     selectedFile: null,
     selectedApplicationData: null,  // Datos completos de la solicitud seleccionada
+    selectedPaymentType: null,
+    selectedInstallment: null,
     llevoRate: null,  // Tasa de conversion LLEVO a VES
     amountInLlevo: null,  // Monto original en LLEVO de la solicitud
     
@@ -127,11 +129,13 @@ const PaymentFlow = {
     // Configurar event listeners
     setupEventListeners() {
         // Navegación entre pasos
-        document.getElementById('nextStep1').addEventListener('click', () => this.goToStep(2));
+        document.getElementById('nextStep1').addEventListener('click', () => this.goToStep('1b'));
+        document.getElementById('prevStep1b')?.addEventListener('click', () => this.goToStep(1));
+        document.getElementById('nextStep1b')?.addEventListener('click', () => this.goToStep(2));
         document.getElementById('nextStep2').addEventListener('click', () => this.handleNextStep2());
         document.getElementById('nextStep3').addEventListener('click', () => this.validateAndSubmitPayment());
         
-        document.getElementById('prevStep2').addEventListener('click', () => this.goToStep(1));
+        document.getElementById('prevStep2').addEventListener('click', () => this.goToStep('1b'));
         document.getElementById('prevStep3').addEventListener('click', () => this.goToStep(2));
         
         // Upload de archivos
@@ -200,7 +204,7 @@ const PaymentFlow = {
                             ${app.application_number || `Solicitud #${app.id}`}
                         </h6>
                         <p class="mb-1"><strong>Producto:</strong> ${app.product_name || 'N/A'}</p>
-                        <p class="mb-1"><strong>Cuota mensual:</strong> $${this.formatNumber(app.payment_amount || 0)}</p>
+                        <p class="mb-1"><strong>Cuota mensual:</strong> ${this.formatNumber(app.payment_amount || 0)} LLEVO</p>
                         <span class="badge bg-${this.getStatusColor(app.status)}">${app.status_display || app.status}</span>
                     </div>
                     <div class="col-md-4 text-end">
@@ -541,12 +545,26 @@ const PaymentFlow = {
         const paymentData = {
             applicationId: this.selectedApplication,
             applicationNumber: this.selectedApplicationData?.application_number,
-            amount: this.selectedApplicationData?.payment_amount || 0,
+            amount: this.amountInLlevo || this.selectedApplicationData?.payment_amount || 0,
             productName: this.selectedApplicationData?.product?.name || 'Producto',
-            customerName: this.selectedApplicationData?.customer?.full_name || 'Cliente'
+            customerName: this.selectedApplicationData?.customer?.full_name || 'Cliente',
+            paymentType: this.selectedPaymentType || 'installment',
+            installmentNumber: this.selectedInstallment
         };
 
         console.log('📦 Datos para R4:', paymentData);
+
+        // Guardar pago pendiente en localStorage para tracking
+        const pendingR4Payment = {
+            applicationId: paymentData.applicationId,
+            applicationNumber: paymentData.applicationNumber,
+            amount: paymentData.amount,
+            paymentType: paymentData.paymentType,
+            installmentNumber: paymentData.installmentNumber,
+            timestamp: Date.now()
+        };
+        localStorage.setItem('pending_r4_payment', JSON.stringify(pendingR4Payment));
+        console.log('💾 Pago R4 pendiente guardado en localStorage:', pendingR4Payment);
 
         // Crear y mostrar modal R4
         const r4Modal = new R4PaymentModal();
@@ -555,25 +573,242 @@ const PaymentFlow = {
         console.log('✅ Modal R4 mostrado');
     },
 
-    async goToStep(step) {
-        // Ocultar paso actual
-        document.getElementById(`step-${this.currentStep}`).classList.add('d-none');
 
-        // Actualizar indicadores
-        document.getElementById(`step${this.currentStep}`).classList.remove('active');
-        document.getElementById(`step${this.currentStep}`).classList.add('completed');
+    // Cargar tipos de pago disponibles (inicial o cuotas)
+    async loadPaymentTypes() {
+        const container = document.getElementById('paymentTypeContainer');
+        if (!container) return;
 
-        if (this.currentStep < step) {
-            document.getElementById(`line${this.currentStep}`).classList.add('completed');
+        const app = this.selectedApplicationData;
+        if (!app) {
+            container.innerHTML = '<p class="text-danger">Error: No hay solicitud seleccionada</p>';
+            return;
         }
 
-        // Mostrar nuevo paso
-        this.currentStep = step;
-        document.getElementById(`step-${step}`).classList.remove('d-none');
-        document.getElementById(`step${step}`).classList.add('active');
+        // Verificar si el pago inicial está completado (viene del serializer)
+        const initialPaymentCompleted = app.initial_payment_completed || false;
+        const downPaymentLlevos = parseFloat(app.down_payment_llevos) || 0;
+        const downPaymentVes = parseFloat(app.down_payment_ves) || (downPaymentLlevos * this.llevoRate);
 
-        // Cargar datos específicos del paso
-        if (step === 2) {
+        let html = '';
+
+        // Si NO ha pagado la inicial, mostrarla primero y bloquear cuotas
+        if (!initialPaymentCompleted && downPaymentLlevos > 0) {
+            html = `
+                <div class="alert alert-warning mb-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Importante:</strong> Debes pagar la cuota inicial antes de las cuotas mensuales.
+                </div>
+
+                <div class="payment-type-card p-3 mb-3 border border-warning rounded selected" 
+                     data-payment-type="initial" 
+                     style="cursor: pointer; background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);"
+                     onclick="PaymentFlow.selectPaymentType('initial')">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h5 class="mb-1 text-warning">
+                                <i class="fas fa-star me-2"></i>
+                                PAGO INICIAL (Requerido)
+                            </h5>
+                            <p class="mb-1"><strong>Producto:</strong> ${app.product_name || 'N/A'}</p>
+                            <p class="mb-0"><strong>Monto:</strong> <span class="text-primary fw-bold">${this.formatNumber(downPaymentLlevos)} LLEVO</span></p>
+                            <p class="mb-0 text-success fw-bold">Paga hoy: ${this.formatNumber(downPaymentVes)} Bs</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <input class="form-check-input" type="radio" name="paymentType"
+                                   id="paymentType_initial" value="initial" checked style="transform: scale(1.5);">
+                            <label class="form-check-label fw-bold text-success ms-2" for="paymentType_initial">
+                                <i class="fas fa-check-circle"></i> Seleccionado
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-3">
+                <h6 class="text-muted mb-3"><i class="fas fa-lock me-2"></i>Cuotas Mensuales (Disponibles después del pago inicial)</h6>
+                <div class="text-muted p-3 bg-light rounded" style="opacity: 0.5;">
+                    <p class="mb-0"><i class="fas fa-calendar me-2"></i>Las cuotas mensuales se habilitarán una vez completado el pago inicial.</p>
+                </div>
+            `;
+
+            // Auto-seleccionar inicial
+            this.selectedPaymentType = 'initial';
+            this.amountInLlevo = downPaymentLlevos;
+            setTimeout(() => {
+                document.getElementById('nextStep1b').disabled = false;
+            }, 100);
+        } else {
+            // Ya pagó la inicial, cargar cuotas del calendario
+            html = `
+                <div class="alert alert-success mb-3">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Pago inicial completado.</strong> Selecciona la cuota mensual a pagar.
+                </div>
+            `;
+
+            // Cargar cuotas pendientes
+            try {
+                const response = await API.users.authFetch('/api/financing/payment-schedule/');
+                if (response.success) {
+                    const scheduleData = response.data.results || response.data;
+                    // Filtrar solo las cuotas de esta solicitud
+                    const appSchedule = scheduleData.filter(s => s.application === app.id);
+
+                    if (appSchedule.length === 0) {
+                        html += '<p class="text-muted">No hay cuotas pendientes para esta solicitud.</p>';
+                    } else {
+                        // Encontrar cuotas pendientes (no pagadas)
+                        const pendingInstallments = appSchedule.filter(s => s.status !== 'paid');
+                        
+                        if (pendingInstallments.length === 0) {
+                            html += '<p class="text-success"><i class="fas fa-check-circle me-2"></i>¡Todas las cuotas han sido pagadas!</p>';
+                        } else {
+                            // Mensaje informativo sobre adelanto de cuotas
+                            html += '<div class="alert alert-info mb-3"><i class="fas fa-info-circle me-2"></i><strong>Puedes adelantar cuotas:</strong> Selecciona cualquier cuota pendiente para pagarla.</div>';
+                            html += pendingInstallments.map((installment, index) => {
+                                const isNext = index === 0;
+                                const amount = parseFloat(installment.amount_llevos) || parseFloat(installment.amount) || 0;
+                                const amountVes = amount * this.llevoRate;
+
+                                return `
+                                    <div class="payment-type-card p-3 mb-2 border rounded ${installment.status === 'overdue' ? 'border-danger' : (installment.status === 'in_window' ? 'border-warning' : (isNext ? 'border-primary' : ''))}"\n                                         data-payment-type="installment"
+                                         data-installment="${installment.payment_number}"
+                                         data-amount="${amount}"
+                                         style="cursor: pointer;"
+                                         onclick="PaymentFlow.selectPaymentType('installment', " + installment.payment_number + ", " + amount + ")">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-8">
+                                                <h6 class="mb-1 text-primary">
+                                                    <i class="fas fa-calendar-check me-2"></i>
+                                                    Cuota ${installment.payment_number}
+                                                    ${installment.status === 'overdue' ? '<span class="badge bg-danger ms-2">Vencida</span>' : (installment.status === 'in_window' ? '<span class="badge bg-warning text-dark ms-2">En ventana</span>' : (isNext ? '<span class="badge bg-primary ms-2">Próxima</span>' : '<span class="badge bg-info ms-2">Adelantar</span>'))}
+                                                </h6>
+                                                <p class="mb-0 small">${installment.window_status || 'Vence: ' + (installment.due_date || 'N/A')}</p>
+                                            </div>
+                                            <div class="col-md-4 text-end">
+                                                <span class="fw-bold text-primary">${this.formatNumber(amount)} LLEVO</span>
+                                                <br><small class="text-success fw-bold">Paga hoy: ${this.formatNumber(amountVes)} Bs</small>
+                                                <br><input class="form-check-input mt-2" type="radio" name="paymentType" id="paymentType_inst_${installment.payment_number}" value="installment" style="transform: scale(1.5);">
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('');
+
+                            // Auto-seleccionar la primera cuota pendiente
+                            const nextInstallment = pendingInstallments[0];
+                            if (nextInstallment) {
+                                this.selectedPaymentType = 'installment';
+                                this.selectedInstallment = nextInstallment.payment_number;
+                                this.amountInLlevo = parseFloat(nextInstallment.amount_llevos) || parseFloat(nextInstallment.amount) || 0;
+                                setTimeout(() => {
+                                    const radio = document.getElementById('paymentType_inst_' + nextInstallment.payment_number);
+                                    if (radio) radio.checked = true;
+                                    document.getElementById('nextStep1b').disabled = false;
+                                }, 100);
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando cuotas:', error);
+                html += '<p class="text-danger">Error al cargar cuotas pendientes.</p>';
+            }
+        }
+
+        container.innerHTML = html;
+    },
+
+    // Seleccionar tipo de pago
+    selectPaymentType(type, installmentNumber = null, amount = null) {
+        this.selectedPaymentType = type;
+        this.selectedInstallment = installmentNumber;
+
+        if (amount !== null) {
+            this.amountInLlevo = amount;
+        } else if (type === 'initial') {
+            this.amountInLlevo = parseFloat(this.selectedApplicationData?.down_payment_llevos) || 0;
+        }
+
+        // Actualizar UI
+        document.querySelectorAll('#paymentTypeContainer .payment-type-card').forEach(card => {
+            card.classList.remove('selected');
+            card.style.background = '';
+        });
+
+        const selector = type === 'initial'
+            ? '[data-payment-type="initial"]'
+            : `[data-installment="${installmentNumber}"]`;
+        const selectedCard = document.querySelector(selector);
+        if (selectedCard) {
+            selectedCard.classList.add('selected');
+            if (type === 'initial') {
+                selectedCard.style.background = 'linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%)';
+            } else {
+                selectedCard.style.background = 'linear-gradient(135deg, #cce5ff 0%, #b8daff 100%)';
+            }
+        }
+
+        // Actualizar radios
+        document.querySelectorAll('input[name="paymentType"]').forEach(radio => {
+            radio.checked = false;
+        });
+        if (type === 'initial') {
+            const radio = document.getElementById('paymentType_initial');
+            if (radio) radio.checked = true;
+        } else if (installmentNumber) {
+            const radio = document.getElementById('paymentType_inst_' + installmentNumber);
+            if (radio) radio.checked = true;
+        }
+
+        // Habilitar siguiente
+        document.getElementById('nextStep1b').disabled = false;
+
+        // Actualizar resumen
+        this.updateSummary();
+
+        console.log('✅ Tipo de pago seleccionado:', type, installmentNumber, this.amountInLlevo);
+    },
+    async goToStep(step) {
+        // Ocultar paso actual
+        const currentStepEl = document.getElementById(`step-${this.currentStep}`);
+        if (currentStepEl) currentStepEl.classList.add('d-none');
+
+        // El paso 1b es un subpaso de 1, no tiene indicador visual propio
+        // Solo actualizar indicadores para pasos numericos principales
+        const isCurrentStepNumeric = typeof this.currentStep === 'number';
+        const isNewStepNumeric = typeof step === 'number';
+
+        if (isCurrentStepNumeric) {
+            const currentIndicator = document.getElementById(`step${this.currentStep}`);
+            if (currentIndicator) {
+                currentIndicator.classList.remove('active');
+                // Solo marcar como completado si vamos a un paso mayor
+                if ((isNewStepNumeric && step > this.currentStep) || step === '1b') {
+                    currentIndicator.classList.add('completed');
+                    const line = document.getElementById(`line${this.currentStep}`);
+                    if (line) line.classList.add('completed');
+                }
+            }
+        }
+
+        // Guardar paso actual
+        this.currentStep = step;
+
+        // Mostrar nuevo paso
+        const newStepEl = document.getElementById(`step-${step}`);
+        if (newStepEl) newStepEl.classList.remove('d-none');
+
+        // Actualizar indicador visual (solo para pasos numericos)
+        if (isNewStepNumeric) {
+            const newIndicator = document.getElementById(`step${step}`);
+            if (newIndicator) newIndicator.classList.add('active');
+        }
+
+        // Cargar datos especificos del paso
+        if (step === '1b') {
+            await this.loadPaymentTypes();
+        } else if (step === 2) {
             await this.loadPaymentMethods();
         } else if (step === 3) {
             // ===== MEJORA 1, 2 y 3: Instrucciones, campos y upload =====
@@ -583,11 +818,11 @@ const PaymentFlow = {
                 this.setupFileUpload();
             }
 
-            // Pre-cargar monto en Bs. basado en la solicitud
+            // Pre-cargar monto en Bs basado en tipo de pago seleccionado
             if (this.selectedApplicationData && this.llevoRate) {
-                const amountLLEVO = parseFloat(this.selectedApplicationData.payment_amount || 0);
+                // Usar el monto seleccionado en paso 1b (inicial o cuota)
+                const amountLLEVO = this.amountInLlevo || parseFloat(this.selectedApplicationData.payment_amount || 0);
                 const amountVES = amountLLEVO * this.llevoRate;
-                this.amountInLlevo = amountLLEVO;  // Guardar monto original en LLEVO
                 document.getElementById("paymentAmount").value = amountVES.toFixed(2);
                 this.updateConversionDisplay();
                 console.log(`💰 Monto pre-cargado: ${amountLLEVO} LLEVO = ${amountVES.toFixed(2)} Bs.`);

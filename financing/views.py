@@ -442,6 +442,7 @@ class CustomerApplicationsView(generics.ListAPIView):
 
 class PaymentScheduleListView(generics.ListAPIView):
     """Vista para listar calendario de pagos del cliente"""
+    pagination_class = None  # Sin paginacion para mostrar todas las cuotas
     serializer_class = PaymentScheduleSerializer
     permission_classes = [permissions.IsAuthenticated]
     
@@ -1098,6 +1099,8 @@ class PaymentSubmissionView(APIView):
                 'payment_type': payment.get_payment_type_display(),
                 'payment_method': payment.get_payment_method_display(),
                 'amount': float(payment.amount),
+                    'amount_llevos': float(payment.amount_llevos) if payment.amount_llevos else None,
+                    'payment_type_code': payment.payment_type,
                 'currency': payment.currency,
                 'status': payment.get_status_display(),
                 'payment_date': payment.payment_date.isoformat(),
@@ -1172,6 +1175,8 @@ class UserPaymentsView(APIView):
                     'payment_type': payment.get_payment_type_display(),
                     'payment_method': payment.get_payment_method_display(),
                     'amount': float(payment.amount),
+                    'amount_llevos': float(payment.amount_llevos) if payment.amount_llevos else None,
+                    'payment_type_code': payment.payment_type,
                     'currency': payment.currency,
                     'status': payment.get_status_display(),
                     'status_code': payment.status,
@@ -1229,6 +1234,8 @@ class PaymentStatusView(APIView):
                 'payment_type': payment.get_payment_type_display(),
                 'payment_method': payment.get_payment_method_display(),
                 'amount': float(payment.amount),
+                    'amount_llevos': float(payment.amount_llevos) if payment.amount_llevos else None,
+                    'payment_type_code': payment.payment_type,
                 'currency': payment.currency,
                 'status': payment.get_status_display(),
                 'status_code': payment.status,

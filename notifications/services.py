@@ -357,3 +357,17 @@ def send_application_status_notification(user: User, status: str, application_da
     }
     
     return notification_service.send_notification(user, notification_type, context) 
+
+def send_payment_confirmed_notification(user, payment_data: Dict[str, Any]) -> bool:
+    """Envía notificación de pago confirmado por R4"""
+    context = {
+        "payment_id": payment_data.get("id"),
+        "application_number": payment_data.get("application_number"),
+        "amount": payment_data.get("amount"),
+        "currency": payment_data.get("currency", "VES"),
+        "payment_type": payment_data.get("payment_type", "cuota"),
+        "reference": payment_data.get("reference"),
+        "confirmed_at": payment_data.get("confirmed_at"),
+    }
+    
+    return notification_service.send_notification(user, "payment_confirmed", context)

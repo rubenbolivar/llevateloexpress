@@ -211,6 +211,20 @@
                         <h5 class="mb-0">Calendario de Pagos</h5>
                     </div>
                     <div class="card-body">
+                        <!-- Seccion Pago Inicial -->
+                        <div id="initialPaymentSection" style="display: none;">
+                            <div class="card mb-3 border-warning">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0"><i class="fas fa-star me-2"></i>Pago Inicial</h6>
+                                </div>
+                                <div class="card-body" id="initialPaymentContent">
+                                    <!-- Se llenara dinamicamente -->
+                                </div>
+                            </div>
+                            <hr>
+                            <h6 class="text-muted mb-3"><i class="fas fa-calendar me-2"></i>Cuotas Mensuales</h6>
+                        </div>
+
                         <div id="paymentSchedule">
                             <!-- Se llenará dinámicamente -->
                         </div>
@@ -240,6 +254,30 @@
                             <button class="btn btn-secondary" onclick="window.location.href='/contacto.html'">
                                 <i class="fas fa-headset"></i> Soporte
                             </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cuadro Informativo: Tasa LLEVO y Penalizaciones -->
+                <div class="card mt-3">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informacion Importante</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <strong><i class="fas fa-coins me-2"></i>Cotizacion LLEVO del dia:</strong>
+                            <div class="mt-1">
+                                <span class="badge bg-primary fs-6" id="tasaLlevoHoy">Cargando...</span>
+                            </div>
+                        </div>
+                        <hr>
+                        <div>
+                            <strong><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Penalizacion por retraso:</strong>
+                            <ul class="mt-2 mb-0 small">
+                                <li>Si pagas fuera de tu ventana de pago, se aplicara una penalizacion de <strong>$10 USD</strong> (a tasa BCV del dia).</li>
+                                <li>Cada cuota tiene una ventana de pago de 15 dias.</li>
+                                <li>Paga dentro de tu ventana para evitar recargos.</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -302,7 +340,7 @@
     <script src="js/r4-config.js"></script>
     <script src="js/r4-payment-button.js"></script>
     <script src="js/r4-payment-modal.js"></script>
-    <script src="js/dashboard.js"></script>
+    <script src="js/dashboard.js?v=1766158116"></script>
 
 <!-- Botón flotante oficial de WhatsApp -->
 <a href="https://api.whatsapp.com/send?phone=5804128701585&text=¡Hola!%20Necesito%20información%20sobre%20financiamiento%20de%20vehículos%20en%20LlévateloExpress.%20¿Pueden%20ayudarme?" 

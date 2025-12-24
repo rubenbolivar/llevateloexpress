@@ -37,8 +37,29 @@ class PaymentScheduleInline(admin.TabularInline):
 class PaymentInline(admin.TabularInline):
     model = Payment
     extra = 0
-    fields = ('payment_type', 'payment_method', 'amount', 'payment_date', 'status', 'reference_number')
-    readonly_fields = ('created_at',)
+    fields = ('payment_type', 'payment_method', 'monto_llevos', 'monto_bs', 'payment_date', 'status', 'reference_number')
+    readonly_fields = ('created_at', 'monto_llevos', 'monto_bs')
+    
+    def monto_llevos(self, obj):
+        """Mostrar monto en LLEVO"""
+        if obj.amount_llevos:
+            return f"{obj.amount_llevos:.2f} LLEVO"
+        elif obj.payment_type == 'initial':
+            # Para pagos iniciales, amount ya está en LLEVO
+            return f"{obj.amount:.2f} LLEVO"
+        return "-"
+    monto_llevos.short_description = "Monto LLEVO"
+    
+    def monto_bs(self, obj):
+        """Mostrar equivalente en Bs al momento del pago"""
+        if obj.amount and obj.payment_type != 'initial':
+            return f"{obj.amount:,.2f} Bs"
+        elif obj.payment_type == 'initial' and obj.llevo_rate_at_payment:
+            # Para pago inicial, calcular Bs desde LLEVO
+            bs_amount = float(obj.amount) * float(obj.llevo_rate_at_payment)
+            return f"{bs_amount:,.2f} Bs"
+        return "-"
+    monto_bs.short_description = "Equiv. Bs"
 
 # Inline para archivos adjuntos de pagos
 # PaymentAttachmentInline comentado temporalmente hasta crear la migración correspondiente
@@ -421,11 +442,11 @@ class PaymentAdmin(admin.ModelAdmin):
     actions = ['mark_as_verified', 'mark_as_rejected', 'mark_as_processing']
     
     def get_application_number(self, obj):
-        return obj.application.application_number
+        return obj.application.application_number if obj.application else "-"
     get_application_number.short_description = 'No. Solicitud'
     
     def get_customer_name(self, obj):
-        return obj.application.customer.user.get_full_name()
+        return obj.application.customer.user.get_full_name() if obj.application else "-"
     get_customer_name.short_description = 'Cliente'
     
     def has_receipt(self, obj):
@@ -553,7 +574,7 @@ class PaymentScheduleAdmin(admin.ModelAdmin):
     readonly_fields = ['days_late', 'late_fee']
     
     def get_application_number(self, obj):
-        return obj.application.application_number
+        return obj.application.application_number if obj.application else "-"
     get_application_number.short_description = 'No. Solicitud'
 
 # Configuración del simulador

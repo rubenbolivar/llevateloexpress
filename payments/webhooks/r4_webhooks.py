@@ -11,6 +11,7 @@ import json
 from decimal import Decimal
 from django.utils import timezone
 from products.llevo_models import LlevoRate
+from notifications.services import send_payment_confirmed_notification
 
 logger = logging.getLogger(__name__)
 
@@ -304,7 +305,7 @@ def r4_notification_webhook(request):
             # Buscar solicitud en estado "approved" o "in_payment" (pagando cuotas)
             solicitud = FinancingRequest.objects.filter(
                 customer=cliente,
-                status__in=['approved', 'in_payment']
+                status__in=['approved', 'in_payment', 'active']
             ).order_by('-created_at').first()
 
             if not solicitud:
@@ -348,7 +349,7 @@ def r4_notification_webhook(request):
             pago_inicial_realizado = Payment.objects.filter(
                 application=solicitud,
                 payment_type='initial',
-                status='completed'
+                status__in=['completed', 'verified']
             ).exists()
 
             if not pago_inicial_realizado:
@@ -483,6 +484,24 @@ def r4_notification_webhook(request):
             # PASO 10: Responder al banco (R4)
             # ---------------------------------
             logger.info(f"R4notifica - Pago procesado exitosamente: {referencia}")
+
+            # PASO 11: Enviar notificación al cliente
+            # -----------------------------------------
+            try:
+                user = solicitud.customer.user
+                payment_data = {
+                    "id": pago.id,
+                    "application_number": solicitud.application_number,
+                    "amount": float(monto_llevos),
+                    "currency": "LLEVO",
+                    "payment_type": tipo_pago,
+                    "reference": referencia,
+                    "confirmed_at": timezone.now().isoformat()
+                }
+                send_payment_confirmed_notification(user, payment_data)
+                logger.info(f"Notificación de pago enviada a {user.email}")
+            except Exception as notif_error:
+                logger.warning(f"Error enviando notificación: {notif_error}")
             # Formato oficial R4 Conecta V3.0 página 10: {"abono": true}
             return JsonResponse({
                 'abono': True,

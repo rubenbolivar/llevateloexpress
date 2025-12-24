@@ -260,9 +260,23 @@ class FinancingRequest(models.Model):
         return f"{prefix}{year}{new_number:05d}"
     
     def calculate_payment_schedule(self):
-        """Calcula y genera el calendario de pagos"""
+        """
+        Calcula y genera el calendario de pagos con las nuevas reglas:
+        
+        Regla 1: Creditos aprobados entre el 1 y el 15 del mes
+        - Primera cuota: del 1 al 15 del mes siguiente (sin penalizacion)
+        - Recordatorios: dias 1, 5, 10, 15
+        - Penalizacion despues del 15: 10 USD a tasa BCV
+        
+        Regla 2: Creditos aprobados entre el 16 y el ultimo dia del mes
+        - Primera cuota: del 15 al 30 del mes siguiente (sin penalizacion)
+        - Recordatorios: dias 16, 21, 26, 30
+        - Penalizacion despues del 30: 10 USD a tasa BCV
+        """
         from datetime import timedelta
         from dateutil.relativedelta import relativedelta
+        from calendar import monthrange
+        from decimal import Decimal
         
         if self.status != 'approved':
             return
@@ -270,24 +284,52 @@ class FinancingRequest(models.Model):
         # Limpiar calendario existente
         self.payment_schedule.all().delete()
         
-        # Fecha de inicio (primer pago)
-        start_date = self.approved_at.date() if self.approved_at else timezone.now().date()
+        # Fecha de aprobacion
+        approval_date = self.approved_at.date() if self.approved_at else timezone.now().date()
+        approval_day = approval_date.day
         
-        # Calcular fechas según frecuencia
+        # Determinar si fue aprobado en primera o segunda quincena
+        is_first_half = approval_day <= 15
+        
+        # Penalizacion fija: 10 USD
+        PENALTY_USD = Decimal('10.00')
+        
+        # Monto de cuota en LLEVOS (usar payment_amount_llevos si existe, sino convertir)
+        cuota_llevos = self.payment_amount_llevos if self.payment_amount_llevos else self.payment_amount
+        
+        # Generar cuotas
         for i in range(1, self.number_of_payments + 1):
-            if self.payment_frequency == 'weekly':
-                due_date = start_date + timedelta(weeks=i)
-            elif self.payment_frequency == 'biweekly':
-                due_date = start_date + timedelta(weeks=i*2)
-            else:  # monthly
-                due_date = start_date + relativedelta(months=i)
+            # Calcular el mes de la cuota
+            cuota_month_date = approval_date + relativedelta(months=i)
+            year = cuota_month_date.year
+            month = cuota_month_date.month
+            
+            # Obtener ultimo dia del mes
+            _, last_day = monthrange(year, month)
+            
+            if is_first_half:
+                # Aprobado entre 1-15: ventana del 1 al 15 del mes siguiente
+                window_start = cuota_month_date.replace(day=1)
+                window_end = cuota_month_date.replace(day=15)
+                due_date = window_end  # Fecha limite sin penalizacion
+            else:
+                # Aprobado entre 16-31: ventana del 15 al 30 del mes siguiente
+                window_start = cuota_month_date.replace(day=15)
+                window_end = cuota_month_date.replace(day=min(30, last_day))
+                due_date = window_end  # Fecha limite sin penalizacion
             
             PaymentSchedule.objects.create(
                 application=self,
                 payment_number=i,
                 due_date=due_date,
-                amount=self.payment_amount
+                amount=self.payment_amount if self.payment_amount else 0,
+                amount_llevos=cuota_llevos,
+                payment_window_start=window_start,
+                payment_window_end=window_end,
+                penalty_amount=PENALTY_USD,
+                penalty_applied=False
             )
+
 
 
 class PaymentMethod(models.Model):
@@ -727,6 +769,32 @@ class PaymentSchedule(models.Model):
         decimal_places=2, 
         default=0,
         verbose_name="Cargo por mora"
+    )
+    
+    # Nuevos campos para sistema de pagos con ventanas
+    payment_window_start = models.DateField(
+        null=True, blank=True,
+        verbose_name="Inicio ventana de pago"
+    )
+    payment_window_end = models.DateField(
+        null=True, blank=True,
+        verbose_name="Fin ventana sin penalización"
+    )
+    penalty_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name="Monto penalización (USD)"
+    )
+    penalty_applied = models.BooleanField(
+        default=False,
+        verbose_name="Penalización aplicada"
+    )
+    amount_llevos = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True, blank=True,
+        verbose_name="Monto en LLEVOS"
     )
     
     class Meta:

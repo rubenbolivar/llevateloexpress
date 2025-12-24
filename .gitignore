@@ -116,3 +116,9 @@ test_upload.*
 test_flujo_*
 
 # ===== FIN PATRONES ADICIONALES =====
+
+# Backups con timestamp
+*.backup_*
+*.backup.*
+*.pre_*
+*.before_*

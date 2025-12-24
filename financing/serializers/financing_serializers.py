@@ -21,48 +21,114 @@ class FinancingPlanSerializer(serializers.ModelSerializer):
 
 
 class PaymentScheduleSerializer(serializers.ModelSerializer):
-    """Serializer para el calendario de pagos"""
+    """Serializer para el calendario de pagos con nuevas reglas de ventanas"""
     status = serializers.SerializerMethodField()
     amount_llevo = serializers.SerializerMethodField()
     amount_ves = serializers.SerializerMethodField()
+    status_display = serializers.SerializerMethodField()
+    window_status = serializers.SerializerMethodField()
+    days_until_due = serializers.SerializerMethodField()
+    days_overdue = serializers.SerializerMethodField()
     
     class Meta:
         model = PaymentSchedule
         fields = [
-            'id', 'payment_number', 'due_date', 'amount', 'amount_llevo', 'amount_ves',
+            'id', 'application', 'payment_number', 'due_date', 'amount', 'amount_llevo', 'amount_llevos', 'amount_ves',
             'is_paid', 'paid_date', 'paid_amount',
-            'days_late', 'late_fee', 'status'
+            'days_late', 'late_fee', 'status', 'status_display',
+            'payment_window_start', 'payment_window_end',
+            'penalty_amount', 'penalty_applied',
+            'window_status', 'days_until_due', 'days_overdue'
         ]
     
     def get_status(self, obj):
+        from django.utils import timezone
+        today = timezone.now().date()
+        
         if obj.is_paid:
             return 'paid'
-        elif obj.days_late > 0:
+        
+        # Verificar si esta vencido (paso la ventana de pago)
+        if obj.payment_window_end and today > obj.payment_window_end:
             return 'overdue'
+        
+        # Esta en ventana de pago
+        if obj.payment_window_start and obj.payment_window_end:
+            if obj.payment_window_start <= today <= obj.payment_window_end:
+                return 'in_window'
+        
+        return 'pending'
+    
+    def get_status_display(self, obj):
+        status = self.get_status(obj)
+        status_map = {
+            'paid': 'Pagado',
+            'overdue': 'Vencido',
+            'in_window': 'En ventana de pago',
+            'pending': 'Pendiente'
+        }
+        return status_map.get(status, 'Desconocido')
+    
+    def get_window_status(self, obj):
+        """Estado de la ventana de pago en espanol"""
+        from django.utils import timezone
+        today = timezone.now().date()
+        
+        if obj.is_paid:
+            return 'Cuota pagada'
+        
+        if not obj.payment_window_start or not obj.payment_window_end:
+            return 'Sin ventana definida'
+        
+        if today < obj.payment_window_start:
+            days_to_start = (obj.payment_window_start - today).days
+            return f'Inicia en {days_to_start} dias'
+        elif obj.payment_window_start <= today <= obj.payment_window_end:
+            days_left = (obj.payment_window_end - today).days
+            if days_left == 0:
+                return 'Ultimo dia sin penalizacion'
+            return f'{days_left} dias para pagar sin penalizacion'
         else:
-            return 'pending'
+            return 'Vencido - Aplica penalizacion de  USD'
+    
+    def get_days_until_due(self, obj):
+        from django.utils import timezone
+        today = timezone.now().date()
+        if obj.is_paid or not obj.payment_window_end:
+            return 0
+        days = (obj.payment_window_end - today).days
+        return max(0, days)
+    
+    def get_days_overdue(self, obj):
+        from django.utils import timezone
+        today = timezone.now().date()
+        if obj.is_paid or not obj.payment_window_end:
+            return 0
+        if today > obj.payment_window_end:
+            return (today - obj.payment_window_end).days
+        return 0
     
     def get_amount_llevo(self, obj):
-        """Convertir monto USD a LLEVO para mostrar al usuario"""
-        # Asumimos que amount está en USD, convertir a LLEVO
+        """Usar amount_llevos si existe, sino convertir"""
+        if obj.amount_llevos:
+            return float(obj.amount_llevos)
+        # Fallback: convertir desde USD
         current_rate = LlevoRate.get_current_rate()
         if current_rate and obj.amount:
-            # USD a LLEVO: redondeo estándar
             conversion_factor = current_rate.llevo_value / current_rate.usdt_ves_rate
-            return round(obj.amount / conversion_factor)
+            return round(float(obj.amount) / float(conversion_factor))
         return int(obj.amount) if obj.amount else 0
     
     def get_amount_ves(self, obj):
         """Convertir LLEVO a VES para pagos R4"""
         from decimal import Decimal
         current_rate = LlevoRate.get_current_rate()
-        if current_rate and obj.amount:
-            # Primero USD a LLEVO, luego LLEVO a VES
-            conversion_factor = current_rate.usdt_ves_rate / (15 * Decimal('1.18'))
-            amount_llevo = obj.amount * conversion_factor
+        amount_llevo = obj.amount_llevos if obj.amount_llevos else obj.amount
+        if current_rate and amount_llevo:
             amount_ves = Decimal(str(amount_llevo)) * current_rate.llevo_value
             return float(amount_ves)
         return 0.0
+
 
 
 class PaymentSerializer(serializers.ModelSerializer):
@@ -108,6 +174,8 @@ class FinancingRequestListSerializer(serializers.ModelSerializer):
     product_price_llevo = serializers.SerializerMethodField()
     payment_amount_llevo = serializers.SerializerMethodField()
     payment_amount_ves = serializers.SerializerMethodField()
+    initial_payment_completed = serializers.SerializerMethodField()
+    down_payment_ves = serializers.SerializerMethodField()
     
     class Meta:
         model = FinancingRequest
@@ -116,7 +184,7 @@ class FinancingRequestListSerializer(serializers.ModelSerializer):
             'product_name', 'product_image', 'product_price', 'product_price_llevo',
             'status', 'status_display', 'payment_amount', 'payment_amount_llevo', 'payment_amount_ves',
             "down_payment_llevos",
-            'payment_frequency', 'created_at'
+            'payment_frequency', 'created_at', 'initial_payment_completed', 'down_payment_ves'
         ]
     
     def get_product_price_llevo(self, obj):
@@ -149,6 +217,24 @@ class FinancingRequestListSerializer(serializers.ModelSerializer):
             amount_llevo = obj.payment_amount * conversion_factor
             amount_ves = Decimal(str(amount_llevo)) * current_rate.llevo_value
             return float(amount_ves)
+        return 0.0
+
+    def get_initial_payment_completed(self, obj):
+        """Verificar si el pago inicial ya fue completado"""
+        from financing.models import Payment
+        return Payment.objects.filter(
+            application=obj,
+            payment_type='initial',
+            status='verified'
+        ).exists()
+
+    def get_down_payment_ves(self, obj):
+        """Convertir pago inicial LLEVO a VES"""
+        from decimal import Decimal
+        current_rate = LlevoRate.get_current_rate()
+        down_payment_llevos = obj.down_payment_llevos or 0
+        if current_rate and down_payment_llevos:
+            return float(Decimal(str(down_payment_llevos)) * current_rate.llevo_value)
         return 0.0
 
 
