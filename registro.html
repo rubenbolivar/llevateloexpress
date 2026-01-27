@@ -141,6 +141,78 @@
                                     </small>
                                 </div>
 
+                                <!-- Ubicación -->
+                                <h5 class="mb-3 mt-4">Ubicación</h5>
+                                <div class="mb-3">
+                                    <label for="state" class="form-label">Estado <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="state" name="state" required>
+                                        <option value="">Seleccione su estado</option>
+                                        <option value="amazonas">Amazonas</option>
+                                        <option value="anzoategui">Anzoátegui</option>
+                                        <option value="apure">Apure</option>
+                                        <option value="aragua">Aragua</option>
+                                        <option value="barinas">Barinas</option>
+                                        <option value="bolivar">Bolívar</option>
+                                        <option value="carabobo">Carabobo</option>
+                                        <option value="cojedes">Cojedes</option>
+                                        <option value="delta_amacuro">Delta Amacuro</option>
+                                        <option value="distrito_capital">Distrito Capital</option>
+                                        <option value="falcon">Falcón</option>
+                                        <option value="guarico">Guárico</option>
+                                        <option value="lara">Lara</option>
+                                        <option value="merida">Mérida</option>
+                                        <option value="miranda">Miranda</option>
+                                        <option value="monagas">Monagas</option>
+                                        <option value="nueva_esparta">Nueva Esparta</option>
+                                        <option value="portuguesa">Portuguesa</option>
+                                        <option value="sucre">Sucre</option>
+                                        <option value="tachira">Táchira</option>
+                                        <option value="trujillo">Trujillo</option>
+                                        <option value="vargas">Vargas</option>
+                                        <option value="yaracuy">Yaracuy</option>
+                                        <option value="zulia">Zulia</option>
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        Por favor seleccione su estado.
+                                    </div>
+                                </div>
+
+                                <div class="mb-3" id="branchContainer" style="display: none;">
+                                    <label for="branch" class="form-label">Sucursal <span class="text-success"><i class="fas fa-map-marker-alt"></i></span></label>
+                                    <select class="form-select" id="branch" name="branch">
+                                        <option value="">Sin sucursal asignada</option>
+                                        <option value="sucursal_caracas">Sucursal Llevatelo - CCCT Caracas</option>
+                                        <option value="sucursal_barcelona">Sucursal Llevatelo - Barcelona</option>
+                                    </select>
+                                    <small class="text-success">
+                                        <i class="fas fa-check-circle me-1"></i>
+                                        ¡Tenemos una sucursal cerca de ti!
+                                    </small>
+                                </div>
+
+                                <!-- Información Adicional -->
+                                <h5 class="mb-3 mt-4">Información Adicional</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">¿Es empleado público? <span class="text-danger">*</span></label>
+                                    <div class="d-flex gap-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="is_public_employee" id="publicEmployeeYes" value="true" required>
+                                            <label class="form-check-label" for="publicEmployeeYes">
+                                                Sí
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="is_public_employee" id="publicEmployeeNo" value="false" required>
+                                            <label class="form-check-label" for="publicEmployeeNo">
+                                                No
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="invalid-feedback">
+                                        Por favor indique si es empleado público.
+                                    </div>
+                                </div>
+
                                 <!-- Credenciales -->
                                 <h5 class="mb-3 mt-4">Credenciales de Acceso</h5>
                                 <div class="mb-3">
@@ -290,6 +362,39 @@
     <script>const API_BASE_URL = "/api";</script>
     <script src="/static/js/auth.js"></script>
     <script src="/static/js/registro.js?v=1769486767"></script>
+
+    <!-- Script para campo condicional de sucursal -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const stateSelect = document.getElementById('state');
+        const branchContainer = document.getElementById('branchContainer');
+        const branchSelect = document.getElementById('branch');
+
+        if (stateSelect && branchContainer && branchSelect) {
+            stateSelect.addEventListener('change', function() {
+                const selectedState = this.value;
+
+                // Mapeo de estados a sucursales
+                const branchMapping = {
+                    'distrito_capital': 'sucursal_caracas',
+                    'anzoategui': 'sucursal_barcelona'
+                };
+
+                if (branchMapping[selectedState]) {
+                    // Mostrar el contenedor de sucursal
+                    branchContainer.style.display = 'block';
+                    // Pre-seleccionar la sucursal correspondiente
+                    branchSelect.value = branchMapping[selectedState];
+                } else {
+                    // Ocultar el contenedor de sucursal
+                    branchContainer.style.display = 'none';
+                    // Limpiar la selección
+                    branchSelect.value = '';
+                }
+            });
+        }
+    });
+    </script>
 
 <!-- Botón flotante oficial de WhatsApp -->
 <a href="https://api.whatsapp.com/send?phone=5804128701585&text=¡Hola!%20Necesito%20información%20sobre%20financiamiento%20de%20vehículos%20en%20LlévateloExpress.%20¿Pueden%20ayudarme?" 
