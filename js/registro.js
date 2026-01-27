@@ -333,7 +333,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 first_name: document.getElementById('firstName').value,
                 last_name: document.getElementById('lastName').value,
                 phone: document.getElementById('phone').value,
-                identity_document: document.getElementById('idType').value + '-' + document.getElementById('idNumber').value
+                identity_document: document.getElementById('idType').value + '-' + document.getElementById('idNumber').value,
+                state: document.getElementById('state').value,
+                branch: document.getElementById('branch').value || '',
+                is_public_employee: document.querySelector('input[name="is_public_employee"]:checked') ? document.querySelector('input[name="is_public_employee"]:checked').value === 'true' : false
             };
             
             // Realizar registro
