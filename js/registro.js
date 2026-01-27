@@ -4,12 +4,16 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 registro.js cargado y ejecutándose');
+
     // Elementos del formulario
     const registrationForm = document.getElementById('registrationForm');
     const passwordInput = document.getElementById('password');
     const confirmPasswordInput = document.getElementById('confirmPassword');
     const submitButton = registrationForm ? registrationForm.querySelector('button[type="submit"]') : null;
     const alertContainer = document.getElementById('alert-container');
+
+    console.log('📝 Formulario encontrado:', registrationForm ? 'SÍ' : 'NO');
     
     // Inicializar validaciones
     initializeFormValidation();
@@ -311,6 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
      * Maneja el envío del formulario de registro
      */
     async function handleRegistrationSubmit(event) {
+        console.log('🎯 handleRegistrationSubmit ejecutado - formulario enviado');
         event.preventDefault();
         
         // Validar formulario
@@ -338,7 +343,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 branch: document.getElementById('branch').value || '',
                 is_public_employee: document.querySelector('input[name="is_public_employee"]:checked') ? document.querySelector('input[name="is_public_employee"]:checked').value === 'true' : false
             };
-            
+
+            console.log('🔍 DEBUG - userData construido en registro.js:', userData);
+            console.log('  state:', userData.state);
+            console.log('  branch:', userData.branch);
+            console.log('  is_public_employee:', userData.is_public_employee);
+
             // Realizar registro
             const result = await Auth.register(userData);
             
