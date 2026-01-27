@@ -361,40 +361,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>const API_BASE_URL = "/api";</script>
     <script src="/static/js/auth.js"></script>
-    <script src="/static/js/registro.js?v=1769491900"></script>
-
-    <!-- Script para campo condicional de sucursal -->
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const stateSelect = document.getElementById('state');
-        const branchContainer = document.getElementById('branchContainer');
-        const branchSelect = document.getElementById('branch');
-
-        if (stateSelect && branchContainer && branchSelect) {
-            stateSelect.addEventListener('change', function() {
-                const selectedState = this.value;
-
-                // Mapeo de estados a sucursales
-                const branchMapping = {
-                    'distrito_capital': 'sucursal_caracas',
-                    'anzoategui': 'sucursal_barcelona'
-                };
-
-                if (branchMapping[selectedState]) {
-                    // Mostrar el contenedor de sucursal
-                    branchContainer.style.display = 'block';
-                    // Pre-seleccionar la sucursal correspondiente
-                    branchSelect.value = branchMapping[selectedState];
-                } else {
-                    // Ocultar el contenedor de sucursal
-                    branchContainer.style.display = 'none';
-                    // Limpiar la selección
-                    branchSelect.value = '';
-                }
-            });
-        }
-    });
-    </script>
+    <script src="/static/js/registro.js?v=1769493000"></script>
 
 <!-- Botón flotante oficial de WhatsApp -->
 <a href="https://api.whatsapp.com/send?phone=5804128701585&text=¡Hola!%20Necesito%20información%20sobre%20financiamiento%20de%20vehículos%20en%20LlévateloExpress.%20¿Pueden%20ayudarme?" 

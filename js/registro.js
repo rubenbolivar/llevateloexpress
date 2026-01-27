@@ -14,7 +14,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const alertContainer = document.getElementById('alert-container');
 
     console.log('📝 Formulario encontrado:', registrationForm ? 'SÍ' : 'NO');
-    
+
+    // Inicializar funcionalidad de campo condicional de sucursal
+    setupBranchConditionalField();
+
     // Inicializar validaciones
     initializeFormValidation();
     setupPasswordValidation();
@@ -428,5 +431,45 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         return result.message || 'Error desconocido';
+    }
+
+    /**
+     * Configura el campo condicional de sucursal
+     */
+    function setupBranchConditionalField() {
+        const stateSelect = document.getElementById('state');
+        const branchContainer = document.getElementById('branchContainer');
+        const branchSelect = document.getElementById('branch');
+
+        if (stateSelect && branchContainer && branchSelect) {
+            console.log('✅ Campos de sucursal encontrados, configurando lógica condicional');
+
+            stateSelect.addEventListener('change', function() {
+                const selectedState = this.value;
+                console.log('Estado seleccionado:', selectedState);
+
+                // Mapeo de estados a sucursales
+                const branchMapping = {
+                    'distrito_capital': 'sucursal_caracas',
+                    'anzoategui': 'sucursal_barcelona'
+                };
+
+                if (branchMapping[selectedState]) {
+                    // Mostrar el contenedor de sucursal
+                    branchContainer.style.display = 'block';
+                    // Pre-seleccionar la sucursal correspondiente
+                    branchSelect.value = branchMapping[selectedState];
+                    console.log('Sucursal asignada:', branchMapping[selectedState]);
+                } else {
+                    // Ocultar el contenedor de sucursal
+                    branchContainer.style.display = 'none';
+                    // Limpiar la selección
+                    branchSelect.value = '';
+                    console.log('Sin sucursal asignada para este estado');
+                }
+            });
+        } else {
+            console.warn('⚠️ No se encontraron todos los campos para sucursal condicional');
+        }
     }
 }); 
