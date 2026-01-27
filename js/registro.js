@@ -3,6 +3,8 @@
  * Utiliza el módulo Auth para gestionar el registro de usuarios
  */
 
+console.log('📄 registro.js SE ESTÁ CARGANDO - antes de DOMContentLoaded');
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 registro.js cargado y ejecutándose');
 
