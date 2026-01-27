@@ -52,10 +52,14 @@ class RegisterSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
     phone = serializers.CharField(required=True)
     identity_document = serializers.CharField(required=True)
-    
+    state = serializers.CharField(required=True)
+    branch = serializers.CharField(required=False, allow_blank=True, default='')
+    is_public_employee = serializers.BooleanField(required=True)
+
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'password2', 'first_name', 'last_name', 'phone', 'identity_document']
+        fields = ['username', 'email', 'password', 'password2', 'first_name', 'last_name',
+                  'phone', 'identity_document', 'state', 'branch', 'is_public_employee']
     
     def validate(self, data):
         # Validar que las contraseñas coincidan
@@ -87,20 +91,26 @@ class RegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         phone = validated_data.pop('phone')
         identity_document = validated_data.pop('identity_document')
+        state = validated_data.pop('state')
+        branch = validated_data.pop('branch', '')
+        is_public_employee = validated_data.pop('is_public_employee', False)
         validated_data.pop('password2')
-        
+
         # Asegurar que el email y username sean iguales (para logins consistentes)
         if 'email' in validated_data and 'username' in validated_data:
             validated_data['username'] = validated_data['email']
-        
+
         user = User.objects.create_user(**validated_data)
-        
+
         Customer.objects.create(
             user=user,
             phone=phone,
-            identity_document=identity_document
+            identity_document=identity_document,
+            state=state,
+            branch=branch,
+            is_public_employee=is_public_employee
         )
-        
+
         return user
 
 class ApplicationSerializer(serializers.ModelSerializer):
