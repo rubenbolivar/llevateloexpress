@@ -398,6 +398,7 @@ const Dashboard = {
                         <div class="row align-items-center">
                             <div class="col-md-5">
                                 <h6 class="mb-1 fw-bold">Cuota ${payment.payment_number}</h6>
+                                ${payment.application_number ? '<small class="text-muted d-block"><i class="fas fa-file-alt me-1"></i>' + payment.application_number + '</small>' : ''}
                                 <small class="text-muted d-block">
                                     <i class="fas fa-calendar-alt me-1"></i>
                                     ${windowInfo || 'Vence: ' + this.formatDate(payment.due_date)}

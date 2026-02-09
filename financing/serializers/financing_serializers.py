@@ -23,17 +23,18 @@ class FinancingPlanSerializer(serializers.ModelSerializer):
 class PaymentScheduleSerializer(serializers.ModelSerializer):
     """Serializer para el calendario de pagos con nuevas reglas de ventanas"""
     status = serializers.SerializerMethodField()
+    application_number = serializers.SerializerMethodField()
     amount_llevo = serializers.SerializerMethodField()
     amount_ves = serializers.SerializerMethodField()
     status_display = serializers.SerializerMethodField()
     window_status = serializers.SerializerMethodField()
     days_until_due = serializers.SerializerMethodField()
     days_overdue = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = PaymentSchedule
         fields = [
-            'id', 'application', 'payment_number', 'due_date', 'amount', 'amount_llevo', 'amount_llevos', 'amount_ves',
+            'id', 'application', 'application_number', 'payment_number', 'due_date', 'amount', 'amount_llevo', 'amount_llevos', 'amount_ves',
             'is_paid', 'paid_date', 'paid_amount',
             'days_late', 'late_fee', 'status', 'status_display',
             'payment_window_start', 'payment_window_end',
@@ -41,6 +42,9 @@ class PaymentScheduleSerializer(serializers.ModelSerializer):
             'window_status', 'days_until_due', 'days_overdue'
         ]
     
+    def get_application_number(self, obj):
+        return obj.application.application_number if obj.application else None
+
     def get_status(self, obj):
         from django.utils import timezone
         today = timezone.now().date()
